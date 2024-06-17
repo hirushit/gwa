@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Profile</title>
+</head>
+<body>
+    <h1>Doctor Profile</h1>
+    <p><strong>Name:</strong> <%= doctor.name %></p>
+    <p><strong>Speciality:</strong> <%= doctor.speciality %></p>
+    <p><strong>Experience:</strong> <%= doctor.experience %> years</p>
+
+    <h3>Book an Appointment</h3>
+    <form action="/patient/book" method="POST">
+        <input type="hidden" name="doctorId" value="<%= doctor._id %>">
+        <div>
+            <label for="date">Date:</label>
+            <input type="date" id="date" name="date" required>
+        </div>
+        <div>
+            <label for="time">Time:</label>
+            <input type="time" id="time" name="time" required>
+        </div>
+        <button type="submit">Book</button>
+    </form>
+    <a href="/patient/doctors">Back to Doctors</a>
+</body>
+</html>

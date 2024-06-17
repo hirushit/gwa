@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <!-- Add your CSS stylesheets or links here -->
+  <style>
+
+  </style>
+</head>
+<body>
+  <h1>Admin Dashboard</h1>
+
+  <% if (success_msg) { %>
+    <div class="alert alert-success"><%= success_msg %></div>
+  <% } %>
+
+  <h2>Doctor Verification Requests</h2>
+
+  <% if (doctors.length > 0) { %>
+    <% doctors.forEach(doctor => { %>
+      <div class="doctor-request">
+        <h3><%= doctor.name %></h3>
+        <p><strong>Email:</strong> <%= doctor.email %></p>
+        <p><strong>Status:</strong> 
+          <% if (doctor.verified === 'Verified') { %>
+            Verified
+          <% } else if (doctor.verified === 'Pending') { %>
+            Pending
+          <% } else { %>
+            Not Verified
+          <% } %>
+        </p>
+        <form action="/admin/view/<%= doctor._id %>" method="GET">
+          <button type="submit">View Profile and Verify</button>
+        </form>
+      </div>
+      <hr>
+    <% }) %>
+  <% } else { %>
+    <p>No doctor verification requests found.</p>
+  <% } %>
+
+  <a href="/auth/logout">Logout</a>
+
+  <!-- Add your JavaScript scripts or links here -->
+</body>
+</html>

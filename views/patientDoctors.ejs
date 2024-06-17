@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Available Doctors</title>
+</head>
+<body>
+    <h1>Available Doctors</h1>
+    <% if (doctors.length > 0) { %>
+        <ul>
+            <% doctors.forEach(doctor => { %>
+                <li>
+                    <p>Name: <%= doctor.name %></p>
+                    <p>Specialty: <%= doctor.speciality %></p>
+                    <p>Consultation: <%= doctor.consultation %></p>
+                    
+                    <% if (doctor.timeSlots && doctor.timeSlots.length > 0) { %>
+                        <p>Available Time Slots:</p>
+                        <ul>
+                            <% doctor.timeSlots.forEach(slot => { %>
+                                <% if (slot.status === 'free') { %>
+                                    <li>
+                                        <p>Date: <%= slot.date.toDateString() %></p>
+                                        <p>Time: <%= slot.startTime %> - <%= slot.endTime %></p>
+                                        <form action="/patient/doctor/<%= doctor._id %>/slots" method="GET">                                            <input type="hidden" name="doctorId" value="<%= doctor._id %>">
+                                            <input type="hidden" name="date" value="<%= slot.date.toISOString() %>">
+                                            <input type="hidden" name="time" value="<%= slot.startTime %> - <%= slot.endTime %>">
+                                            <input type="hidden" name="consultationType" value="<%= doctor.consultation %>">
+                                            <button type="submit">Book Slot</button>
+                                        </form>
+                                    </li>
+                                <% } %>
+                            <% }) %>
+                        </ul>
+                    <% } else { %>
+                        <p>No available time slots.</p>
+                    <% } %>
+                    
+                    <% if (doctor.availableDates && doctor.availableDates.length > 0) { %>
+                        <p>Available Dates:</p>
+                        <ul>
+                            <% doctor.availableDates.forEach(date => { %>
+                                <li><%= date %></li>
+                            <% }) %>
+                        </ul>
+                    <% } else { %>
+                        <p>No available dates.</p>
+                    <% } %>
+                </li>
+            <% }) %>
+        </ul>
+    <% } else { %>
+        <p>No doctors available.</p>
+    <% } %>
+    <a href="/patient/bookings">View your bookings</a>
+</body>
+</html>

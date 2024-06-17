@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Profile</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Patient Profile</h1>
+
+        <div class="profile-header">
+            <% if (patient && patient.profilePicture && patient.profilePicture.data) { %>
+                <img src="data:<%= patient.profilePicture.contentType %>;base64,<%= patient.profilePicture.data.toString('base64') %>" alt="Profile Picture" width="150" height="180">
+            <% } else { %>
+                <p>No profile picture available.</p>
+            <% } %>
+
+            <div class="profile-info">
+                <% if (patient) { %>
+                    <p><strong>Name:</strong> <%= patient.name %></p>
+                    <p><strong>Email:</strong> <%= patient.email %></p>
+                    <p><strong>Date of Birth:</strong> <%= patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 'N/A' %></p>
+                    <p><strong>Age:</strong> <%= patient.dateOfBirth ? Math.floor((new Date() - new Date(patient.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)) : 'N/A' %></p>
+                    <p><strong>Phone Number:</strong> <%= patient.phoneNumber %></p>
+                    <p><strong>Address:</strong> <%= patient.address %></p>
+                    <p><strong>Blood Group:</strong> <%= patient.bloodGroup %></p>
+                    <p><strong>Insurance Provider:</strong> <%= patient.insuranceProvider %></p>
+                    <p><strong>Policy Number:</strong> <%= patient.policyNumber %></p>
+                    <p><strong>Group Number:</strong> <%= patient.groupNumber %></p>
+                <% } else { %>
+                    <p>Patient data not available.</p>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="emergency-contacts">
+            <h3>Emergency Contacts</h3>
+            <% if (patient && patient.emergencyContacts && patient.emergencyContacts.length > 0) { %>
+                <ul>
+                    <% patient.emergencyContacts.forEach(contact => { %>
+                        <% if (contact) { %>
+                            <li>
+                                <p><strong>Name:</strong> <%= contact.name %></p>
+                                <p><strong>Relationship:</strong> <%= contact.relationship %></p>
+                                <p><strong>Phone:</strong> <%= contact.phone %></p>
+                                <p><strong>Email:</strong> <%= contact.email %></p>
+                            </li>
+                        <% } %>
+                    <% }) %>
+                </ul>
+            <% } else { %>
+                <p>No emergency contacts available.</p>
+            <% } %>
+        </div>
+
+        <div class="actions">
+            <a href="/patient/doctors">View Doctors</a> 
+            <a href="/patient/bookings">Manage Bookings</a>
+            <a href="/patient/edit">Edit Profile</a>
+            <form action="/auth/logout" method="POST" style="display: inline;">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

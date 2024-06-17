@@ -1,0 +1,43 @@
+<!-- views/patientBookings.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings</title>
+</head>
+<body>
+    <div class="container">
+        <h1>My Bookings</h1>
+        <% if (bookings && bookings.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Doctor</th>
+                        <th>Speciality</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Consultation Type</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% bookings.forEach(booking => { %>
+                        <tr>
+                            <td><%= booking.doctor.name %></td>
+                            <td><%= booking.doctor.speciality %></td>
+                            <td><%= new Date(booking.date).toLocaleDateString() %></td>
+                            <td><%= booking.time %></td>
+                            <td><%= booking.consultationType %></td>
+                            <td class="status-<%= booking.status %>"><%= booking.status %></td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p>No bookings found.</p>
+        <% } %>
+        <a href="/patient/profile">Back to Profile</a>
+    </div>
+</body>
+</html>

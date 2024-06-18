@@ -8,17 +8,17 @@
     function addInput(fieldName) {
       const container = document.getElementById(fieldName + '-container');
       const newIndex = container.getElementsByClassName('form-control').length + 1;
-
+    
       const inputWrapper = document.createElement('div');
       inputWrapper.className = 'input-group';
-
+    
       const input = document.createElement('input');
       input.type = 'text';
-      input.name = fieldName;
+      input.name = `${fieldName}[${newIndex}]`; // Use array notation for multiple inputs
       input.className = 'form-control';
       input.placeholder = `${fieldName} ${newIndex}`;
       inputWrapper.appendChild(input);
-
+    
       const removeButton = document.createElement('button');
       removeButton.type = 'button';
       removeButton.className = 'btn btn-danger';
@@ -27,9 +27,50 @@
         inputWrapper.remove();
       });
       inputWrapper.appendChild(removeButton);
-
+    
       container.appendChild(inputWrapper);
     }
+
+    function addTimeSlot() {
+      const container = document.getElementById('time-slots-container');
+      const newIndex = container.getElementsByClassName('input-group').length + 1;
+  
+      const timeSlotWrapper = document.createElement('div');
+      timeSlotWrapper.className = 'input-group';
+  
+      const dateInput = document.createElement('input');
+      dateInput.type = 'date';
+      dateInput.name = `timeSlots[${newIndex}][date]`;
+      dateInput.className = 'form-control';
+      dateInput.placeholder = 'Date';
+      timeSlotWrapper.appendChild(dateInput);
+  
+      const startTimeInput = document.createElement('input');
+      startTimeInput.type = 'time';
+      startTimeInput.name = `timeSlots[${newIndex}][startTime]`;
+      startTimeInput.className = 'form-control';
+      startTimeInput.placeholder = 'Start Time';
+      timeSlotWrapper.appendChild(startTimeInput);
+  
+      const endTimeInput = document.createElement('input');
+      endTimeInput.type = 'time';
+      endTimeInput.name = `timeSlots[${newIndex}][endTime]`;
+      endTimeInput.className = 'form-control';
+      endTimeInput.placeholder = 'End Time';
+      timeSlotWrapper.appendChild(endTimeInput);
+  
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'btn btn-danger';
+      removeButton.textContent = 'Remove';
+      removeButton.addEventListener('click', function() {
+          timeSlotWrapper.remove();
+      });
+      timeSlotWrapper.appendChild(removeButton);
+  
+      container.appendChild(timeSlotWrapper);
+  }
+    
   </script>
 </head>
 <body>
@@ -48,14 +89,24 @@
       <input type="text" name="title" value="<%= doctor.title %>" required>
     </div>
     <div>
-      <label>Specialty:</label>
-      <input type="text" name="speciality" value="<%= doctor.speciality %>" required>
+      <label>Country:</label>
+      <input type="text" name="country" value="<%= doctor.country %>" required>
     </div>
     <div>
-      <label>Location:</label>
-      <input type="text" name="location" value="<%= doctor.location %>" required>
+      <label>State:</label>
+      <input type="text" name="state" value="<%= doctor.state %>" required>
     </div>
     <div>
+      <label>City:</label>
+      <input type="text" name="city" value="<%= doctor.city %>" required>
+    </div>
+    <div>
+      <label>Availability:</label>
+      <select name="availability">
+        <option value="true" <%= doctor.availability === 'true' ? 'selected' : '' %>>Available</option>
+        <option value="false" <%= doctor.availability === 'false' ? 'selected' : '' %>>Not Available</option>
+      </select>
+    </div>
       <label>Gender:</label>
       <input type="radio" name="gender" value="Male" <%= doctor.gender === 'Male' ? 'checked' : '' %>> Male
       <input type="radio" name="gender" value="Female" <%= doctor.gender === 'Female' ? 'checked' : '' %>> Female
@@ -116,32 +167,36 @@
 
     <!-- Dynamic Input Fields -->
     <div>
-      <label>Conditions Managed:</label>
-      <div id="conditions-container">
-        <% doctor.conditions.forEach((condition, index) => { %>
+      <label>Specialities:</label>
+      <div id="speciality-container">
+        <% doctor.speciality.forEach((speciality, index) => { %>
           <div class="input-group">
-            <input type="text" name="conditions" value="<%= condition %>" class="form-control">
-            <% if (index > 0) { %>
-              <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
-            <% } %>
+            <input type="text" name="speciality[<%= index %>]" value="<%= speciality %>" class="form-control">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
           </div>
         <% }) %>
       </div>
-      <button type="button" onclick="addInput('conditions')">Add Condition</button>
+      <button type="button" onclick="addInput('speciality')">Add Speciality</button>
     </div>
-        <div>
-            <label>Languages Spoken:</label>
-            <div id="languages-container">
-                <% doctor.languages.forEach((language, index) => { %>
-                    <div class="input-group">
-                        <input type="text" name="languages" value="<%= language %>" class="form-control">
-                        <% if (index > 0) { %>
-                            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
-                        <% } %>
-                    </div>
-                <% }) %>
-            </div>
-            <button type="button" onclick="addInput('languages')">Add Language</button>
+    
+      
+    <div>
+      <label>Languages Spoken:</label>
+      <div id="languages-container">
+          <% doctor.languages.forEach((language, index) => { %>
+              <div class="input-group">
+                  <input type="text" name="languages[<%= index %>]" value="<%= language %>" class="form-control">
+                  <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+              </div>
+          <% }) %>
+      </div>
+      <button type="button" onclick="addInput('languages')">Add Language</button>
+  </div>
+
+  </div>
+
+    
+            
         </div>
         <div>
             <label>Hospitals/Clinics:</label>

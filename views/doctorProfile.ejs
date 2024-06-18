@@ -33,7 +33,7 @@
     <p><strong>Email:</strong> <%= doctor.email %></p>
     <p><strong>Title:</strong> <%= doctor.title %></p>
     <p><strong>Speciality:</strong> <%= doctor.speciality %></p>
-    <p><strong>Location:</strong> <%= doctor.location %></p>
+    <p><strong>Location:</strong> <%= doctor.city %>, <%= doctor.state %>, <%= doctor.country %></p>
     <p><strong>Gender:</strong> <%= doctor.gender %></p>
     <p><strong>Date of Birth:</strong> <%= doctor.dateOfBirth ? new Date(doctor.dateOfBirth).toLocaleDateString() : 'N/A' %></p>
     <p><strong>Age:</strong> <%= doctor.dateOfBirth ? Math.floor((new Date() - new Date(doctor.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)) : 'N/A' %></p>
@@ -60,9 +60,9 @@
     <% } %>
     </ul>
     <h3>Conditions Managed</h3>
-    <% if (doctor.conditions.length > 0) { %>
+    <% if (doctor.speciality.length > 0) { %>
     <ul>
-        <% doctor.conditions.forEach(condition => { %>
+        <% doctor.speciality.forEach(condition => { %>
         <li><%= condition %></li>
         <% }) %>
     </ul>
@@ -119,6 +119,23 @@
     <% } else { %>
     <p>No FAQs listed.</p>
     <% } %>
+
+    <!-- Time Slots -->
+    <h3>Time Slots</h3>
+    <ul>
+        <% doctor.timeSlots.forEach((timeSlot, index) => { %>
+            <% if (timeSlot) { %>
+                <li>
+                    <strong>Date:</strong> <%= timeSlot.date ? new Date(timeSlot.date).toLocaleDateString() : 'N/A' %><br>
+                    <strong>Start Time:</strong> <%= timeSlot.startTime %><br>
+                    <strong>End Time:</strong> <%= timeSlot.endTime %><br>
+                    <strong>Status:</strong> <%= timeSlot.status %><br>
+                </li>
+            <% } %>
+        <% }) %>
+        
+    </ul>
+
 
     <a href="/doctor/bookings">Manage Bookings</a>
     <a href="/doctor/edit">Edit Profile</a>

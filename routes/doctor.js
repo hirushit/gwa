@@ -35,7 +35,7 @@ router.get('/edit', isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
         const doctor = await Doctor.findOne({ email: doctorEmail });
-        res.render('editDoctorProfile', { doctor });
+        res.render('editDoctorProfile', { doctor: doctor, index: 0 });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -47,9 +47,12 @@ router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, asyn
         const doctorEmail = req.session.user.email;
         let doctor = await Doctor.findOne({ email: doctorEmail });
 
+        // Convert speciality to array if it's a single value
+        const speciality = Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality];
+
         const updateData = {
             ...req.body,
-            conditions: Array.isArray(req.body.conditions) ? req.body.conditions : [req.body.conditions],
+            speciality,  // Use the array value
             languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
             hospitals: Array.isArray(req.body.hospitals) ? req.body.hospitals : [req.body.hospitals],
             insurances: Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances],
@@ -74,6 +77,7 @@ router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, asyn
         res.status(500).send('Server Error');
     }
 });
+
 
 router.post('/profile/verify', isLoggedIn, async (req, res) => {
     try {

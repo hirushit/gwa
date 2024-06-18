@@ -3,56 +3,313 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Available Doctors</title>
+    <title>Find a Doctor</title>
+    <style>
+        .filter-container {
+            display: flex;
+            flex-direction: column;
+            width: 200px;
+            margin-right: 20px;
+        }
+
+        .doctor-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .container {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Available Doctors</h1>
-    <% if (doctors.length > 0) { %>
-        <ul>
-            <% doctors.forEach(doctor => { %>
-                <li>
-                    <p>Name: <%= doctor.name %></p>
-                    <p>Specialty: <%= doctor.speciality %></p>
-                    <p>Consultation: <%= doctor.consultation %></p>
-                    
-                    <% if (doctor.timeSlots && doctor.timeSlots.length > 0) { %>
-                        <p>Available Time Slots:</p>
-                        <ul>
-                            <% doctor.timeSlots.forEach(slot => { %>
-                                <% if (slot.status === 'free') { %>
-                                    <li>
-                                        <p>Date: <%= slot.date.toDateString() %></p>
-                                        <p>Time: <%= slot.startTime %> - <%= slot.endTime %></p>
-                                        <form action="/patient/doctor/<%= doctor._id %>/slots" method="GET">                                            <input type="hidden" name="doctorId" value="<%= doctor._id %>">
-                                            <input type="hidden" name="date" value="<%= slot.date.toISOString() %>">
-                                            <input type="hidden" name="time" value="<%= slot.startTime %> - <%= slot.endTime %>">
-                                            <input type="hidden" name="consultationType" value="<%= doctor.consultation %>">
-                                            <button type="submit">Book Slot</button>
-                                        </form>
-                                    </li>
-                                <% } %>
-                            <% }) %>
-                        </ul>
-                    <% } else { %>
-                        <p>No available time slots.</p>
-                    <% } %>
-                    
-                    <% if (doctor.availableDates && doctor.availableDates.length > 0) { %>
-                        <p>Available Dates:</p>
-                        <ul>
-                            <% doctor.availableDates.forEach(date => { %>
-                                <li><%= date %></li>
-                            <% }) %>
-                        </ul>
-                    <% } else { %>
-                        <p>No available dates.</p>
-                    <% } %>
-                </li>
-            <% }) %>
-        </ul>
-    <% } else { %>
-        <p>No doctors available.</p>
-    <% } %>
-    <a href="/patient/bookings">View your bookings</a>
+    <h1>Find a Doctor</h1>
+    <div class="filter-container">
+        <label for="country">Country:</label>
+        <select id="country" onchange="searchDoctors()">
+            <option value="">Select Country</option>
+        </select>
+
+        <label for="state">State:</label>
+        <select id="state" onchange="searchDoctors()">
+            <option value="">Select State</option>
+        </select>
+
+        <label for="city">City:</label>
+        <select id="city" onchange="searchDoctors()">
+            <option value="">Select City</option>
+        </select>
+
+        <label for="speciality">Speciality:</label>
+        <select id="speciality" onchange="searchDoctors()">
+            <option value="">Select Speciality</option>
+        </select>
+
+        <label for="languages">Language Spoken:</label>
+        <select id="languages" multiple onchange="searchDoctors()">
+            <option value="">Select Languages</option>
+        </select>
+
+        <label for="gender">Gender:</label>
+        <select id="gender" onchange="searchDoctors()">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select>
+
+        <label for="hospital">Hospital:</label>
+        <select id="hospital" onchange="searchDoctors()">
+            <option value="">Select Hospital</option>
+        </select>
+
+        <label for="availability">Available Now:</label>
+        <select id="availability" onchange="searchDoctors()">
+            <option value="">Select Availability</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+        </select>
+
+        <label for="dateAvailability">Date Availability:</label>
+        <input type="date" id="dateAvailability" onchange="searchDoctors()">
+
+        <label for="consultation">Consultation Type:</label>
+        <select id="consultation" onchange="searchDoctors()">
+            <option value="">Select Consultation Type</option>
+            <option value="In-person">In-Person</option>
+            <option value="Video Call">Video Call</option>
+            <option value="Both">Both</option>
+        </select>
+
+        <div class="button-container">
+            <button onclick="resetFilters()">Reset Filters</button>
+        </div>
+    </div>
+
+    <div id="results-container"></div>
+
+    <div class="container" id="doctor-details-container">
+        <!-- This section will be populated dynamically when a doctor is selected -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            populateDropdowns();
+            searchDoctors();
+        });
+
+        async function populateDropdowns() {
+            await populateCountryDropdown();
+            await populateStateDropdown();
+            await populateCityDropdown();
+            await populateHospitalDropdown();
+            await populateLanguagesDropdown();
+            await populateSpecialityDropdown();
+        }
+
+        async function populateCountryDropdown() {
+            try {
+                const response = await fetch('/auth/countries');
+                const countries = await response.json();
+                const countrySelect = document.getElementById('country');
+                
+                countries.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country;
+                    option.textContent = country;
+                    countrySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching countries:', error);
+            }
+        }
+
+        async function populateStateDropdown() {
+            try {
+                const response = await fetch('/auth/states');
+                const states = await response.json();
+                const stateSelect = document.getElementById('state');
+                
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state;
+                    option.textContent = state;
+                    stateSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching states:', error);
+            }
+        }
+
+        async function populateCityDropdown() {
+            try {
+                const response = await fetch('/auth/cities');
+                const cities = await response.json();
+                const citySelect = document.getElementById('city');
+                
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching cities:', error);
+            }
+        }
+
+        async function populateHospitalDropdown() {
+            try {
+                const response = await fetch('/auth/hospitals');
+                const hospitals = await response.json();
+                const hospitalSelect = document.getElementById('hospital');
+                
+                hospitals.forEach(hospital => {
+                    const option = document.createElement('option');
+                    option.value = hospital;
+                    option.textContent = hospital;
+                    hospitalSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching hospitals:', error);
+            }
+        }
+
+        async function populateLanguagesDropdown() {
+            try {
+                const response = await fetch('/auth/languages');
+                const languages = await response.json();
+                const languagesSelect = document.getElementById('languages');
+                
+                languages.forEach(language => {
+                    const option = document.createElement('option');
+                    option.value = language;
+                    option.textContent = language;
+                    languagesSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching languages:', error);
+            }
+        }
+
+        async function populateSpecialityDropdown() {
+            try {
+                const response = await fetch('/auth/specialities');
+                const specialities = await response.json();
+                const specialitySelect = document.getElementById('speciality');
+                
+                specialities.forEach(speciality => {
+                    const option = document.createElement('option');
+                    option.value = speciality;
+                    option.textContent = speciality;
+                    specialitySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching specialities:', error);
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('country').value = '';
+            document.getElementById('state').value = '';
+            document.getElementById('city').value = '';
+            document.getElementById('speciality').value = '';
+            document.getElementById('languages').value = '';
+            document.getElementById('gender').value = '';
+            document.getElementById('hospital').value = '';
+            document.getElementById('availability').value = '';
+            document.getElementById('dateAvailability').value = '';
+            document.getElementById('consultation').value = '';
+
+            searchDoctors();
+        }
+
+        async function searchDoctors() {
+            const country = document.getElementById('country').value;
+            const state = document.getElementById('state').value;
+            const city = document.getElementById('city').value;
+            const speciality = document.getElementById('speciality').value;
+            const languagesSelect = document.getElementById('languages');
+            const languages = Array.from(languagesSelect?.selectedOptions || []).map(option => option.value).join(',');
+            const gender = document.getElementById('gender').value;
+            const hospitalsSelect = document.getElementById('hospital');
+            const hospital = Array.from(hospitalsSelect.selectedOptions).map(option => option.value);
+            const availability = document.getElementById('availability').value;
+            const dateAvailability = document.getElementById('dateAvailability').value;
+            const consultation = document.getElementById('consultation').value;
+
+            const url = `/auth/search-doctors?country=${country}&state=${state}&city=${city}&speciality=${speciality}&languages=${languages}&gender=${gender}&hospitals=${hospital}&availability=${availability}&dateAvailability=${dateAvailability}&consultation=${consultation}`;
+
+            try {
+                const response = await fetch(url);
+                const doctors = await response.json();
+
+                const resultsContainer = document.getElementById('results-container');
+                resultsContainer.innerHTML = '';
+
+                if (doctors.length === 0) {
+                    resultsContainer.textContent = 'No doctors found.';
+                    return;
+                }
+
+                doctors.forEach(doctor => {
+                    const doctorCard = document.createElement('div');
+                    doctorCard.className = 'doctor-card';
+                    doctorCard.innerHTML = `
+                        <h2>${doctor.name}</h2>
+                        <p>Speciality: ${doctor.speciality}</p>
+                        <p>Location: ${doctor.city}, ${doctor.state}, ${doctor.country}</p>
+                        <p>Language Spoken: ${doctor.languages}</p>
+                        <p>Gender: ${doctor.gender}</p>
+                                                <p>Available Now: ${doctor.availability ? 'Yes' : 'No'}</p>
+                        <button onclick="showDoctorDetails('${doctor._id}')">View Details</button>
+                    `;
+                    resultsContainer.appendChild(doctorCard);
+                });
+            } catch (error) {
+                console.error('Error fetching doctors:', error);
+            }
+        }
+
+        async function showDoctorDetails(doctorId) {
+            try {
+                const response = await fetch(`/auth/doctor/${doctorId}`);
+                const doctor = await response.json();
+
+                const doctorDetailsContainer = document.getElementById('doctor-details-container');
+                doctorDetailsContainer.innerHTML = `
+                    <h2>Doctor: ${doctor.name}</h2>
+                    <h3>Specialty: ${doctor.speciality}</h3>
+                    <h3>Consultation Type: ${doctor.consultation}</h3>
+                    <h3>Available Time Slots</h3>
+                    <ul id="available-slots"></ul>
+                `;
+
+                const availableSlotsList = doctorDetailsContainer.querySelector('#available-slots');
+                doctor.availableSlots.forEach(slot => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <p><strong>Date:</strong> ${new Date(slot.date).toDateString()}</p>
+                        <p><strong>Time:</strong> ${slot.startTime} - ${slot.endTime}</p>
+                        <form action="/patient/book" method="POST">
+                            <input type="hidden" name="doctorId" value="${doctor._id}">
+                            <input type="hidden" name="date" value="${new Date(slot.date).toISOString()}">
+                            <input type="hidden" name="time" value="${slot.startTime} - ${slot.endTime}">
+                            <label for="consultationType">Consultation Type:</label>
+                            <select id="consultationType" name="consultationType" required>
+                                <option value="In-person">In-person</option>
+                                <option value="Video call">Video call</option>
+                            </select>
+                            <button type="submit">Book Slot</button>
+                        </form>
+                    `;
+                    availableSlotsList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching doctor details:', error);
+            }
+        }
+    </script>
 </body>
 </html>

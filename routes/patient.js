@@ -84,7 +84,23 @@ router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, asyn
 router.get('/doctors', async (req, res) => {
   try {
     const doctors = await Doctor.find({ verified: 'Verified' });
-    res.render('patientDoctors', { doctors });
+    const countries = await Doctor.distinct('country');
+    const states = await Doctor.distinct('state');
+    const cities = await Doctor.distinct('city');
+    const specialities = await Doctor.distinct('speciality');
+    const languages = await Doctor.distinct('languages');
+    const hospitals = await Doctor.distinct('hospitals');
+    const genders = await Doctor.distinct('gender');
+    res.render('patientDoctors', {
+      doctors,
+      countries,
+      states,
+      cities,
+      specialities,
+      languages,
+      hospitals,
+      genders
+    });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -119,7 +135,6 @@ router.get('/doctor/:id/slots', isLoggedIn, async (req, res) => {
   }
 });
 
-// Route to book a time slot
 router.post('/book', isLoggedIn, async (req, res) => {
   try {
     const { doctorId, date, time, consultationType } = req.body;
@@ -145,7 +160,7 @@ router.post('/book', isLoggedIn, async (req, res) => {
     }
 
     // Find the matching time slot and update its status
-    const slotToUpdate = doctor.timeSlots.find(slot => slot.date.toISOString() === date && slot.startTime === time.split(' - ')[0]);
+    const slotToUpdate = doctor.timeSlots.find(slot => slot && slot.date && slot.date.toISOString() === date && slot.startTime === time.split(' - ')[0]);
     if (slotToUpdate) {
       slotToUpdate.status = 'booked';
       await doctor.save();

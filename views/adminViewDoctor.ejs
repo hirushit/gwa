@@ -52,15 +52,15 @@
         <li><a href="<%= doctor.socialHandles.instagram %>" target="_blank">Instagram</a></li>
       <% } %>
     </ul>
-    <h3>Conditions Managed</h3>
-    <% if (doctor.conditions.length > 0) { %>
+    <h3>Speciality</h3>
+    <% if (doctor.speciality && doctor.speciality.length > 0) { %>
       <ul>
-        <% doctor.conditions.forEach(condition => { %>
-          <li><%= condition %></li>
+        <% doctor.speciality.forEach(speciality => { %>
+          <li><%= speciality %></li>
         <% }) %>
       </ul>
     <% } else { %>
-      <p>No conditions managed listed.</p>
+      <p>No specialities listed.</p>
     <% } %>
     <h3>Languages Spoken</h3>
     <% if (doctor.languages.length > 0) { %>

@@ -111,55 +111,64 @@ router.get('/bookings', isLoggedIn, async (req, res) => {
 
 router.post('/bookings/:id', isLoggedIn, async (req, res) => {
     try {
-        const { status } = req.body;
-        const bookingId = req.params.id;
-
-        const booking = await Booking.findById(bookingId);
-        if (!booking) {
-            return res.status(404).send('Booking not found');
-        }
-
-        const currentStatus = booking.status; // Get current status before update
-
-        // Update booking status
-        booking.status = status;
-        await booking.save();
-
-        const doctor = await Doctor.findById(booking.doctor);
-        if (!doctor) {
-            return res.status(404).send('Doctor not found');
-        }
-
-        // Find the index of the time slot to update
-        const timeSlotIndex = doctor.timeSlots.findIndex(slot =>
-            slot.date.toISOString() === booking.date.toISOString() &&
-            slot.startTime === booking.time.split(' - ')[0] // Extract start time from "14:05 - 14:10"
-        );
-
-        if (timeSlotIndex !== -1) {
-            // Handle different status scenarios
-            if (currentStatus === 'rejected' && (status === 'waiting' || status === 'accepted')) {
-                // If status changes from rejected to waiting or accepted, mark time slot as booked
-                doctor.timeSlots[timeSlotIndex].status = 'booked';
-            } else if (status === 'rejected') {
-                // If status is rejected, mark time slot as free
-                doctor.timeSlots[timeSlotIndex].status = 'free';
-            } else {
-                // Default: mark time slot as booked for waiting or accepted status
-                doctor.timeSlots[timeSlotIndex].status = 'booked';
-            }
-
-            await doctor.save();
+    const { status } = req.body;
+    const bookingId = req.params.id;
+    
+    
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+        return res.status(404).send('Booking not found');
+    }
+    
+    if (!booking.date || !booking.time) {
+        return res.status(400).send('Booking date or time is missing');
+    }
+    
+    const currentStatus = booking.status; // Get current status before update
+    
+    // Update booking status
+    booking.status = status;
+    await booking.save();
+    
+    const doctor = await Doctor.findById(booking.doctor);
+    if (!doctor) {
+        return res.status(404).send('Doctor not found');
+    }
+    
+    // Ensure doctor.timeSlots is initialized
+    doctor.timeSlots = doctor.timeSlots || [];
+    
+    // Find the index of the time slot to update
+    const timeSlotIndex = doctor.timeSlots.findIndex(slot =>
+        slot && slot.date && slot.date.toISOString() === booking.date.toISOString() &&
+        slot.startTime === booking.time.split(' - ')[0] // Extract start time from "14:05 - 14:10"
+    );
+    
+    if (timeSlotIndex !== -1) {
+        // Handle different status scenarios
+        if (currentStatus === 'rejected' && (status === 'waiting' || status === 'accepted')) {
+            // If status changes from rejected to waiting or accepted, mark time slot as booked
+            doctor.timeSlots[timeSlotIndex].status = 'booked';
+        } else if (status === 'rejected') {
+            // If status is rejected, mark time slot as free
+            doctor.timeSlots[timeSlotIndex].status = 'free';
         } else {
-            return res.status(404).send('Time slot not found');
+            // Default: mark time slot as booked for waiting or accepted status
+            doctor.timeSlots[timeSlotIndex].status = 'booked';
         }
-
-        res.redirect('/doctor/bookings');
+    
+        await doctor.save();
+    } else {
+        return res.status(404).send('Time slot not found');
+    }
+    
+    res.redirect('/doctor/bookings');
+    
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
     }
-});
+    });
 
 
 

@@ -27,6 +27,7 @@ router.get('/dashboard', isLoggedIn, async (req, res) => {
 });
 
 // GET route to view a doctor's profile details
+// GET route to view a doctor's profile details
 router.get('/view/:id', isLoggedIn, async (req, res) => {
   try {
     const doctorId = req.params.id;

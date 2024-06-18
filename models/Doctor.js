@@ -65,6 +65,10 @@ const doctorSchema = new mongoose.Schema({
   consultationsCompleted: {
     type: Number,
     default: 0
+  },
+  profileViews: {
+    type: Number,
+    default: 0
   }
 });
 

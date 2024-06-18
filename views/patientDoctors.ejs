@@ -7,6 +7,15 @@
 </head>
 <body>
     <h1>Available Doctors</h1>
+    
+    <label for="sortOptions">Sort by:</label>
+    <select id="sortOptions" onchange="sortDoctors()">
+        <option value="">Select</option>
+        <option value="mostReviewed">Most Reviewed</option>
+        <option value="highestRated">Highest Rated</option>
+        <option value="mostViewed">Most Viewed</option>
+    </select>
+    
     <% if (doctors.length > 0) { %>
         <ul>
             <% doctors.forEach(doctor => { %>
@@ -19,11 +28,12 @@
                         <p>Available Time Slots:</p>
                         <ul>
                             <% doctor.timeSlots.forEach(slot => { %>
-                                <% if (slot.status === 'free') { %>
+                                <% if (slot && slot.status === 'free') { %>
                                     <li>
-                                        <p>Date: <%= slot.date.toDateString() %></p>
+                                        <p>Date: <%= new Date(slot.date).toDateString() %></p>
                                         <p>Time: <%= slot.startTime %> - <%= slot.endTime %></p>
-                                        <form action="/patient/doctor/<%= doctor._id %>/slots" method="GET">                                            <input type="hidden" name="doctorId" value="<%= doctor._id %>">
+                                        <form action="/patient/doctor/<%= doctor._id %>/slots" method="GET">
+                                            <input type="hidden" name="doctorId" value="<%= doctor._id %>">
                                             <input type="hidden" name="date" value="<%= slot.date.toISOString() %>">
                                             <input type="hidden" name="time" value="<%= slot.startTime %> - <%= slot.endTime %>">
                                             <input type="hidden" name="consultationType" value="<%= doctor.consultation %>">
@@ -54,5 +64,12 @@
         <p>No doctors available.</p>
     <% } %>
     <a href="/patient/bookings">View your bookings</a>
+
+    <script>
+        function sortDoctors() {
+            const sortOption = document.getElementById('sortOptions').value;
+            window.location.href = `/patient/doctors?sort=${sortOption}`;
+        }
+    </script>
 </body>
 </html>

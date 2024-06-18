@@ -15,10 +15,18 @@ app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
+const connectWithRetry = () => {
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('MongoDB connected'))
+    .catch(err => {
+      console.error('MongoDB connection error:', err);
+      console.log('Retrying MongoDB connection in 5 seconds...');
+      setTimeout(connectWithRetry, 5000); // Retry after 5 seconds
+    });
+};
+
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+connectWithRetry();
 
 // Initialize MongoStore with session
 const sessionStore = MongoStore.create({

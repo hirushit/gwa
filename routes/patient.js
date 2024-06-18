@@ -1,3 +1,4 @@
+// routes/patient.js
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -80,10 +81,29 @@ router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, asyn
   }
 });
 
-// Route to display available doctors
+// Route to display available doctors with sorting functionality
+// routes/patient.js
+
 router.get('/doctors', async (req, res) => {
   try {
-    const doctors = await Doctor.find({ verified: 'Verified' });
+    const sortOption = req.query.sort;
+    let sortCriteria;
+
+    switch (sortOption) {
+      case 'mostReviewed':
+        sortCriteria = { consultationsCompleted: -1 };
+        break;
+      case 'highestRated':
+        sortCriteria = { rating: -1 };
+        break;
+      case 'mostViewed':
+        sortCriteria = { profileViews: -1 };
+        break;
+      default:
+        sortCriteria = {};
+    }
+
+    const doctors = await Doctor.find({ verified: 'Verified' }).sort(sortCriteria);
     res.render('patientDoctors', { doctors });
   } catch (err) {
     console.error(err.message);
@@ -91,13 +111,19 @@ router.get('/doctors', async (req, res) => {
   }
 });
 
-// Route to view a doctor's profile
+// Other routes remain unchanged
+
 router.get('/doctors/:id', isLoggedIn, async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.id);
     if (!doctor) {
       return res.status(404).send('Doctor not found');
     }
+
+    // Increment the profile views
+    doctor.profileViews = (doctor.profileViews || 0) + 1;
+    await doctor.save();
+
     res.render('doctorProfileView', { doctor });
   } catch (error) {
     console.error(error.message);
@@ -105,7 +131,6 @@ router.get('/doctors/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-// Route to view and book time slots for a doctor
 router.get('/doctor/:id/slots', isLoggedIn, async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.id);
@@ -119,32 +144,27 @@ router.get('/doctor/:id/slots', isLoggedIn, async (req, res) => {
   }
 });
 
-// Route to book a time slot
 router.post('/book', isLoggedIn, async (req, res) => {
   try {
     const { doctorId, date, time, consultationType } = req.body;
     const patientId = req.session.user._id;
 
-    // Create new booking
     const booking = new Booking({
       patient: patientId,
       doctor: doctorId,
       date: new Date(date),
       time: time,
       consultationType: consultationType,
-      status: 'waiting' // Assuming this field exists in Booking schema to track booking status
+      status: 'waiting'
     });
 
-    // Save booking
     await booking.save();
 
-    // Update doctor's time slot status (assuming 'timeSlots' is an array of objects in Doctor schema)
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
       return res.status(404).send('Doctor not found');
     }
 
-    // Find the matching time slot and update its status
     const slotToUpdate = doctor.timeSlots.find(slot => slot.date.toISOString() === date && slot.startTime === time.split(' - ')[0]);
     if (slotToUpdate) {
       slotToUpdate.status = 'booked';
@@ -158,7 +178,6 @@ router.post('/book', isLoggedIn, async (req, res) => {
   }
 });
 
-// Route to view patient's bookings
 router.get('/bookings', isLoggedIn, async (req, res) => {
   try {
     const bookings = await Booking.find({ patient: req.session.user._id }).populate('doctor');

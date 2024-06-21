@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Form</title>
+    <script>
+        function updatePaymentDetails() {
+            const tier = document.getElementById('subscriptionType').value;
+            const paymentDetails = document.getElementById('paymentDetails');
+
+            switch (tier) {
+                case 'Free':
+                    paymentDetails.value = '0';
+                    break;
+                case 'Standard':
+                    paymentDetails.value = '1000'; // $10 in cents
+                    break;
+                case 'Premium':
+                    paymentDetails.value = '4900'; // $49 in cents
+                    break;
+                case 'Enterprise':
+                    paymentDetails.value = '9900'; // $99 in cents
+                    break;
+                default:
+                    paymentDetails.value = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updatePaymentDetails(); // Set default value on page load
+        });
+    </script>
+</head>
+<body>
+    <form action="/doctor/subscribe" method="post" enctype="multipart/form-data">
+        <label for="subscriptionType">Subscription Type:</label>
+        <select id="subscriptionType" name="subscriptionType" onchange="updatePaymentDetails()" required>
+            <option value="Free">Free</option>
+            <option value="Standard">Standard - $10</option>
+            <option value="Premium">Premium - $49</option>
+            <option value="Enterprise">Enterprise - $99</option>
+        </select>
+
+        <label for="paymentDetails">Payment Details (in cents):</label>
+        <input type="text" id="paymentDetails" name="paymentDetails[amount]" readonly>
+
+        <label for="licenseProof">License Proof:</label>
+        <input type="file" id="licenseProof" name="licenseProof" required>
+
+        <label for="certificationProof">Certification Proof:</label>
+        <input type="file" id="certificationProof" name="certificationProof" required>
+
+        <label for="businessProof">Business Proof:</label>
+        <input type="file" id="businessProof" name="businessProof" required>
+
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>

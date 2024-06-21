@@ -262,9 +262,10 @@
                         <p>Location: ${doctor.city}, ${doctor.state}, ${doctor.country}</p>
                         <p>Language Spoken: ${doctor.languages}</p>
                         <p>Gender: ${doctor.gender}</p>
-                                                <p>Available Now: ${doctor.availability ? 'Yes' : 'No'}</p>
-                        <button onclick="showDoctorDetails('${doctor._id}')">View Details</button>
+                        <p>Available Now: ${doctor.availability ? 'Yes' : 'No'}</p>
+                        <button onclick="window.location.href='/patient/doctors/${doctor._id}'">View Details</button>
                     `;
+
                     resultsContainer.appendChild(doctorCard);
                 });
             } catch (error) {

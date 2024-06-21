@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Doctor Profile</title>
+<script>
+    function handleRestrictedAccess() {
+        alert('You need to subscribe to a package to access this feature.');
+    }
+</script>
 </head>
 <body>
 <h1>Doctor Profile</h1>
@@ -44,6 +49,15 @@
     <p><strong>Consultation:</strong> <%= doctor.consultation %></p>
     <p><strong>Rating:</strong> <%= doctor.rating %></p>
     <p><strong>Consultations Completed:</strong> <%= doctor.consultationsCompleted %></p>
+    
+    <h3>Subscription Details</h3>
+    <p><strong>Subscription Type:</strong> <%= doctor.subscriptionType %></p>
+    <p><strong>Subscription Verification:</strong> <%= doctor.subscriptionVerification %></p>
+
+    <% if (doctor.subscriptionType === 'Free') { %>
+        <a href="/doctor/subscribe">Subscribe</a>
+    <% } %>
+    
     <h3>Social Media Handles</h3>
     <ul>
     <% if (doctor.socialHandles && doctor.socialHandles.twitter) { %>
@@ -59,6 +73,7 @@
         <li><a href="<%= doctor.socialHandles.instagram %>" target="_blank">Instagram</a></li>
     <% } %>
     </ul>
+
     <h3>Conditions Managed</h3>
     <% if (doctor.speciality.length > 0) { %>
     <ul>
@@ -69,6 +84,7 @@
     <% } else { %>
     <p>No conditions managed listed.</p>
     <% } %>
+
     <h3>Languages Spoken</h3>
     <% if (doctor.languages.length > 0) { %>
     <ul>
@@ -79,6 +95,7 @@
     <% } else { %>
     <p>No languages listed.</p>
     <% } %>
+
     <h3>Hospitals/Clinics</h3>
     <% if (doctor.hospitals.length > 0) { %>
     <ul>
@@ -89,6 +106,7 @@
     <% } else { %>
     <p>No hospitals/clinics listed.</p>
     <% } %>
+
     <h3>Insurances Accepted</h3>
     <% if (doctor.insurances.length > 0) { %>
     <ul>
@@ -99,6 +117,7 @@
     <% } else { %>
     <p>No insurances listed.</p>
     <% } %>
+
     <h3>Awards</h3>
     <% if (doctor.awards.length > 0) { %>
     <ul>
@@ -109,6 +128,7 @@
     <% } else { %>
     <p>No awards listed.</p>
     <% } %>
+
     <h3>FAQs</h3>
     <% if (doctor.faqs.length > 0) { %>
     <ul>
@@ -133,13 +153,12 @@
                 </li>
             <% } %>
         <% }) %>
-        
     </ul>
 
+    
 
-    <a href="/doctor/bookings">Manage Bookings</a>
     <a href="/doctor/edit">Edit Profile</a>
-    <a href="/doctor/manage-time-slots">Manage Time Slots</a>
+    
     <form action="/auth/logout" method="GET">
     <button type="submit">Logout</button>
     </form>

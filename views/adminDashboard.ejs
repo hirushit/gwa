@@ -6,7 +6,50 @@
   <title>Admin Dashboard</title>
   <!-- Add your CSS stylesheets or links here -->
   <style>
-
+    /* Add some basic styles for better presentation */
+    body {
+      font-family: Arial, sans-serif;
+    }
+    h1 {
+      color: #333;
+    }
+    .alert {
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+    }
+    .alert-success {
+      color: #3c763d;
+      background-color: #dff0d8;
+      border-color: #d6e9c6;
+    }
+    .doctor-request {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    a {
+      display: block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: #007bff;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -42,6 +85,8 @@
     <p>No doctor verification requests found.</p>
   <% } %>
 
+ 
+  <a href="/doctor/admin/subscriptions">Doctor Subscription Verification Requests</a>
   <a href="/auth/logout">Logout</a>
 
   <!-- Add your JavaScript scripts or links here -->

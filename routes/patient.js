@@ -83,7 +83,8 @@ router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, asyn
 // Route to display available doctors
 router.get('/doctors', async (req, res) => {
   try {
-    const doctors = await Doctor.find({ verified: 'Verified' });
+    const patient = await Patient.find({subscriptionTier: 'Free'})
+    const doctors = await Doctor.find({ verified: 'Verified', subscriptionType: { $ne: 'Free' } });
     const countries = await Doctor.distinct('country');
     const states = await Doctor.distinct('state');
     const cities = await Doctor.distinct('city');
@@ -92,6 +93,7 @@ router.get('/doctors', async (req, res) => {
     const hospitals = await Doctor.distinct('hospitals');
     const genders = await Doctor.distinct('gender');
     res.render('patientDoctors', {
+      patient,
       doctors,
       countries,
       states,
@@ -110,11 +112,12 @@ router.get('/doctors', async (req, res) => {
 // Route to view a doctor's profile
 router.get('/doctors/:id', isLoggedIn, async (req, res) => {
   try {
+    
     const doctor = await Doctor.findById(req.params.id);
     if (!doctor) {
       return res.status(404).send('Doctor not found');
     }
-    res.render('doctorProfileView', { doctor });
+    res.render('doctorProfileView', { doctor,user: req.user });
   } catch (error) {
     console.error(error.message);
     res.status(500).send('Server Error');

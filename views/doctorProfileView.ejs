@@ -12,7 +12,7 @@
     <p><strong>Experience:</strong> <%= doctor.experience %> years</p>
 
     <h3>Book an Appointment</h3>
-    <form action="/patient/book" method="POST">
+    <form action="/patient/book" method="POST" id="appointmentForm">
         <input type="hidden" name="doctorId" value="<%= doctor._id %>">
         <div>
             <label for="date">Date:</label>
@@ -22,8 +22,18 @@
             <label for="time">Time:</label>
             <input type="time" id="time" name="time" required>
         </div>
-        <button type="submit">Book</button>
+        <div>
+            <label for="consultationType">Consultation Type:</label>
+            <select id="consultationType" name="consultationType" required>
+                <option value="In-person">In-person</option>
+                <option value="Video call">Video call</option>
+            </select>
+        </div>
+        <button type="submit" id="submitBtn">Book</button>
     </form>
+
     <a href="/patient/doctors">Back to Doctors</a>
+
+    
 </body>
 </html>

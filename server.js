@@ -69,7 +69,14 @@ app.get('/auth/search-doctors', async (req, res) => {
   const { country, state, city, speciality, languages, gender, hospitals, availability, dateAvailability } = req.query;
 
   try {
-      let query = { role: 'doctor' };
+      let query = {
+          role: 'doctor',
+          $and: [
+              { subscriptionType: { $in: ['Premium', 'Standard', 'Enterprise'] } }, // Include doctors with subscriptionType 'Premium', 'Standard', or 'Enterprise'
+              { verified: 'Verified' } // Include doctors with 'Verified' verification status
+          ]
+      };
+
       if (country) query.country = { $regex: new RegExp(country, 'i') };
       if (state) query.state = { $regex: new RegExp(state, 'i') };
       if (city) query.city = { $regex: new RegExp(city, 'i') };
@@ -78,7 +85,6 @@ app.get('/auth/search-doctors', async (req, res) => {
       if (gender) query.gender = gender;
       if (hospitals) query.hospitals = { $regex: new RegExp(hospitals, 'i') };
       if (availability) query.availability = availability === 'true';
-      
 
       const doctors = await Doctor.find(query);
       res.json(doctors);
@@ -86,6 +92,8 @@ app.get('/auth/search-doctors', async (req, res) => {
       res.status(500).json({ message: 'Error fetching doctors', error });
   }
 });
+
+
 
 app.get('/auth/countries', async (req, res) => {
   try {

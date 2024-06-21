@@ -67,6 +67,31 @@ const doctorSchema = new mongoose.Schema({
   consultationsCompleted: {
     type: Number,
     default: 0
+  },
+  subscriptionType: {
+    type: String
+  },
+  paymentDetails: {
+    type: String
+  },
+  documents: {
+    licenseProof: {
+      data: Buffer,
+      contentType: String
+    },
+    certificationProof: {
+      data: Buffer,
+      contentType: String
+    },
+    businessProof: {
+      data: Buffer,
+      contentType: String
+    }
+  },
+  subscriptionVerification: {
+    type: String,
+    enum: ['Pending', 'Verified', 'Rejected'],
+    default: 'Pending'
   }
 });
 

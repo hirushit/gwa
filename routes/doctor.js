@@ -4,6 +4,8 @@ const multer = require('multer');
 const methodOverride = require('method-override');
 const Doctor = require('../models/Doctor');
 const Booking = require('../models/Booking');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -16,6 +18,13 @@ function isLoggedIn(req, res, next) {
     }
     res.redirect('/auth/login');
 }
+function isAdmin(req, res, next) {
+    if (req.session.user && req.session.user.role === 'admin') {
+        return next();
+    }
+    res.status(403).send('Access denied.');
+  };
+  
 
 router.get('/profile', isLoggedIn, async (req, res) => {
     try {
@@ -230,6 +239,10 @@ router.delete('/manage-time-slots/:index', isLoggedIn, async (req, res) => {
             return res.status(404).send('Doctor not found');
         }
 
+        if (doctor.subscriptionType === 'Free') {
+            return res.status(403).send('You need to subscribe to manage time slots.');
+        }
+
         doctor.timeSlots.splice(index, 1);
         await doctor.save();
 
@@ -249,5 +262,149 @@ router.get('/patients', isLoggedIn, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+router.use(methodOverride('_method'));
+
+router.get('/subscribe', isLoggedIn, async (req, res) => {
+    res.render('subscriptionForm');
+});
+router.post('/subscribe', upload.fields([{ name: 'licenseProof' }, { name: 'certificationProof' }, { name: 'businessProof' }]), isLoggedIn, async (req, res) => {
+    try {
+    const { subscriptionType } = req.body;
+    const paymentDetails = req.body.paymentDetails;
+    const doctorId = req.session.user._id; // Use session to get user ID
+    const amount = parseInt(paymentDetails.amount, 10);
+    console.log(amount);
+    
+        if (isNaN(amount) || amount <= 0) {
+            return res.status(400).send('Invalid payment amount');
+        }
+    
+        // Retrieve the uploaded files
+        const licenseProof = req.files['licenseProof'][0];
+        const certificationProof = req.files['certificationProof'][0];
+        const businessProof = req.files['businessProof'][0];
+    
+        // Create a Checkout Session
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: `${subscriptionType} Subscription`,
+                    },
+                    unit_amount: amount, // Amount in cents
+                },
+                quantity: 1,
+            }],
+            mode: 'payment',
+            success_url: `${req.protocol}://${req.get('host')}/doctor/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.protocol}://${req.get('host')}/doctor/subscription-failure`,
+        });
+    
+        // Save the session info in the session or database
+        req.session.subscriptionInfo = {
+            doctorId,
+            subscriptionType,
+            paymentDetails: {
+                amount: amount,
+                currency: 'usd'
+            },
+            licenseProof,
+            certificationProof,
+            businessProof
+        };
+    
+        res.redirect(303, session.url);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+    });
+    
+    // GET subscription success
+router.get('/subscription-success', async (req, res) => {
+        try {
+            const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+        
+            if (session.payment_status === 'paid') {
+                const { doctorId, subscriptionType, paymentDetails, licenseProof, certificationProof, businessProof } = req.session.subscriptionInfo;
+    
+                // Stringify the paymentDetails object
+                const paymentDetailsString = JSON.stringify(paymentDetails);
+        
+                // Update the doctor document in the database
+                const updatedDoctor = await Doctor.findByIdAndUpdate(
+                    doctorId,
+                    {
+                        subscription: 'Pending',
+                        subscriptionType,
+                        paymentDetails: paymentDetailsString,
+                        'documents.licenseProof': {
+                            data: licenseProof.buffer,
+                            contentType: licenseProof.mimetype
+                        },
+                        'documents.certificationProof': {
+                            data: certificationProof.buffer,
+                            contentType: certificationProof.mimetype
+                        },
+                        'documents.businessProof': {
+                            data: businessProof.buffer,
+                            contentType: businessProof.mimetype
+                        },
+                        subscriptionVerification: 'Pending'
+                    },
+                    { new: true }
+                );
+        
+                res.render('subscriptionSuccess', { doctor: updatedDoctor });
+            } else {
+                res.status(400).send('Payment was not successful');
+            }
+        } catch (error) {
+            console.error(error.message);
+            res.status(500).send('Server Error');
+        }
+    });
+    
+    
+    
+
+router.get('/subscription-failure', (req, res) => {
+    res.send('Subscription payment failed. Please try again.');
+});
+
+
+router.get('/admin/subscriptions', isAdmin, async (req, res) => {
+    try {
+        const doctors = await Doctor.find({}).lean(); // Fetch all doctors
+
+        res.render('adminSubscriptions', { doctors });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+  
+router.post('/admin/verify-subscription/:id', isAdmin, async (req, res) => {
+    try {
+        const doctorId = req.params.id;
+        const { verificationStatus } = req.body;
+  
+        const updatedDoctor = await Doctor.findByIdAndUpdate(
+            doctorId,
+            { subscriptionVerification: verificationStatus },
+            { new: true }
+        );
+  
+        res.redirect('/admin/dashboard');
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+  });
 
 module.exports = router;

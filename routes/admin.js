@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Doctor = require('../models/Doctor');
 const Admin = require('../models/Admin'); // Ensure consistent casing
+const Patient = require('../models/Patient'); // Adjust the path to match your file structure
 
 // Middleware to check if user is logged in as admin
 function isLoggedIn(req, res, next) {
@@ -11,6 +12,14 @@ function isLoggedIn(req, res, next) {
   req.flash('error_msg', 'Please log in to view this resource');
   res.redirect('/auth/login');
 }
+
+function isAdmin(req, res, next) {
+  if (req.session.user && req.session.user.role === 'admin') {
+      return next();
+  }
+  res.status(403).send('Access denied.');
+};
+
 
 // GET route to render admin dashboard
 router.get('/dashboard', isLoggedIn, async (req, res) => {
@@ -71,5 +80,6 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 module.exports = router;

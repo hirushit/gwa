@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signup</title>
+</head>
+<body>
+  <h1>Signup</h1>
+  <% if (success_msg) { %>
+    <p style="color: green;"><%= success_msg %></p>
+  <% } %>
+  <% if (error_msg) { %>
+    <p style="color: red;"><%= error_msg %></p>
+  <% } %>
+
+  <% if (!showOtpForm) { %>
+    <form action="/auth/signup" method="POST">
+      <div>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <div>
+        <label for="role">Role:</label>
+        <select id="role" name="role" required>
+          <option value="patient">Patient</option>
+          <option value="doctor">Doctor</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button type="submit">Signup</button>
+    </form>
+  <% } else { %>
+    <form action="/auth/verify" method="POST">
+      <div>
+        <label for="otp">OTP:</label>
+        <input type="text" id="otp" name="otp" required>
+      </div>
+      <button type="submit">Verify OTP</button>
+    </form>
+  <% } %>
+  <a href="/auth/login">Login</a>
+</body>
+</html>

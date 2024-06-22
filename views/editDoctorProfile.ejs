@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Doctor Profile</title>
+  <script>
+    function addInput(fieldName) {
+      const container = document.getElementById(fieldName + '-container');
+      const newIndex = container.getElementsByClassName('form-control').length + 1;
+    
+      const inputWrapper = document.createElement('div');
+      inputWrapper.className = 'input-group';
+    
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.name = `${fieldName}[${newIndex}]`; // Use array notation for multiple inputs
+      input.className = 'form-control';
+      input.placeholder = `${fieldName} ${newIndex}`;
+      inputWrapper.appendChild(input);
+    
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'btn btn-danger';
+      removeButton.textContent = 'Remove';
+      removeButton.addEventListener('click', function() {
+        inputWrapper.remove();
+      });
+      inputWrapper.appendChild(removeButton);
+    
+      container.appendChild(inputWrapper);
+    }
+
+    function addTimeSlot() {
+      const container = document.getElementById('time-slots-container');
+      const newIndex = container.getElementsByClassName('input-group').length + 1;
+  
+      const timeSlotWrapper = document.createElement('div');
+      timeSlotWrapper.className = 'input-group';
+  
+      const dateInput = document.createElement('input');
+      dateInput.type = 'date';
+      dateInput.name = `timeSlots[${newIndex}][date]`;
+      dateInput.className = 'form-control';
+      dateInput.placeholder = 'Date';
+      timeSlotWrapper.appendChild(dateInput);
+  
+      const startTimeInput = document.createElement('input');
+      startTimeInput.type = 'time';
+      startTimeInput.name = `timeSlots[${newIndex}][startTime]`;
+      startTimeInput.className = 'form-control';
+      startTimeInput.placeholder = 'Start Time';
+      timeSlotWrapper.appendChild(startTimeInput);
+  
+      const endTimeInput = document.createElement('input');
+      endTimeInput.type = 'time';
+      endTimeInput.name = `timeSlots[${newIndex}][endTime]`;
+      endTimeInput.className = 'form-control';
+      endTimeInput.placeholder = 'End Time';
+      timeSlotWrapper.appendChild(endTimeInput);
+  
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'btn btn-danger';
+      removeButton.textContent = 'Remove';
+      removeButton.addEventListener('click', function() {
+          timeSlotWrapper.remove();
+      });
+      timeSlotWrapper.appendChild(removeButton);
+  
+      container.appendChild(timeSlotWrapper);
+  }
+    
+  </script>
+</head>
+<body>
+  <h1>Edit Doctor Profile</h1>
+  <form action="/doctor/profile/update" method="POST" enctype="multipart/form-data">
+    <div>
+      <label>Name:</label>
+      <input type="text" name="name" value="<%= doctor.name %>" required>
+    </div>
+    <div>
+      <label>Email:</label>
+      <input type="email" name="email" value="<%= doctor.email %>" required>
+    </div>
+    <div>
+      <label>Title:</label>
+      <input type="text" name="title" value="<%= doctor.title %>" required>
+    </div>
+    <div>
+      <label>Country:</label>
+      <input type="text" name="country" value="<%= doctor.country %>" required>
+    </div>
+    <div>
+      <label>State:</label>
+      <input type="text" name="state" value="<%= doctor.state %>" required>
+    </div>
+    <div>
+      <label>City:</label>
+      <input type="text" name="city" value="<%= doctor.city %>" required>
+    </div>
+    <div>
+      <label>Availability:</label>
+      <select name="availability">
+        <option value="true" <%= doctor.availability === 'true' ? 'selected' : '' %>>Available</option>
+        <option value="false" <%= doctor.availability === 'false' ? 'selected' : '' %>>Not Available</option>
+      </select>
+    </div>
+      <label>Gender:</label>
+      <input type="radio" name="gender" value="Male" <%= doctor.gender === 'Male' ? 'checked' : '' %>> Male
+      <input type="radio" name="gender" value="Female" <%= doctor.gender === 'Female' ? 'checked' : '' %>> Female
+      <input type="radio" name="gender" value="Other" <%= doctor.gender === 'Other' ? 'checked' : '' %>> Other
+    </div>
+    <div>
+      <label>Date of Birth:</label>
+      <input type="date" name="dateOfBirth" value="<%= doctor.dateOfBirth ? doctor.dateOfBirth.toISOString().split('T')[0] : '' %>" required>
+    </div>
+    <div>
+      <label>Blood Group:</label>
+      <select name="bloodGroup">
+        <option value="">Select Blood Group</option>
+        <option value="A+" <%= doctor.bloodGroup === 'A+' ? 'selected' : '' %>>A+</option>
+        <option value="A-" <%= doctor.bloodGroup === 'A-' ? 'selected' : '' %>>A-</option>
+        <option value="B+" <%= doctor.bloodGroup === 'B+' ? 'selected' : '' %>>B+</option>
+        <option value="B-" <%= doctor.bloodGroup === 'B-' ? 'selected' : '' %>>B-</option>
+        <option value="AB+" <%= doctor.bloodGroup === 'AB+' ? 'selected' : '' %>>AB+</option>
+        <option value="AB-" <%= doctor.bloodGroup === 'AB-' ? 'selected' : '' %>>AB-</option>
+        <option value="O+" <%= doctor.bloodGroup === 'O+' ? 'selected' : '' %>>O+</option>
+        <option value="O-" <%= doctor.bloodGroup === 'O-' ? 'selected' : '' %>>O-</option>
+        <option value="Unknown" <%= doctor.bloodGroup === 'Unknown' ? 'selected' : '' %>>Unknown</option>
+      </select>
+    </div>
+    <div>
+      <label>Website:</label>
+      <input type="url" name="website" value="<%= doctor.website %>">
+    </div>
+    <div>
+      <label>Social Media Handles:</label>
+      <div>
+        <label>Twitter:</label>
+        <input type="url" name="socialHandles[twitter]" value="<%= doctor.socialHandles.twitter %>">
+      </div>
+      <div>
+        <label>Facebook:</label>
+        <input type="url" name="socialHandles[facebook]" value="<%= doctor.socialHandles.facebook %>">
+      </div>
+      <div>
+        <label>LinkedIn:</label>
+        <input type="url" name="socialHandles[linkedin]" value="<%= doctor.socialHandles.linkedin %>">
+      </div>
+      <div>
+        <label>Instagram:</label>
+        <input type="url" name="socialHandles[instagram]" value="<%= doctor.socialHandles.instagram %>">
+      </div>
+    </div>
+
+    <!-- Consultation Options -->
+    <div>
+      <label>Consultation:</label>
+      <select name="consultation">
+        <option value="In-person" <%= doctor.consultation === 'In-person' ? 'selected' : '' %>>In-person</option>
+        <option value="Video call" <%= doctor.consultation === 'Video call' ? 'selected' : '' %>>Video call</option>
+        <option value="Both" <%= doctor.consultation === 'Both' ? 'selected' : '' %>>Both</option>
+      </select>
+    </div>
+
+    <!-- Dynamic Input Fields -->
+    <div>
+      <label>Specialities:</label>
+      <div id="speciality-container">
+        <% doctor.speciality.forEach((speciality, index) => { %>
+          <div class="input-group">
+            <input type="text" name="speciality[<%= index %>]" value="<%= speciality %>" class="form-control">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" onclick="addInput('speciality')">Add Speciality</button>
+    </div>
+    
+      
+    <div>
+      <label>Languages Spoken:</label>
+      <div id="languages-container">
+          <% doctor.languages.forEach((language, index) => { %>
+              <div class="input-group">
+                  <input type="text" name="languages[<%= index %>]" value="<%= language %>" class="form-control">
+                  <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+              </div>
+          <% }) %>
+      </div>
+      <button type="button" onclick="addInput('languages')">Add Language</button>
+  </div>
+
+  </div>
+
+    
+            
+        </div>
+        <div>
+            <label>Hospitals/Clinics:</label>
+            <div id="hospitals-container">
+                <% doctor.hospitals.forEach((hospital, index) => { %>
+                    <div class="input-group">
+                        <input type="text" name="hospitals" value="<%= hospital %>" class="form-control">
+                        <% if (index > 0) { %>
+                            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+                        <% } %>
+                    </div>
+                <% }) %>
+            </div>
+            <button type="button" onclick="addInput('hospitals')">Add Hospital/Clinic</button>
+        </div>
+        <div>
+            <label>Insurances Accepted:</label>
+            <div id="insurances-container">
+                <% doctor.insurances.forEach((insurance, index) => { %>
+                    <div class="input-group">
+                        <input type="text" name="insurances" value="<%= insurance %>" class="form-control">
+                        <% if (index > 0) { %>
+                            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+                        <% } %>
+                    </div>
+                <% }) %>
+            </div>
+            <button type="button" onclick="addInput('insurances')">Add Insurance</button>
+        </div>
+        <div>
+            <label>Awards:</label>
+            <div id="awards-container">
+                <% doctor.awards.forEach((award, index) => { %>
+                    <div class="input-group">
+                        <input type="text" name="awards" value="<%= award %>" class="form-control">
+                        <% if (index > 0) { %>
+                            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+                        <% } %>
+                    </div>
+                <% }) %>
+            </div>
+            <button type="button" onclick="addInput('awards')">Add Award</button>
+        </div>
+        <div>
+            <label>FAQs:</label>
+            <div id="faqs-container">
+                <% doctor.faqs.forEach((faq, index) => { %>
+                    <div class="input-group">
+                        <input type="text" name="faqs" value="<%= faq %>" class="form-control">
+                        <% if (index > 0) { %>
+                            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+                        <% } %>
+                    </div>
+                <% }) %>
+            </div>
+            <button type="button" onclick="addInput('faqs')">Add FAQ</button>
+        </div>
+        <div>
+            <label>Profile Picture:</label>
+            <input type="file" name="profilePicture">
+        </div>
+        <button type="submit">Save Changes</button>
+    </form>
+</body>
+</html>

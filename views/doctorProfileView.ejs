@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Profile</title>
+</head>
+<body>
+    <h1>Doctor Profile: <%= doctor.name %></h1>
+    <p>Specialty: <%= doctor.speciality %></p>
+    <p>Location: <%= doctor.city %>, <%= doctor.state %>, <%= doctor.country %></p>
+    <p>Languages Spoken: <%= doctor.languages.join(', ') %></p>
+    <p>Gender: <%= doctor.gender %></p>
+    <p>Availability: <%= doctor.availability ? 'Available' : 'Not Available' %></p>
+    <p>Profile Views: <%= doctor.profileViews || 0 %></p>
+
+    <h2>Consultation Information</h2>
+    <p>Consultation Type: <%= doctor.consultation %></p>
+
+    <% if (doctor.timeSlots && doctor.timeSlots.length > 0) { %>
+        <h2>Available Time Slots</h2>
+        <ul>
+            <% doctor.timeSlots.forEach(slot => { %>
+                <li>
+                    <% if (slot.date) { %>
+                        <p>Date: <%= slot.date.toDateString() %></p>
+                    <% } else { %>
+                        <p>Date: N/A</p>
+                    <% } %>
+
+                    <% if (slot.startTime && slot.endTime) { %>
+                        <p>Time: <%= slot.startTime %> - <%= slot.endTime %></p>
+                    <% } else { %>
+                        <p>Time: N/A</p>
+                    <% } %>
+
+                    <% if (slot.status === 'free') { %>
+                        <form action="/patient/book" method="POST">
+                            <input type="hidden" name="doctorId" value="<%= doctor._id %>">
+                            <input type="hidden" name="date" value="<%= slot.date.toISOString() %>">
+                            <input type="hidden" name="time" value="<%= slot.startTime %> - <%= slot.endTime %>">
+                            
+                            <label for="consultationType">Consultation Type:</label>
+                            <select id="consultationType" name="consultationType">
+                                <option value="In-person">In-person</option>
+                                <option value="Video call">Video call</option>
+                            </select>
+                            
+                            <button type="submit">Book Slot</button>
+                        </form>
+                    <% } else { %>
+                        <p>Status: <%= slot.status %></p>
+                    <% } %>
+                </li>
+            <% }) %>
+        </ul>
+    <% } else { %>
+        <p>No available time slots.</p>
+    <% } %>
+
+    <a href="/patient/doctors">Back to Doctors List</a>
+</body>
+</html>

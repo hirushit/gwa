@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Bookings</title>
+</head>
+<body>
+    <h1>Doctor Bookings</h1>
+
+    <% if (bookings.length > 0) { %>
+        <table>
+            <thead>
+                <tr>
+                    <th>Patient Name</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Consultation Type</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% bookings.forEach(booking => { %>
+                    <tr>
+                        <td><%= booking.patient.name %></td>
+                        <td><%= booking.date.toDateString() %></td>
+                        <td><%= booking.time %></td>
+                        <td><%= booking.consultationType %></td>
+                        <td><%= booking.status %></td>
+                        <td>
+                            <form action="/doctor/bookings/<%= booking._id %>" method="POST" style="display: inline;">
+                                <select name="status" required>
+                                    <option value="" <%= !booking.status ? 'selected' : '' %> disabled>Select</option>
+                                    <option value="waiting" <%= booking.status === 'waiting' ? 'selected' : '' %>>Waitlist</option>
+                                    <option value="accepted" <%= booking.status === 'accepted' ? 'selected' : '' %>>Accept</option>
+                                    <option value="rejected" <%= booking.status === 'rejected' ? 'selected' : '' %>>Reject</option>
+                                </select>
+                                <button type="submit">Update</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <p>No bookings available.</p>
+    <% } %>
+
+    <a href="/doctor/profile">Back to Profile</a>
+</body>
+</html>

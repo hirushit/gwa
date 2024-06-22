@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find a Doctor</title>
+    <style>
+        .filter-container {
+            display: flex;
+            flex-direction: column;
+            width: 200px;
+            margin-right: 20px;
+        }
+
+        .doctor-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .container {
+            margin-top: 20px;
+            display: flex;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Find a Doctor</h1>
+    <div class="search-container">
+        <label for="what">What:</label>
+        <input type="text" id="what" placeholder="Search by name or speciality">
+
+        <label for="where">Where:</label>
+        <input type="text" id="where" placeholder="Search by location">
+
+        <button onclick="searchDoctors()">Search</button>
+
+        <label for="sortOptions">Sort by:</label>
+        <select id="sortOptions" onchange="sortDoctors()">
+            <option value="">Select</option>
+            <option value="highestRated">Highest Rated</option>
+            <option value="mostReviewed">Most Reviewed</option>
+        </select>
+    </div>
+    
+    <div class="filter-container">
+        <label for="country">Country:</label>
+        <select id="country" onchange="searchDoctors()">
+            <option value="">Select Country</option>
+        </select>
+
+        <label for="state">State:</label>
+        <select id="state" onchange="searchDoctors()">
+            <option value="">Select State</option>
+        </select>
+
+        <label for="city">City:</label>
+        <select id="city" onchange="searchDoctors()">
+            <option value="">Select City</option>
+        </select>
+
+        <label for="speciality">Speciality:</label>
+        <select id="speciality" onchange="searchDoctors()">
+            <option value="">Select Speciality</option>
+        </select>
+
+        <label for="languages">Language Spoken:</label>
+        <select id="languages" multiple onchange="searchDoctors()">
+            <option value="">Select Languages</option>
+        </select>
+
+        <label for="gender">Gender:</label>
+        <select id="gender" onchange="searchDoctors()">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select>
+
+        <label for="hospital">Hospital:</label>
+        <select id="hospital" onchange="searchDoctors()">
+            <option value="">Select Hospital</option>
+        </select>
+
+        <label for="availability">Available Now:</label>
+        <select id="availability" onchange="searchDoctors()">
+            <option value="">Select Availability</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+        </select>
+
+        <label for="dateAvailability">Date Availability:</label>
+        <input type="date" id="dateAvailability" onchange="searchDoctors()">
+
+        <label for="consultation">Consultation Type:</label>
+        <select id="consultation" onchange="searchDoctors()">
+            <option value="">Select Consultation Type</option>
+            <option value="In-person">In-Person</option>
+            <option value="Video Call">Video Call</option>
+            <option value="Both">Both</option>
+        </select>
+
+        <div class="button-container">
+            <button onclick="resetFilters()">Reset Filters</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="results-container">
+            <!-- Doctor cards will be dynamically generated here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            populateDropdowns();
+            populateSearchFieldsFromUrl();
+            searchDoctors();
+        });
+
+        async function populateDropdowns() {
+            await populateCountryDropdown();
+            await populateStateDropdown();
+            await populateCityDropdown();
+            await populateSpecialityDropdown();
+            await populateLanguagesDropdown();
+            await populateHospitalDropdown();
+        }
+
+        async function populateCountryDropdown() {
+            try {
+                const response = await fetch('/auth/countries');
+                const countries = await response.json();
+                const countrySelect = document.getElementById('country');
+
+                countries.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country;
+                    option.textContent = country;
+                    countrySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching countries:', error);
+            }
+        }
+
+        async function populateStateDropdown() {
+            try {
+                const response = await fetch('/auth/states');
+                const states = await response.json();
+                const stateSelect = document.getElementById('state');
+
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state;
+                    option.textContent = state;
+                    stateSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching states:', error);
+            }
+        }
+
+        async function populateCityDropdown() {
+            try {
+                const response = await fetch('/auth/cities');
+                const cities = await response.json();
+                const citySelect = document.getElementById('city');
+
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching cities:', error);
+            }
+        }
+
+        async function populateSpecialityDropdown() {
+            try {
+                const response = await fetch('/auth/specialities');
+                const specialities = await response.json();
+                const specialitySelect = document.getElementById('speciality');
+
+                specialities.forEach(speciality => {
+                    const option = document.createElement('option');
+                    option.value = speciality;
+                    option.textContent = speciality;
+                    specialitySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching specialities:', error);
+            }
+        }
+
+        async function populateLanguagesDropdown() {
+            try {
+                const response = await fetch('/auth/languages');
+                const languages = await response.json();
+                const languagesSelect = document.getElementById('languages');
+
+                languages.forEach(language => {
+                    const option = document.createElement('option');
+                    option.value = language;
+                    option.textContent = language;
+                    languagesSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching languages:', error);
+            }
+        }
+
+        async function populateHospitalDropdown() {
+            try {
+                const response = await fetch('/auth/hospitals');
+                const hospitals = await response.json();
+                const hospitalSelect = document.getElementById('hospital');
+
+                hospitals.forEach(hospital => {
+                    const option = document.createElement('option');
+                    option.value = hospital;
+                    option.textContent = hospital;
+                    hospitalSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching hospitals:', error);
+            }
+        }
+
+        async function populateSearchFieldsFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const what = urlParams.get('what');
+            const where = urlParams.get('where');
+
+            document.getElementById('what').value = what || '';
+            document.getElementById('where').value = where || '';
+        }
+
+        async function searchDoctors() {
+            const what = document.getElementById('what').value;
+            const where = document.getElementById('where').value;
+            const country = document.getElementById('country').value;
+            const state = document.getElementById('state').value;
+            const city = document.getElementById('city').value;
+            const speciality = document.getElementById('speciality').value;
+            const languagesSelect = document.getElementById('languages');
+            const languages = Array.from(languagesSelect?.selectedOptions || []).map(option => option.value).join(',');
+            const gender = document.getElementById('gender').value;
+            const hospitalsSelect = document.getElementById('hospital');
+            const hospital = Array.from(hospitalsSelect.selectedOptions).map(option => option.value);
+            const availability = document.getElementById('availability').value;
+            const dateAvailability = document.getElementById('dateAvailability').value;
+            const consultation = document.getElementById('consultation').value;
+
+            const url = `/auth/search-doctors?what=${what}&where=${where}&country=${country}&state=${state}&city=${city}&speciality=${speciality}&languages=${languages}&gender=${gender}&hospitals=${hospital}&availability=${availability}&dateAvailability=${dateAvailability}&consultation=${consultation}`;
+
+            try {
+                const response = await fetch(url);
+                const doctors = await response.json();
+
+                const resultsContainer = document.getElementById('results-container');
+                resultsContainer.innerHTML = '';
+
+                if (doctors.length === 0) {
+                    resultsContainer.textContent = 'No doctors found.';
+                    return;
+                }
+
+                doctors.forEach(doctor => {
+                    const doctorCard = document.createElement('div');
+                    doctorCard.className = 'doctor-card';
+                    doctorCard.innerHTML = `
+                        <h2>${doctor.name}</h2>
+                        <p>Title: ${doctor.title}</p>
+                        <p>Speciality: ${doctor.speciality}</p>
+                        <p>Rating: ${doctor.rating}</p>
+                        <p>Available Now: ${doctor.availability ? 'Yes' : 'No'}</p>
+                        <p>Location: ${doctor.city}, ${doctor.state}, ${doctor.country}</p>
+                        <button onclick="showDoctorDetails('${doctor._id}')">View Details</button>
+                    `;
+                    resultsContainer.appendChild(doctorCard);
+                });
+            } catch (error) {
+                console.error('Error fetching doctors:', error);
+            }
+        }
+
+        async function showDoctorDetails(doctorId) {
+            window.location.href = `/patient/doctors/${doctorId}/slots`;
+        }
+
+        function sortDoctors() {
+            const sortOption = document.getElementById('sortOptions').value;
+            const url = `/auth/search-doctors?sort=${sortOption}`;
+            fetchAndDisplayDoctors(url);
+        }
+
+        async function fetchAndDisplayDoctors(url) {
+            try {
+                const response = await fetch(url);
+                const doctors = await response.json();
+
+                const resultsContainer = document.getElementById('results-container');
+                resultsContainer.innerHTML = '';
+
+                if (doctors.length === 0) {
+                    resultsContainer.textContent = 'No doctors found.';
+                    return;
+                }
+
+                doctors.forEach(doctor => {
+                    const doctorCard = document.createElement('div');
+                    doctorCard.className = 'doctor-card';
+                    doctorCard.innerHTML = `
+                        <h2>${doctor.name}</h2>
+                        <p>Title: ${doctor.title}</p>
+                        <p>Speciality: ${doctor.speciality}</p>
+                        <p>Rating: ${doctor.rating}</p>
+                        <p>Available Now: ${doctor.availability ? 'Yes' : 'No'}</p>
+                        <p>Location: ${doctor.city}, ${doctor.state}, ${doctor.country}</p>
+                        <button onclick="showDoctorDetails('${doctor._id}')">View Details</button>
+                    `;
+                    resultsContainer.appendChild(doctorCard);
+                });
+            } catch (error) {
+                console.error('Error fetching sorted doctors:', error);
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('what').value = '';
+            document.getElementById('where').value = '';
+            document.getElementById('country').value = '';
+            document.getElementById('state').value = '';
+            document.getElementById('city').value = '';
+            document.getElementById('speciality').value = '';
+            document.getElementById('languages').value = '';
+            document.getElementById('gender').value = '';
+            document.getElementById('hospital').value = '';
+            document.getElementById('availability').value = '';
+            document.getElementById('dateAvailability').value = '';
+            document.getElementById('consultation').value = '';
+
+            searchDoctors();
+        }
+    </script>
+
+</body>
+</html>

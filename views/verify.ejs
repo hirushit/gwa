@@ -1,0 +1,29 @@
+<!-- verify.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify OTP</title>
+</head>
+<body>
+  <h1>Verify OTP</h1>
+  
+  <form action="/auth/verify" method="POST">
+    <input type="hidden" name="email" value="<%= email %>"> <!-- Pass email to OTP verification -->
+    <div>
+      <label for="otp">Enter OTP:</label>
+      <input type="text" id="otp" name="otp" required>
+    </div>
+    <button type="submit">Verify OTP</button>
+  </form>
+
+  <!-- Flash messages -->
+  <% if (error_msg) { %>
+    <p style="color: red;"><%= error_msg %></p>
+  <% } %>
+  <% if (success_msg) { %>
+    <p style="color: green;"><%= success_msg %></p>
+  <% } %>
+</body>
+</html>

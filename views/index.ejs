@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Find a Doctor</title>
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .filter-container, .auth-container {
+            width: 300px;
+            margin-bottom: 20px;
+        }
+
+        .filter-container select, .filter-container input, .filter-container button, .auth-container a {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .doctor-card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Find a Doctor</h1>
+
+        <!-- Authentication Links -->
+        <div class="auth-container">
+            <a href="/auth/login">Login</a>
+            <a href="/auth/signup">Signup</a>
+        </div>
+
+        <!-- Search Filters -->
+        <div class="filter-container">
+            <form action="/patient/doctors" method="get">
+                <label for="what">What:</label>
+                <input type="text" id="what" name="what" placeholder="Select Speciality, Condition or Doctor" list="what-options">
+                <datalist id="what-options"></datalist>
+
+                <label for="where">Where:</label>
+                <input type="text" id="where" name="where" placeholder="Enter City, State or Country" list="where-options">
+                <datalist id="where-options"></datalist>
+
+                <button type="submit">Search</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            populateWhatOptions();
+            populateWhereOptions();
+        });
+
+        async function populateWhatOptions() {
+            try {
+                const response = await fetch('/auth/what-options');
+                const { specialities, conditions, doctors } = await response.json();
+                const whatOptions = [...specialities, ...conditions, ...doctors];
+                const dataList = document.getElementById('what-options');
+
+                whatOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option;
+                    dataList.appendChild(optionElement);
+                });
+            } catch (error) {
+                console.error('Error fetching what options:', error);
+            }
+        }
+
+        async function populateWhereOptions() {
+            try {
+                const response = await fetch('/auth/where-options');
+                const { cities, states, countries } = await response.json();
+                const whereOptions = [...cities, ...states, ...countries];
+                const dataList = document.getElementById('where-options');
+
+                whereOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option;
+                    dataList.appendChild(optionElement);
+                });
+            } catch (error) {
+                console.error('Error fetching where options:', error);
+            }
+        }
+    </script>
+</body>
+</html>

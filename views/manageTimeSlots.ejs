@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Time Slots</title>
+    <style>
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome, <%= doctor.name %></h1>
+
+        <div class="verification-status">
+            <% if (doctor.verified === 'Verified') { %>
+                <p class="verified">Verification Status: Verified</p>
+            <% } else if (doctor.verified === 'Pending') { %>
+                <p class="pending">Verification Status: Pending</p>
+            <% } else { %>
+                <p class="not-verified">Verification Status: Not Verified</p>
+                <form action="/doctor/profile/verify" method="POST">
+                    <button type="submit">Request Verification</button>
+                </form>
+            <% } %>
+        </div>
+
+        <div class="time-slots">
+            <h3>Time Slots</h3>
+            <% if (doctor.timeSlots && doctor.timeSlots.length > 0) { %>
+                <% doctor.timeSlots.forEach((slot, index) => { %>
+                    <div class="time-slot">
+                        <p><strong>Date:</strong> <%= slot.date.toDateString() %></p>
+                        <p><strong>Time:</strong> <%= slot.startTime %> - <%= slot.endTime %></p>
+                        <p><strong>Status:</strong> <%= slot.status %></p> 
+                        <form action="/doctor/manage-time-slots/<%= index %>?_method=DELETE" method="POST">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <p>No time slots added yet.</p>
+            <% } %>
+        </div>
+
+        <form action="/doctor/manage-time-slots" method="POST">
+            <h3>Add Time Slot</h3>
+            <label for="date">Date:</label>
+            <input type="date" id="date" name="date" required>
+            <br>
+            <label for="startTime">Start Time:</label>
+            <input type="time" id="startTime" name="startTime" required>
+            <br>
+            <label for="endTime">End Time:</label>
+            <input type="time" id="endTime" name="endTime" required>
+            <br>
+            <button type="submit">Add Slot</button>
+        </form>
+
+        <a href="/doctor/profile">Back to Profile</a>
+        <a href="/doctor/bookings">Manage Bookings</a>
+        <a href="/doctor/edit">Edit Profile</a>
+        <form action="/auth/logout" method="GET">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+</body>
+</html>

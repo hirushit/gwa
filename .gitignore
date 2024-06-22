@@ -1,0 +1,7 @@
+node_modules/
+.env
+package-lock.json
+catalyst.json
+app-config.json
+app.js
+.catalystrc

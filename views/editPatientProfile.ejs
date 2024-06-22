@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Patient Profile</title>
+</head>
+<body>
+    <h1>Edit Patient Profile</h1>
+    <form action="/patient/profile/update" method="POST" enctype="multipart/form-data">
+        <div>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="<%= patient.name %>" required>
+        </div>
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="<%= patient.email %>" required>
+        </div>
+        <div>
+            <label for="dateOfBirth">Date of Birth:</label>
+            <input type="date" id="dateOfBirth" name="dateOfBirth" value="<%= patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().split('T')[0] : '' %>" required>
+        </div>
+        <div>
+            <label for="phoneNumber">Phone Number:</label>
+            <input type="tel" id="phoneNumber" name="phoneNumber" value="<%= patient.phoneNumber %>" required>
+        </div>
+        <div>
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address" value="<%= patient.address %>" required>
+        </div>
+        <div>
+            <label for="bloodGroup">Blood Group:</label>
+            <select id="bloodGroup" name="bloodGroup" required>
+                <option value="">Select Blood Group</option>
+                <option value="A+" <%= patient.bloodGroup === 'A+' ? 'selected' : '' %>>A+</option>
+                <option value="A-" <%= patient.bloodGroup === 'A-' ? 'selected' : '' %>>A-</option>
+                <option value="B+" <%= patient.bloodGroup === 'B+' ? 'selected' : '' %>>B+</option>
+                <option value="B-" <%= patient.bloodGroup === 'B-' ? 'selected' : '' %>>B-</option>
+                <option value="AB+" <%= patient.bloodGroup === 'AB+' ? 'selected' : '' %>>AB+</option>
+                <option value="AB-" <%= patient.bloodGroup === 'AB-' ? 'selected' : '' %>>AB-</option>
+                <option value="O+" <%= patient.bloodGroup === 'O+' ? 'selected' : '' %>>O+</option>
+                <option value="O-" <%= patient.bloodGroup === 'O-' ? 'selected' : '' %>>O-</option>
+            </select>
+        </div>
+        
+        <div>
+            <label for="insuranceProvider">Insurance Provider:</label>
+            <input type="text" id="insuranceProvider" name="insuranceProvider" value="<%= patient.insuranceProvider %>" required>
+        </div>
+        <div>
+            <label for="policyNumber">Policy Number:</label>
+            <input type="text" id="policyNumber" name="policyNumber" value="<%= patient.policyNumber %>" required>
+        </div>
+        <div>
+            <label for="groupNumber">Group Number:</label>
+            <input type="text" id="groupNumber" name="groupNumber" value="<%= patient.groupNumber %>" required>
+        </div>
+        <div id="emergencyContacts">
+            <h3>Emergency Contacts</h3>
+            <% if (patient.emergencyContacts && patient.emergencyContacts.length > 0) { %>
+                <% patient.emergencyContacts.forEach((contact, index) => { %>
+                    <% if (contact) { %>
+                        <div class="emergency-contact">
+                            <label for="emergencyContactName<%= index %>">Name:</label>
+                            <input type="text" id="emergencyContactName<%= index %>" name="emergencyContacts[<%= index %>][name]" value="<%= contact.name %>" required>
+                            <label for="emergencyContactRelationship<%= index %>">Relationship:</label>
+                            <input type="text" id="emergencyContactRelationship<%= index %>" name="emergencyContacts[<%= index %>][relationship]" value="<%= contact.relationship %>" required>
+                            <label for="emergencyContactPhone<%= index %>">Phone:</label>
+                            <input type="tel" id="emergencyContactPhone<%= index %>" name="emergencyContacts[<%= index %>][phone]" value="<%= contact.phone %>" required>
+                            <label for="emergencyContactEmail<%= index %>">Email:</label>
+                            <input type="email" id="emergencyContactEmail<%= index %>" name="emergencyContacts[<%= index %>][email]" value="<%= contact.email %>" required>
+                            <button type="button" class="removeEmergencyContact">Remove</button>
+                        </div>
+                    <% } %>
+                <% }) %>
+            <% } else { %>
+                <p>No emergency contacts available.</p>
+            <% } %>
+        </div>
+        
+        <button type="button" id="addEmergencyContact">Add Emergency Contact</button>
+        <div>
+            <label for="profilePicture">Profile Picture:</label>
+            <input type="file" id="profilePicture" name="profilePicture">
+        </div>
+        <button type="submit">Save Changes</button>
+    </form>
+
+    <a href="/patient/profile">Back to Profile</a>
+
+    <script>
+        document.getElementById('addEmergencyContact').addEventListener('click', function() {
+            const emergencyContactsDiv = document.getElementById('emergencyContacts');
+            const newIndex = emergencyContactsDiv.getElementsByClassName('emergency-contact').length;
+            const newEmergencyContact = document.createElement('div');
+            newEmergencyContact.classList.add('emergency-contact');
+            newEmergencyContact.innerHTML = `
+                <label>Name:</label>
+                <input type="text" name="emergencyContacts[${newIndex}][name]" required>
+                <label>Relationship:</label>
+                <input type="text" name="emergencyContacts[${newIndex}][relationship]" required>
+                <label>Phone:</label>
+                <input type="tel" name="emergencyContacts[${newIndex}][phone]" required>
+                <label>Email:</label>
+                <input type="email" name="emergencyContacts[${newIndex}][email]" required>
+                <button type="button" class="removeEmergencyContact">Remove</button>
+            `;
+            emergencyContactsDiv.appendChild(newEmergencyContact);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('removeEmergencyContact')) {
+                e.target.parentElement.remove();
+            }
+        });
+    </script>
+</body>
+</html>

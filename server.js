@@ -5,7 +5,10 @@ const MongoStore = require('connect-mongo');
 const dotenv = require('dotenv');
 const flash = require('connect-flash');
 const Doctor = require('./models/Doctor');
-dotenv.config();
+const Patient = require('./models/Patient');
+const passport = require('passport');
+require('dotenv').config();
+require('./passport-setup');
 
 const app = express();
 
@@ -94,7 +97,7 @@ app.get('/auth/search-doctors', async (req, res) => {
 });
 
 
-
+// countries
 app.get('/auth/countries', async (req, res) => {
   try {
       const countries = await Doctor.distinct('country');
@@ -149,6 +152,104 @@ app.get('/auth/specialities', async (req, res) => {
   }
 });
 
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/auth/login' }),
+  async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.redirect('/auth/login');
+      }
+
+      // Check if the authentication result contains a redirectTo field
+      if (req.authInfo && req.authInfo.redirectTo) {
+        return res.redirect(req.authInfo.redirectTo);
+      }
+
+      const userExists = await Patient.exists({ _id: req.user._id }) || await Doctor.exists({ _id: req.user._id });
+
+      if (userExists) {
+        res.redirect('/auth/login');
+      } else {
+        res.redirect('/auth/signup');
+      }
+    } catch (err) {
+      console.error('Error in Google callback:', err);
+      res.redirect('/auth/login');
+    }
+  });
+
+
+
+
+app.get('/select-role', (req, res) => {
+  if (!req.user) {
+    return res.redirect('/auth/login');
+  }
+  res.send(`
+    <h1>Select Role</h1>
+    <form action="/auth/role-selection" method="POST">
+      <label for="role">Role:</label>
+      <select id="role" name="role">
+        <option value="patient">Patient</option>
+        <option value="doctor">Doctor</option>
+      </select>
+      <button type="submit">Submit</button>
+    </form>
+  `);
+});
+
+app.post('/auth/role-selection', async (req, res) => {
+  if (req.user) {
+    const { role } = req.body;
+    const newUser = {
+      googleId: req.user.googleId,
+      name: req.user.name,
+      email: req.user.email,
+      role: role
+    };
+
+    try {
+      if (role === 'patient') {
+        const patient = new Patient(newUser);
+        await patient.save();
+        req.login(patient, (err) => {
+          if (err) return res.status(500).send(err);
+          return res.redirect('/');
+        });
+      } else if (role === 'doctor') {
+        const doctor = new Doctor(newUser);
+        await doctor.save();
+        req.login(doctor, (err) => {
+          if (err) return res.status(500).send(err);
+          return res.redirect('/');
+        });
+      } else {
+        return res.status(400).send('Invalid role');
+      }
+    } catch (err) {
+      res.status(500).send(err);
+    }
+  } else {
+    res.redirect('/auth/login');
+  }
+});
+
+app.get('/auth/apple', passport.authenticate('apple'));
+
+app.post('/auth/apple/callback',
+  passport.authenticate('apple', { failureRedirect: '/auth/login' }),
+  (req, res) => {
+    if (!req.user) {
+      return res.redirect('/select-role');
+    }
+
+    res.redirect('/dashboard');
+  });
 
 // Start server
 const PORT = process.env.PORT || 3000;

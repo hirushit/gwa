@@ -8,6 +8,10 @@ const emergencyContactSchema = new mongoose.Schema({
 });
 
 const patientSchema = new mongoose.Schema({
+  googleId: {
+    type: String,
+    required: true,
+  },
   name: {
     type: String,
     required: true

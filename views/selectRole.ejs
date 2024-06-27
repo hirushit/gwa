@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Role</title>
+</head>
+<body>
+  <h1>Select Your Role</h1>
+  <form action="/auth/role-selection" method="POST">
+    <div>
+      <label for="role">Role:</label>
+      <select id="role" name="role" required>
+        <option value="patient">Patient</option>
+        <option value="doctor">Doctor</option>
+      </select>
+    </div>
+    <button type="submit">Submit</button>
+  </form>
+</body>
+</html>

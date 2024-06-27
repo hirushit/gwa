@@ -7,6 +7,7 @@ const nodemailer = require('nodemailer');
 const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 const Admin = require('../models/Admin');
+const passport = require('passport');
 
 const router = express.Router();
 
@@ -43,6 +44,21 @@ const sendOTP = async (email, otp) => {
 
   await transporter.sendMail(mailOptions);
 };
+router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get('/auth/google/callback', passport.authenticate('google', {
+  failureRedirect: '/login', // Redirect to login on failure
+}), (req, res) => {
+  // Successful authentication, redirect to appropriate page
+  if (req.user.role === 'patient') {
+    res.redirect('/patient-home');
+  } else if (req.user.role === 'doctor') {
+    res.redirect('/doctor-home');
+  } else {
+    // Handle other roles or errors
+    res.redirect('/login');
+  }
+});
 
 router.get('/signup', (req, res) => {
   const showOtpForm = req.session.newUser && req.session.newUser.otp;

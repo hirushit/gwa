@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Details</title>
+</head>
+<body>
+    <h1><%= blog.title %></h1>
+    
+    <% if (blog.image && blog.image.data && blog.image.contentType) { %>
+        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="<%= blog.title %> Image" width="200">
+    <% } else { %>
+        <p>No image available</p>
+    <% } %>
+    
+    <p><%= blog.summary %></p>
+    <h2>Comments:</h2>
+    <ul>
+        <% blog.comments.forEach(comment => { %>
+            <li><strong><%= comment.username %>:</strong> <%= comment.comment %> (<%= comment.date.toLocaleString() %>)</li>
+        <% }); %>
+    </ul>
+    <!-- Form to add comment -->
+    <form action="/patient/blogs/comment/<%= blog._id %>" method="POST">
+        <label for="comment">Add Comment:</label>
+        <textarea name="comment" id="comment" cols="30" rows="5" required></textarea>
+        <button type="submit">Submit Comment</button>
+    </form>
+
+    <!-- Display existing comments -->
+    
+
+    <!-- Display existing ratings -->
+    
+</body>
+</html>

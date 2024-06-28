@@ -3,367 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Home</title>
+    <title>Home Page</title>
+    <!-- Include any necessary CSS files or stylesheets -->
     <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-
-        .filter-container, .results-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+        /* Add your custom styles here */
+        .blog-box {
             border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            margin-top: 20px;
+            padding: 10px;
+            margin-bottom: 20px;
         }
-
-        .filter-container label {
-            display: block;
-            margin-top: 10px;
-        }
-
-        .filter-container input, .filter-container select {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-        }
-
-        .results-container {
-            margin-top: 20px;
-        }
-
-        .doctor-card {
-            border: 1px solid #ccc;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-
-        .button-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
+        .blog-box:hover {
             cursor: pointer;
+            background-color: #f0f0f0;
         }
     </style>
 </head>
 <body>
-    <h1>Find a Doctor</h1>
-    <div class="filter-container">
-        <label for="country">Country:</label>
-        <select id="country" onchange="searchDoctors()">
-            <option value="">Select Country</option>
-        </select>
+    <h1>Welcome to Our Blog Portal</h1>
 
-        <label for="state">State:</label>
-        <select id="state" onchange="searchDoctors()">
-            <option value="">Select State</option>
-        </select>
-
-        <label for="city">City:</label>
-        <select id="city" onchange="searchDoctors()">
-            <option value="">Select City</option>
-        </select>
-
-        <label for="speciality">Speciality:</label>
-        <select id="speciality" onchange="searchDoctors()">
-            <option value="">Select Speciality</option>
-        </select>
-        
-
-        <label for="languages">Language Spoken:</label>
-        <select id="languages" multiple onchange="searchDoctors()">
-            <option value="">Select Languages</option>
-        </select>
-
-        <label for="gender">Gender:</label>
-        <select id="gender" onchange="searchDoctors()">
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="other">Other</option>
-        </select>
-
-        <label for="hospital">Hospital:</label>
-        <select id="hospital" onchange="searchDoctors()">
-            <option value="">Select Hospital</option>
-        </select>
-
-        <label for="availability">Available Now:</label>
-        <select id="availability" onchange="searchDoctors()">
-            <option value="">Select Availability</option>
-            <option value="true">Yes</option>
-            <option value="false">No</option>
-        </select>
-
-        <label for="dateAvailability">Date Availability:</label>
-        <input type="date" id="dateAvailability" onchange="searchDoctors()">
-
-        <label for="consultation">Consultation Type:</label>
-        <select id="consultation" onchange="searchDoctors()">
-            <option value="">Select Consultation Type</option>
-            <option value="In-person">In-Person</option>
-            <option value="Video Call">Video Call</option>
-            <option value="Both">Both</option>
-        </select>
-        
-        <div class="button-container">
-            <button onclick="resetFilters()">Reset Filters</button>
-        </div>
+    <div class="blogs-container">
+        <% if (verifiedBlogs.length > 0) { %>
+            <% verifiedBlogs.forEach(blog => { %>
+                <div class="blog-box" onclick="location.href='/patient/blogs/view/<%= blog._id %>';">
+                    <h3><%= blog.title %></h3>
+                    <% if (blog.image && blog.image.data) { %>
+                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="<%= blog.title %> Image" width="200">
+                    <% } else { %>
+                        <p>No Image Available</p>
+                    <% } %>
+                    <p><%= blog.summary %></p>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <p>No verified blogs found.</p>
+        <% } %>
     </div>
 
-    <div class="results-container" id="results-container">
-        <!-- Doctor results will be displayed here -->
-    </div>
+    <!-- Add any additional HTML elements or scripts as needed -->
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            populateDropdowns();
-            
-            // Add event listeners to trigger searchDoctors on select change
-            document.getElementById('country').addEventListener('change', searchDoctors);
-            document.getElementById('state').addEventListener('change', searchDoctors);
-            document.getElementById('city').addEventListener('change', searchDoctors);
-            document.getElementById('speciality').addEventListener('change', searchDoctors);
-            document.getElementById('languages').addEventListener('change', searchDoctors);
-            document.getElementById('gender').addEventListener('change', searchDoctors);
-            document.getElementById('hospital').addEventListener('change', searchDoctors);
-            document.getElementById('availability').addEventListener('change', searchDoctors);
-            document.getElementById('dateAvailability').addEventListener('change', searchDoctors);
-        });
-
-        async function populateDropdowns() {
-            await populateCountryDropdown();
-            await populateStateDropdown();
-            await populateCityDropdown();
-            await populateHospitalDropdown();
-            await populateLanguagesDropdown();
-            await populateSpecialityDropdown();
-        }
-
-        async function populateCountryDropdown() {
-            try {
-                const response = await fetch('/auth/countries');
-                const countries = await response.json();
-                const countrySelect = document.getElementById('country');
-                
-                countries.forEach(country => {
-                    const option = document.createElement('option');
-                    option.value = country;
-                    option.textContent = country;
-                    countrySelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error fetching countries:', error);
-            }
-        }
-
-        async function populateStateDropdown() {
-            try {
-                const response = await fetch('/auth/states');
-                const states = await response.json();
-                const stateSelect = document.getElementById('state');
-                
-                states.forEach(state => {
-                    const option = document.createElement('option');
-                    option.value = state;
-                    option.textContent = state;
-                    stateSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error fetching states:', error);
-            }
-        }
-
-        async function populateCityDropdown() {
-            try {
-                const response = await fetch('/auth/cities');
-                const cities = await response.json();
-                const citySelect = document.getElementById('city');
-                
-                cities.forEach(city => {
-                    const option = document.createElement('option');
-                    option.value = city;
-                    option.textContent = city;
-                    citySelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error fetching cities:', error);
-            }
-        }
-
-        async function populateHospitalDropdown() {
-            try {
-                const response = await fetch('/auth/hospitals');
-                const hospitals = await response.json();
-                const hospitalSelect = document.getElementById('hospital');
-                
-                hospitals.forEach(hospital => {
-                    const option = document.createElement('option');
-                    option.value = hospital;
-                    option.textContent = hospital;
-                    hospitalSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error fetching hospitals:', error);
-            }
-        }
-
-        async function populateLanguagesDropdown() {
-            try {
-                const response = await fetch('/auth/languages');
-                const languages = await response.json();
-                const languagesSelect = document.getElementById('languages');
-                
-                languages.forEach(language => {
-                    const option = document.createElement('option');
-                    option.value = language;
-                    option.textContent = language;
-                    languagesSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error fetching languages:', error);
-            }
-        }
-
-        async function populateSpecialityDropdown() {
-            try {
-                const response = await fetch('/auth/specialities');
-                const specialities = await response.json();
-                const specialitySelect = document.getElementById('speciality');
-                
-                specialities.forEach(speciality => {
-                    const option = document.createElement('option');
-                    option.value = speciality;
-                    option.textContent = speciality;
-                    specialitySelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error fetching specialities:', error);
-            }
-        }
-        
-
-        let isResettingFilters = false;
-
-function resetFilters() {
-    isResettingFilters = true;
-    document.getElementById('country').value = '';
-    document.getElementById('state').value = '';
-    document.getElementById('city').value = '';
-    document.getElementById('speciality').value = '';
-    document.getElementById('languages').value = '';
-    document.getElementById('gender').value = '';
-    document.getElementById('hospital').value = '';
-    document.getElementById('availability').value = '';
-    document.getElementById('dateAvailability').value = '';
-   
-
-    searchDoctors();
-}
-
-async function searchDoctors() {
-    const country = document.getElementById('country').value;
-    const state = document.getElementById('state').value;
-    const city = document.getElementById('city').value;
-    const speciality = document.getElementById('speciality').value;
-    const languagesSelect = document.getElementById('languages');
-    const languages = Array.from(languagesSelect?.selectedOptions || []).map(option => option.value).join(',');
-    const gender = document.getElementById('gender').value;
-    const hospitalsSelect = document.getElementById('hospital');
-    const hospital = Array.from(hospitalsSelect.selectedOptions).map(option => option.value);
-    const availability = document.getElementById('availability').value;
-    const dateAvailability = document.getElementById('dateAvailability').value;
-    const consultation = document.getElementById('consultation').value; // New line for consultation type
-
-    const url = `/auth/search-doctors?country=${country}&state=${state}&city=${city}&speciality=${speciality}&languages=${languages}&gender=${gender}&hospitals=${hospital}&availability=${availability}&dateAvailability=${dateAvailability}&consultation=${consultation}`; // Include consultation type in the URL
-
-    try {
-        const response = await fetch(url);
-        const doctors = await response.json();
-
-        const resultsContainer = document.getElementById('results-container');
-        resultsContainer.innerHTML = '';
-
-        if (!isResettingFilters) {
-            if (!Array.isArray(doctors)) {
-                resultsContainer.innerHTML = '<p>Error: Invalid response from server.</p>';
-                return;
-            }
-
-            if (doctors.length === 0) {
-                resultsContainer.innerHTML = '<p>No doctors found.</p>';
-                return;
-            }
-
-            doctors.forEach(doctor => {
-                const doctorCard = document.createElement('div');
-                doctorCard.className = 'doctor-card';
-                doctorCard.innerHTML = `
-                    <p><strong>Name:</strong> ${doctor.name}</p>
-                    <p><strong>Email:</strong> ${doctor.email}</p>
-                    <p><strong>Specializations:</strong> ${doctor.speciality.join(', ')}</p>
-                    <p><strong>Languages Spoken:</strong> ${doctor.languages.join(', ')}</p>
-                    <p><strong>Gender:</strong> ${doctor.gender}</p>
-                    <p><strong>Location:</strong> ${doctor.city}, ${doctor.state}, ${doctor.country}</p>
-                    <p><strong>Hospital:</strong> ${doctor.hospitals}</p>
-                    <p><strong>Available Now:</strong> ${doctor.availability ? 'Yes' : 'No'}</p>
-                    <a href="/doctor-info/${doctor.email}">View Info</a>
-                `;
-                resultsContainer.appendChild(doctorCard);
-            });
-        }
-    } catch (error) {
-        console.error('Error fetching doctors:', error);
-        const resultsContainer = document.getElementById('results-container');
-        resultsContainer.innerHTML = '<p>Error fetching doctors. Please try again later.</p>';
-    } finally {
-        isResettingFilters = false;
-    }
-}
-
-
-        function getAvailabilityText(timeSlots, selectedDate) {
-            if (!selectedDate || !timeSlots || timeSlots.length === 0) {
-                return 'Not available';
-            }
-        
-            const selectedDateTime = new Date(selectedDate).getTime();
-        
-            for (const timeSlot of timeSlots) {
-                const startTime = new Date(timeSlot.startTime).getTime();
-                const endTime = new Date(timeSlot.endTime).getTime();
-        
-                if (selectedDateTime >= startTime && selectedDateTime <= endTime) {
-                    return 'Available';
-                }
-            }
-        
-            return 'Not available';
-        }
-        
-
-        function resetFilters() {
-            document.getElementById('country').value = '';
-            document.getElementById('state').value = '';
-            document.getElementById('city').value = '';
-            document.getElementById('speciality').value = '';
-            document.getElementById('languages').value = '';
-            document.getElementById('gender').value = '';
-            document.getElementById('hospital').value = '';
-            document.getElementById('availability').value = '';
-            document.getElementById('dateAvailability').value = '';
-            
-
-            searchDoctors();
-        }
-    </script>
 </body>
 </html>

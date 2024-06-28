@@ -5,9 +5,9 @@ const methodOverride = require('method-override');
 const Doctor = require('../models/Doctor');
 const Booking = require('../models/Booking');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Blog = require('../models/Blog');
 
-
-const storage = multer.memoryStorage();
+const storage = multer.memoryStorage(); // Store in memory
 const upload = multer({ storage: storage });
 
 router.use(methodOverride('_method'));
@@ -48,6 +48,37 @@ router.get('/edit', isLoggedIn, async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
+    }
+});
+
+// Route to handle blog uploads
+router.get('/blog', (req, res) => {
+    res.render('blog-upload-form'); // Replace 'blog-upload-form' with your actual EJS file name
+});
+
+// POST route for handling blog uploads
+router.post('/blog', upload.single('image'), async (req, res) => {
+    try {
+        const { title, author, description, summary, authorEmail } = req.body;
+
+        const newBlog = new Blog({
+            title,
+            author,
+            description,
+            summary,
+            authorEmail,
+            image: req.file.buffer, // Assuming using multer for file upload
+            verificationStatus: 'pending' // Default status is pending
+        });
+
+
+        await newBlog.save();
+
+        // Render the blog-upload.ejs template after successful blog upload
+        res.render('blog-success', { message: 'Blog uploaded successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
     }
 });
 

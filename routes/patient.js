@@ -4,7 +4,7 @@ const multer = require('multer');
 const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 const Booking = require('../models/Booking');
-
+const Blog = require('../models/Blog');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -186,5 +186,50 @@ router.get('/bookings', isLoggedIn, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
+router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
+  try {
+      const blogId = req.params.id;
+      const blog = await Blog.findById(blogId).lean();
+
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+
+      res.render('PatientViewBlog', { blog });
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
+  try {
+      const { comment } = req.body;
+      const blogId = req.params.id;
+      const blog = await Blog.findById(blogId);
+
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+      console.log(req.session.user.name)
+      // Add comment to blog
+      blog.comments.push({
+          username: req.session.user.name, // Assuming username is stored in session
+          comment: comment
+      });
+
+      await blog.save();
+
+      req.flash('success_msg', 'Comment added successfully');
+      res.redirect(`/patient/blogs/view/${blogId}`);
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+
+
 
 module.exports = router;

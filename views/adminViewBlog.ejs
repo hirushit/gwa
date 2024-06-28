@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin View Blog</title>
+    <!-- Add your CSS stylesheets or links here -->
+    <style>
+        /* Add your custom styles here */
+    </style>
+</head>
+<body>
+    <!-- adminViewBlog.ejs -->
+
+<h1>Blog Details</h1>
+
+<h3>Title: <%= blog.title %></h3>
+<p><strong>Author:</strong> <%= blog.author %></p>
+<p><strong>Description:</strong> <%= blog.description %></p>
+<p><strong>Summary:</strong> <%= blog.summary %></p>
+<p><strong>Author Email:</strong> <%= blog.authorEmail %></p>
+
+<!-- Form to update verification status -->
+
+
+<!-- Form for editing other blog fields -->
+<h1>Edit Blog</h1>
+
+<form action="/admin/blogs/edit/<%= blog._id %>" method="POST" enctype="multipart/form-data">
+    <label for="title">Title:</label>
+    <input type="text" id="title" name="title" value="<%= blog.title %>"><br>
+
+    <label for="author">Author:</label>
+    <input type="text" id="author" name="author" value="<%= blog.author %>"><br>
+
+    <label for="description">Description:</label>
+    <textarea id="description" name="description"><%= blog.description %></textarea><br>
+
+    <label for="summary">Summary:</label>
+    <textarea id="summary" name="summary"><%= blog.summary %></textarea><br>
+
+    <label for="authorEmail">Author Email:</label>
+    <input type="email" id="authorEmail" name="authorEmail" value="<%= blog.authorEmail %>"><br>
+
+    <!-- Add input field for image upload -->
+    <label for="image">Image:</label>
+    <input type="file" id="image" name="image"><br>
+
+    <button type="submit">Save Changes</button>
+</form>
+
+
+<a href="/admin/blogs" class="back-link">Back to Blogs Dashboard</a>
+
+    <!-- Add any additional HTML elements or scripts as needed -->
+
+</body>
+</html>

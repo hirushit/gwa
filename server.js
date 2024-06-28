@@ -9,6 +9,7 @@ const Patient = require('./models/Patient');
 const passport = require('passport');
 require('dotenv').config();
 require('./passport-setup');
+const Blog = require('./models/Blog');
 
 const app = express();
 
@@ -48,9 +49,19 @@ app.use('/doctor', require('./routes/doctor'));
 app.use('/admin', require('./routes/admin'));
 
 // Landing Page Route
-app.get('/', (req, res) => {
-  res.render('index');
+app.get('/', async (req, res) => {
+  try {
+      // Fetch verified blogs
+      const verifiedBlogs = await Blog.find({ verificationStatus: 'Verified' }).lean();
+
+      // Render home page with verified blogs data
+      res.render('index', { verifiedBlogs });
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
 });
+
 
 // Logout route
 app.post('/auth/logout', (req, res) => {
@@ -238,18 +249,6 @@ app.post('/auth/role-selection', async (req, res) => {
     res.redirect('/auth/login');
   }
 });
-
-app.get('/auth/apple', passport.authenticate('apple'));
-
-app.post('/auth/apple/callback',
-  passport.authenticate('apple', { failureRedirect: '/auth/login' }),
-  (req, res) => {
-    if (!req.user) {
-      return res.redirect('/select-role');
-    }
-
-    res.redirect('/dashboard');
-  });
 
 // Start server
 const PORT = process.env.PORT || 3000;

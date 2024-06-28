@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const Patient = require('./models/Patient'); // Adjust to your Patient model
 const Doctor = require('./models/Doctor'); // Adjust to your Doctor model
 const crypto = require('crypto');
-const AppleStrategy = require('passport-apple').Strategy;
 
 // Function to generate a random password
 const generateRandomPassword = () => {
@@ -94,43 +93,6 @@ passport.use(new GoogleStrategy({
     }
   } catch (err) {
     console.error('Error in Google OAuth strategy:', err);
-    done(err, null);
-  }
-}));
-
-passport.use(new AppleStrategy({
-  clientID: process.env.APPLE_CLIENT_ID,
-  teamID: process.env.APPLE_TEAM_ID,
-  keyID: process.env.APPLE_KEY_ID,
-  key: fs.readFileSync(process.env.APPLE_PRIVATE_KEY_PATH),
-  callbackURL: '/auth/apple/callback',
-  passReqToCallback: true // Pass the request to the callback
-}, async (req, accessToken, refreshToken, idToken, profile, done) => {
-  try {
-    let user = await Patient.findOne({ appleId: profile.id });
-    if (!user) {
-      user = await Doctor.findOne({ appleId: profile.id });
-    }
-
-    if (!user) {
-      const email = profile.email || req.body.email;
-      if (email) {
-        const newUser = {
-          appleId: profile.id,
-          name: profile.name || email,
-          email,
-          password: generateRandomPassword()
-        };
-
-        req.session.tempUser = newUser;
-        return done(null, false, { message: 'Please select your role.' });
-      } else {
-        done(null, null);
-      }
-    } else {
-      done(null, user);
-    }
-  } catch (err) {
     done(err, null);
   }
 }));

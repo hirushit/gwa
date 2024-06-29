@@ -58,6 +58,12 @@
         <p>No available time slots.</p>
     <% } %>
 
+    <!-- Add to Favorites Button -->
+    <form action="/patient/add-to-favorites" method="POST">
+        <input type="hidden" name="doctorId" value="<%= doctor._id %>">
+        <button type="submit">Add to Favorites</button>
+    </form>
+
     <a href="/patient/doctors">Back to Doctors List</a>
 </body>
 </html>

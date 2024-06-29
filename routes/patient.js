@@ -229,4 +229,59 @@ router.get('/search-doctors', async (req, res) => {
   }
 });
 
+router.post('/add-to-favorites', isLoggedIn, async (req, res) => {
+  try {
+    const { doctorId } = req.body;
+    const patientId = req.session.user._id;
+
+    // Find patient and doctor documents
+    const patient = await Patient.findById(patientId);
+    const doctor = await Doctor.findById(doctorId);
+
+    if (!patient || !doctor) {
+      return res.status(404).send('Patient or Doctor not found');
+    }
+
+    // Check if the patient's favoriteDoctors array exists
+    if (!patient.favoriteDoctors) {
+      patient.favoriteDoctors = []; // Initialize if it doesn't exist
+    }
+
+    // Check if the doctor is already in favorites
+    if (patient.favoriteDoctors.includes(doctorId)) {
+      return res.status(400).send('Doctor already in favorites');
+    }
+
+    // Add doctor to favorites
+    patient.favoriteDoctors.push(doctorId);
+    await patient.save();
+
+    res.redirect('/patient/doctors'); // Redirect to doctors list or wherever appropriate
+  } catch (error) {
+    console.error('Error adding to favorites:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+
+router.get('/favorites', isLoggedIn, async (req, res) => {
+  try {
+    const patientId = req.session.user._id;
+    const patient = await Patient.findById(patientId).populate({
+      path: 'favoriteDoctors',
+      model: 'Doctor'
+    });
+
+    if (!patient) {
+      return res.status(404).send('Patient not found');
+    }
+
+    res.render('patientFavorites', { favoriteDoctors: patient.favoriteDoctors });
+  } catch (error) {
+    console.error('Error fetching favorite doctors:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+
 module.exports = router;

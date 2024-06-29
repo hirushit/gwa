@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Role</title>
+</head>
+<body>
+  <h1>Select Your Role</h1>
+
+  <% if (error_msg) { %>
+    <p style="color: red;"><%= error_msg %></p>
+  <% } %>
+
+  <form action="/auth/select-role" method="POST">
+    <div>
+      <label for="role">Select Role:</label>
+      <select id="role" name="role" required>
+        <option value="patient">Patient</option>
+        <option value="doctor">Doctor</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <button type="submit">Submit</button>
+  </form>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favorite Doctors</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .doctor-card {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .doctor-card p {
+            margin: 5px 0;
+        }
+        .actions {
+            margin-top: 20px;
+        }
+        .actions a {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Favorite Doctors</h1>
+
+        <% if (favoriteDoctors && favoriteDoctors.length > 0) { %>
+            <% favoriteDoctors.forEach(doctor => { %>
+                <div class="doctor-card">
+                    <p><strong>Name:</strong> <%= doctor.name %></p>
+                    <p><strong>Specialty:</strong> <%= doctor.speciality %></p>
+                    <p><strong>Location:</strong> <%= doctor.city %>, <%= doctor.state %>, <%= doctor.country %></p>
+                    <p><strong>Languages Spoken:</strong> <%= doctor.languages ? doctor.languages.join(', ') : 'N/A' %></p>
+                    <p><strong>Gender:</strong> <%= doctor.gender %></p>
+                    <p><strong>Availability:</strong> <%= doctor.availability ? 'Available' : 'Not Available' %></p>
+                    <p><strong>Consultation Type:</strong> <%= doctor.consultation %></p>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <p>No favorite doctors found.</p>
+        <% } %>
+
+        <div class="actions">
+            <a href="/patient/profile">Back to Profile</a>
+            <a href="/patient/doctors">View All Doctors</a>
+        </div>
+    </div>
+</body>
+</html>

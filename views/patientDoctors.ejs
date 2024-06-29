@@ -16,15 +16,22 @@
             border: 1px solid #ccc;
             padding: 10px;
             margin-bottom: 10px;
+            width: 300px; /
         }
 
         .container {
-            margin-top: 20px;
             display: flex;
+            margin-top: 20px;
         }
 
         .search-container {
             margin-bottom: 20px;
+        }
+
+        #results-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px; 
         }
     </style>
 </head>
@@ -47,69 +54,69 @@
         </select>
     </div>
     
-    <div class="filter-container">
-        <label for="country">Country:</label>
-        <select id="country" onchange="searchDoctors()">
-            <option value="">Select Country</option>
-        </select>
-
-        <label for="state">State:</label>
-        <select id="state" onchange="searchDoctors()">
-            <option value="">Select State</option>
-        </select>
-
-        <label for="city">City:</label>
-        <select id="city" onchange="searchDoctors()">
-            <option value="">Select City</option>
-        </select>
-
-        <label for="speciality">Speciality:</label>
-        <select id="speciality" onchange="searchDoctors()">
-            <option value="">Select Speciality</option>
-        </select>
-
-        <label for="languages">Language Spoken:</label>
-        <select id="languages" multiple onchange="searchDoctors()">
-            <option value="">Select Languages</option>
-        </select>
-
-        <label for="gender">Gender:</label>
-        <select id="gender" onchange="searchDoctors()">
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-        </select>
-
-        <label for="hospital">Hospital:</label>
-        <select id="hospital" onchange="searchDoctors()">
-            <option value="">Select Hospital</option>
-        </select>
-
-        <label for="availability">Available Now:</label>
-        <select id="availability" onchange="searchDoctors()">
-            <option value="">Select Availability</option>
-            <option value="true">Yes</option>
-            <option value="false">No</option>
-        </select>
-
-        <label for="dateAvailability">Date Availability:</label>
-        <input type="date" id="dateAvailability" onchange="searchDoctors()">
-
-        <label for="consultation">Consultation Type:</label>
-        <select id="consultation" onchange="searchDoctors()">
-            <option value="">Select Consultation Type</option>
-            <option value="In-person">In-Person</option>
-            <option value="Video Call">Video Call</option>
-            <option value="Both">Both</option>
-        </select>
-
-        <div class="button-container">
-            <button onclick="resetFilters()">Reset Filters</button>
-        </div>
-    </div>
-
     <div class="container">
+        <div class="filter-container">
+            <label for="country">Country:</label>
+            <select id="country" onchange="searchDoctors()">
+                <option value="">Select Country</option>
+            </select>
+
+            <label for="state">State:</label>
+            <select id="state" onchange="searchDoctors()">
+                <option value="">Select State</option>
+            </select>
+
+            <label for="city">City:</label>
+            <select id="city" onchange="searchDoctors()">
+                <option value="">Select City</option>
+            </select>
+
+            <label for="speciality">Speciality:</label>
+            <select id="speciality" onchange="searchDoctors()">
+                <option value="">Select Speciality</option>
+            </select>
+
+            <label for="languages">Language Spoken:</label>
+            <select id="languages" multiple onchange="searchDoctors()">
+                <option value="">Select Languages</option>
+            </select>
+
+            <label for="gender">Gender:</label>
+            <select id="gender" onchange="searchDoctors()">
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <label for="hospital">Hospital:</label>
+            <select id="hospital" onchange="searchDoctors()">
+                <option value="">Select Hospital</option>
+            </select>
+
+            <label for="availability">Available Now:</label>
+            <select id="availability" onchange="searchDoctors()">
+                <option value="">Select Availability</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+
+            <label for="dateAvailability">Date Availability:</label>
+            <input type="date" id="dateAvailability" onchange="searchDoctors()">
+
+            <label for="consultation">Consultation Type:</label>
+            <select id="consultation" onchange="searchDoctors()">
+                <option value="">Select Consultation Type</option>
+                <option value="In-person">In-Person</option>
+                <option value="Video Call">Video Call</option>
+                <option value="Both">Both</option>
+            </select>
+
+            <div class="button-container">
+                <button onclick="resetFilters()">Reset Filters</button>
+            </div>
+        </div>
+
         <div id="results-container">
             <!-- Doctor cards will be dynamically generated here -->
         </div>

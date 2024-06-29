@@ -4,7 +4,10 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const dotenv = require('dotenv');
 const flash = require('connect-flash');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const Doctor = require('./models/Doctor');
+
 dotenv.config();
 
 const app = express();
@@ -37,6 +40,48 @@ app.use(session({
 
 // Flash messages middleware
 app.use(flash());
+
+// Passport middleware for Google OAuth
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  Doctor.findById(id, (err, user) => {
+    done(err, user);
+  });
+});
+
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: '/auth/google/callback', // Adjust callback URL as per your setup
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      // Check if user exists in your database
+      let user = await Doctor.findOne({ googleId: profile.id });
+
+      if (!user) {
+        // If user doesn't exist, create a new user
+        user = new Doctor({
+          googleId: profile.id,
+          name: profile.displayName,
+          email: profile.emails[0].value,
+          role: null, // Initialize role as null for role selection
+        });
+        await user.save();
+      }
+
+      return done(null, user);
+    } catch (err) {
+      return done(err);
+    }
+  }
+));
 
 // Routes
 app.use('/auth', require('./routes/auth'));
@@ -191,7 +236,6 @@ app.get('/auth/where-options', async (req, res) => {
     res.status(500).json({ message: 'Error fetching where options', error });
   }
 });
-
 
 // Start server
 const PORT = process.env.PORT || 3000;

@@ -7,7 +7,21 @@ const blogSchema = new Schema({
     description: { type: String, required: true },
     summary: { type: String, required: true },
     authorEmail: { type: String, required: true },
-    image: { type: Buffer }, // Store binary data of image
+    image: {
+        data: Buffer,
+        contentType: String
+    },
+    categories: {
+        type: [String]
+    },
+    hashtags: {
+        type: [String]
+    }, 
+    priority: {
+        type: String,
+        enum: ['high', 'low'],
+        required: true
+    },
     verificationStatus: { type: String, default: 'pending' },
     comments: [
         {

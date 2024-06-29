@@ -229,7 +229,41 @@ router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
   }
 });
 
+router.get('/author/:email', async (req, res) => {
+  try {
+      const authorEmail = req.params.email;
 
+      // Find author by email
+      const author = await Doctor.findOne({ email: authorEmail });
+      if (!author) {
+          return res.status(404).send('Author not found');
+      }
 
+      // Count the number of blogs posted by the author
+      const blogCount = await Blog.countDocuments({ authorEmail });
+
+      res.render('author-info', {
+          author,
+          blogCount
+      });
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+// Assuming you have a route to fetch blogs
+router.get('/priority-blogs', async (req, res) => {
+  try {
+    // Fetch blogs with priority 'high'
+    const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).lean();
+
+    // Render the EJS template with blogs data
+    res.render('priorityblogs', { blogs });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 module.exports = router;

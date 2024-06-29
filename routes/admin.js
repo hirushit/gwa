@@ -189,6 +189,34 @@ router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, r
   }
 });
 
+router.post('/verify-subscription/:id', isLoggedIn, async (req, res) => {
+  try {
+    const doctorId = req.params.id;
+    const { verificationStatus } = req.body;
+
+    // Validate verificationStatus
+    if (!['Verified', 'Rejected', 'Pending'].includes(verificationStatus)) {
+      return res.status(400).send('Invalid subscription verification status');
+    }
+
+    // Find the doctor by ID
+    const doctor = await Doctor.findById(doctorId);
+
+    if (!doctor) {
+      return res.status(404).send('Doctor not found');
+    }
+
+    // Update doctor's subscription verification status
+    doctor.subscriptionVerification = verificationStatus;
+    await doctor.save();
+
+    req.flash('success_msg', 'Doctor subscription verification status updated.');
+    res.redirect('/admin/dashboard'); // Redirect to admin dashboard or appropriate page
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 
 module.exports = router;

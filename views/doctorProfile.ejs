@@ -160,7 +160,13 @@
     
 
     <a href="/doctor/edit">Edit Profile</a>
-    
+    <% if ((doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') && doctor.subscriptionVerification === 'Verified') { %>
+        <a href="/doctor/bookings">Manage Bookings</a>
+        <a href="/doctor/manage-time-slots">Manage Time Slots</a>
+    <% } else { %>
+        <button onclick="handleRestrictedAccess()">Manage Bookings</button>
+        <button onclick="handleRestrictedAccess()">Manage Time Slots</button>
+    <% } %>
     <form action="/auth/logout" method="GET">
     <button type="submit">Logout</button>
     </form>

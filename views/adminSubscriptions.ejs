@@ -35,6 +35,7 @@
                             <select name="verificationStatus">
                                 <option value="Verified" <%= doctor.subscriptionVerification === 'Verified' ? 'selected' : '' %>>Verify</option>
                                 <option value="Rejected" <%= doctor.subscriptionVerification === 'Rejected' ? 'selected' : '' %>>Reject</option>
+                                <option value="Pending" <%= doctor.subscriptionVerification === 'Pending' ? 'selected' : '' %>>Pending</option>
                             </select>
                             <button type="submit">Submit</button>
                         </form>

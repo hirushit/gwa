@@ -14,7 +14,29 @@
         <p>No image available</p>
     <% } %>
     
+    <h2>Author Information</h2>
+    <p><strong>Author:</strong> <%= blog.author %></p>
+    <p><strong>Author Email:</strong> <%= blog.authorEmail %></p>
+    <a href="/patient/author/<%= blog.authorEmail %>">View Author Info</a>
+    <h2>Description</h2>
+    <p><%= blog.description %></p>
+    <h2>Summary</h2>
     <p><%= blog.summary %></p>
+
+    <h2>Categories</h2>
+    <ul>
+        <% blog.categories.forEach(category => { %>
+            <li><%= category %></li>
+        <% }); %>
+    </ul>
+
+    <h2>Hashtags</h2>
+    <ul>
+        <% blog.hashtags.forEach(hashtag => { %>
+            <li><%= hashtag %></li>
+        <% }); %>
+    </ul>
+    
     <h2>Comments:</h2>
     <ul>
         <% blog.comments.forEach(comment => { %>
@@ -27,11 +49,5 @@
         <textarea name="comment" id="comment" cols="30" rows="5" required></textarea>
         <button type="submit">Submit Comment</button>
     </form>
-
-    <!-- Display existing comments -->
-    
-
-    <!-- Display existing ratings -->
-    
 </body>
 </html>

@@ -1,0 +1,41 @@
+<!-- views/blogs.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High Priority Blogs</title>
+    <style>
+        .blog-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        .blog-container img {
+            max-width: 150px;
+            max-height: 150px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>High Priority Blogs</h1>
+    <ul>
+        <% blogs.forEach(blog => { %>
+            <li class="blog-container">
+                <% if (blog.image && blog.image.data) { %>
+                    <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                <% } %>
+                <div>
+                    <h3><%= blog.title %></h3>
+                    <p><%= blog.summary %></p>
+                    <a href="/patient/blogs/view/<%= blog._id %>">Read More</a> <!-- Assuming your route for full blog view is /blogs/:id -->
+                </div>
+            </li>
+        <% }) %>
+    </ul>
+    <a href="/">View All Blogs</a>
+</body>
+</html>

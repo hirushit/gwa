@@ -59,7 +59,8 @@ router.get('/blog', (req, res) => {
 // POST route for handling blog uploads
 router.post('/blog', upload.single('image'), async (req, res) => {
     try {
-        const { title, author, description, summary, authorEmail } = req.body;
+        const authorEmail = req.session.user.email;
+        const { title, author, description, summary, categories, hashtags, priority } = req.body;
 
         const newBlog = new Blog({
             title,
@@ -67,8 +68,14 @@ router.post('/blog', upload.single('image'), async (req, res) => {
             description,
             summary,
             authorEmail,
-            image: req.file.buffer, // Assuming using multer for file upload
-            verificationStatus: 'pending' // Default status is pending
+            categories: categories , // Handle empty or undefined categories
+            hashtags: hashtags , // Handle empty or undefined hashtags
+            priority,
+            image: {
+                data: req.file.buffer,
+                contentType: req.file.mimetype
+            },
+            verificationStatus: 'pending'// Default status is pending
         });
 
 
@@ -299,6 +306,7 @@ router.use(methodOverride('_method'));
 router.get('/subscribe', isLoggedIn, async (req, res) => {
     res.render('subscriptionForm');
 });
+
 router.post('/subscribe', upload.fields([{ name: 'licenseProof' }, { name: 'certificationProof' }, { name: 'businessProof' }]), isLoggedIn, async (req, res) => {
     try {
     const { subscriptionType } = req.body;

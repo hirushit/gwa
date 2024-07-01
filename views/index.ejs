@@ -21,6 +21,13 @@
 <body>
     <h1>Welcome to Our Blog Portal</h1>
 
+    <!-- Search form -->
+    <form action="/" method="GET">
+        <label for="search">Search:</label>
+        <input type="text" id="search" name="search" value="<%= searchQuery %>">
+        <button type="submit">Search</button>
+    </form>
+
     <div class="blogs-container">
         <% if (verifiedBlogs.length > 0) { %>
             <% verifiedBlogs.forEach(blog => { %>

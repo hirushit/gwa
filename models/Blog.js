@@ -19,7 +19,6 @@ const blogSchema = new Schema({
     }, 
     priority: {
         type: String,
-        enum: ['high', 'low'],
         required: true
     },
     verificationStatus: { type: String, default: 'pending' },
@@ -29,7 +28,8 @@ const blogSchema = new Schema({
             comment: String,
             date: { type: Date, default: Date.now }
         }
-    ]
+    ],
+    authorId: { type: String }
 });
 
 const Blog = mongoose.model('Blog', blogSchema);

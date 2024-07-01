@@ -5,6 +5,7 @@ const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 const Booking = require('../models/Booking');
 const Blog = require('../models/Blog');
+const Admin = require('../models/Admin');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -203,6 +204,8 @@ router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
   }
 });
 
+
+
 router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
   try {
       const { comment } = req.body;
@@ -229,29 +232,35 @@ router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-router.get('/author/:email', async (req, res) => {
+router.get('/author/:id', async (req, res) => {
   try {
-      const authorEmail = req.params.email;
+    const authorId = req.params.id;
 
-      // Find author by email
-      const author = await Doctor.findOne({ email: authorEmail });
-      if (!author) {
-          return res.status(404).send('Author not found');
-      }
+    // First, try to find the author in the Doctor collection
+    let author = await Doctor.findById(authorId);
 
-      // Count the number of blogs posted by the author
-      const blogCount = await Blog.countDocuments({ authorEmail });
+    // If author is not found in Doctor collection, try to find in Admin collection
+    if (!author) {
+      author = await Admin.findById(authorId);
+    }
 
-      res.render('author-info', {
-          author,
-          blogCount
-      });
+    // If author still not found, return 404
+    if (!author) {
+      return res.status(404).send('Author not found');
+    }
+
+    // Count the number of blogs posted by the author
+    const blogCount = await Blog.countDocuments({ authorId });
+
+    res.render('author-info', {
+      author,
+      blogCount
+    });
   } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
-
 // Assuming you have a route to fetch blogs
 router.get('/priority-blogs', async (req, res) => {
   try {

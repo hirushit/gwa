@@ -57,10 +57,19 @@ router.get('/blog', (req, res) => {
 });
 
 // POST route for handling blog uploads
+
 router.post('/blog', upload.single('image'), async (req, res) => {
     try {
         const authorEmail = req.session.user.email;
         const { title, author, description, summary, categories, hashtags, priority } = req.body;
+
+        // Find the doctor by authorEmail
+        const doctor = await Doctor.findOne({ email: authorEmail });
+
+        let authorId = null;
+        if (doctor) {
+            authorId = doctor._id; // Get the doctor's ID
+        }
 
         const newBlog = new Blog({
             title,
@@ -68,26 +77,101 @@ router.post('/blog', upload.single('image'), async (req, res) => {
             description,
             summary,
             authorEmail,
-            categories: categories , // Handle empty or undefined categories
-            hashtags: hashtags , // Handle empty or undefined hashtags
+            authorId, // Store authorId in the Blog schema
+            categories: categories, // Handle empty or undefined categories
+            hashtags: hashtags, // Handle empty or undefined hashtags
             priority,
             image: {
                 data: req.file.buffer,
                 contentType: req.file.mimetype
             },
-            verificationStatus: 'pending'// Default status is pending
+            verificationStatus: 'Pending' // Default status is pending
         });
-
 
         await newBlog.save();
 
-        // Render the blog-upload.ejs template after successful blog upload
+        // Render the blog-success.ejs template after successful blog upload
         res.render('blog-success', { message: 'Blog uploaded successfully' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
     }
 });
+
+
+
+router.get('/profile/blogs', isLoggedIn, async (req, res) => {
+    try {
+      const doctorEmail = req.session.user.email; // Assuming user email is stored in session
+  
+      // Find all blogs by the logged-in doctor
+      const blogs = await Blog.find({ authorEmail: doctorEmail });
+  
+      res.render('profile-blogs', { blogs });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
+  router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.id);
+
+        if (!blog) {
+            return res.status(404).send('Blog not found');
+        }
+
+        // Ensure the logged-in user is the author of the blog
+        if (blog.authorId.toString() !== req.session.user._id.toString()) {
+            return res.status(403).send('Unauthorized');
+        }
+
+        res.render('edit-blog', { blog });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Update blog route
+router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.id);
+
+        if (!blog) {
+            return res.status(404).send('Blog not found');
+        }
+
+        // Ensure the logged-in user is the author of the blog
+        if (blog.authorId.toString() !== req.session.user._id.toString()) {
+            return res.status(403).send('Unauthorized');
+        }
+
+        const { title, description, summary, categories, hashtags } = req.body;
+
+        blog.title = title;
+        blog.description = description;
+        blog.summary = summary;
+        blog.categories = categories.split(',');
+        blog.hashtags = hashtags.split(',');
+     
+        blog.verificationStatus = 'pending';
+
+        if (req.file) {
+            blog.image.data = req.file.buffer;
+            blog.image.contentType = req.file.mimetype;
+        }
+
+        await blog.save();
+
+        res.redirect('/doctor/profile/blogs'); // Redirect to doctor's profile page after editing
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
 
 router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, async (req, res) => {
     try {

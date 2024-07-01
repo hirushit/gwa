@@ -155,7 +155,15 @@
         <% }) %>
     </ul>
     <form action="/doctor/blog" method="GET">
-        <button type="submit">Upload Blog Post</button>
+        <% if (doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') { %>
+            <% if (doctor.subscriptionVerification === 'Verified') { %>
+                <button type="submit">Upload Blog Post</button>
+            <% } else { %>
+                <button type="button" onclick="handleRestrictedAccess()">Upload Blog Post</button>
+            <% } %>
+        <% } else { %>
+            <button type="button" onclick="handleRestrictedAccess()">Upload Blog Post</button>
+        <% } %>
     </form>
     
 
@@ -163,10 +171,14 @@
     <% if ((doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') && doctor.subscriptionVerification === 'Verified') { %>
         <a href="/doctor/bookings">Manage Bookings</a>
         <a href="/doctor/manage-time-slots">Manage Time Slots</a>
+        <a href="/doctor/profile/blogs">View My Blogs</a>
     <% } else { %>
         <button onclick="handleRestrictedAccess()">Manage Bookings</button>
         <button onclick="handleRestrictedAccess()">Manage Time Slots</button>
+        <button onclick="handleRestrictedAccess()">Manage Blogs</button>
     <% } %>
+
+    
     <form action="/auth/logout" method="GET">
     <button type="submit">Logout</button>
     </form>

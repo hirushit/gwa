@@ -51,17 +51,40 @@ app.use('/admin', require('./routes/admin'));
 // Landing Page Route
 app.get('/', async (req, res) => {
   try {
-      // Fetch verified blogs
-      const verifiedBlogs = await Blog.find({ verificationStatus: 'Verified' }).lean();
+    let filter = { verificationStatus: 'Verified' }; // Default filter for verified blogs
 
-      // Render home page with verified blogs data
-      res.render('index', { verifiedBlogs });
+    // Check if search query parameters are present
+    if (req.query.search) {
+      const regex = new RegExp(escapeRegex(req.query.search), 'gi'); // 'gi' for global and case-insensitive search
+
+      // Update filter to search by title, categories, and hashtags fields
+      filter = {
+        verificationStatus: 'Verified',
+        $or: [
+          { title: regex },
+          { categories: regex },
+          { hashtags: regex }
+          // Add more fields if needed
+        ]
+      };
+    }
+
+    // Fetch verified blogs based on the filter
+    const verifiedBlogs = await Blog.find(filter).lean();
+
+    // Render home page with verified blogs data and search query for display
+    res.render('index', { verifiedBlogs, searchQuery: req.query.search });
+
   } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
 
+// Function to escape special characters for regex search
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+}
 
 // Logout route
 app.post('/auth/logout', (req, res) => {

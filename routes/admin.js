@@ -153,7 +153,7 @@ router.post('/blogs/verify/:id', isLoggedIn, async (req, res) => {
 // POST route to update a blog post
 router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, res) => {
   try {
-    const { title, author, description, summary, authorEmail } = req.body;
+    const { title, author, description, summary, authorEmail, priority } = req.body;
     const blogId = req.params.id;
 
     // Find the blog by ID
@@ -169,6 +169,7 @@ router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, r
     blog.description = description;
     blog.summary = summary;
     blog.authorEmail = authorEmail;
+    blog.priority = priority; // Update priority if provided
 
     // Handle image upload if included in the form
     if (req.file) {
@@ -188,6 +189,53 @@ router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, r
     res.status(500).send('Server Error');
   }
 });
+
+router.get('/blog', (req, res) => {
+  res.render('admin-blog-upload-form'); // Replace 'blog-upload-form' with your actual EJS file name
+});
+
+// POST route for handling blog uploads
+
+router.post('/blog', upload.single('image'), async (req, res) => {
+  try {
+      const authorEmail = req.session.user.email;
+      const { title, author, description, summary, categories, hashtags, priority } = req.body;
+
+      // Find the admin by authorEmail
+      const admin = await Admin.findOne({ email: authorEmail });
+
+      let authorId = null;
+      if (admin) {
+          authorId = admin._id; // Get the admin's ID
+      }
+
+      const newBlog = new Blog({
+          title,
+          author,
+          description,
+          summary,
+          authorEmail,
+          authorId, // Store adminId in the Blog schema
+          categories: categories, // Handle empty or undefined categories
+          hashtags: hashtags, // Handle empty or undefined hashtags
+          priority,
+          image: {
+              data: req.file.buffer,
+              contentType: req.file.mimetype
+          },
+          verificationStatus: 'Pending' // Default status is pending
+      });
+
+      await newBlog.save();
+
+      // Render the admin-blog-success.ejs template after successful blog upload
+      res.render('admin-blog-success', { message: 'Blog uploaded successfully' });
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 router.post('/verify-subscription/:id', isLoggedIn, async (req, res) => {
   try {

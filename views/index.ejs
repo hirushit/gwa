@@ -28,6 +28,13 @@
             padding: 10px;
             margin-bottom: 10px;
         }
+
+        .user-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -36,8 +43,18 @@
 
         <!-- Authentication Links -->
         <div class="auth-container">
-            <a href="/auth/login">Login</a>
-            <a href="/auth/signup">Signup</a>
+            <% if (user) { %>
+                <% if (user.role === 'patient' && patient) { %>
+                    <div class="user-info">Welcome, <%= patient.name %></div>
+                <% } else if (user.role === 'doctor' && doctor) { %>
+                    <div class="user-info">Welcome, Dr. <%= doctor.name %></div>
+                <% } else { %>
+                    <div class="user-info">Welcome, <%= user.name %></div>
+                <% } %>
+            <% } else { %>
+                <a href="/auth/login">Login</a>
+                <a href="/auth/signup">Signup</a>
+            <% } %>
         </div>
 
         <!-- Search Filters -->

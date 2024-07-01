@@ -13,7 +13,7 @@
             color: white;
             text-decoration: none;
             padding: 12px 24px;
-            border-radius: 4px;
+            border-radius: 20px;
             transition: background-color 0.3s ease;
             position: relative;
             overflow: hidden;
@@ -27,6 +27,7 @@
             left: 10px;
             top: 50%;
             transform: translateY(-50%);
+            border-radius: 20px;
             width: 30px;
             height: 30px;
             background: url('https://developers.google.com/identity/images/g-logo.png') no-repeat;
@@ -64,6 +65,8 @@
             <button type="submit" class="btn btn-primary">Login</button>
         </form>
 
+        <br>
+
         <!-- Google Login Button -->
         <div class="mt-3">
             <a href="/auth/google" class="google-signin-btn">
@@ -71,6 +74,8 @@
             </a>        
         </div>
 
+        <br>
+        
         <!-- Forgot Password link -->
         <div class="mt-3">
             <a href="/auth/forgot-password">Forgot Password?</a>

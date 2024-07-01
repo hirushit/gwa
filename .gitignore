@@ -5,3 +5,4 @@ catalyst.json
 app-config.json
 app.js
 .catalystrc
+ref.js

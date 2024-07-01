@@ -5,6 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Bookings</title>
+    <style>
+        /* Example CSS for status colors */
+        .status-accepted {
+            color: green;
+        }
+        .status-rejected {
+            color: red;
+        }
+        /* Add more styles as needed */
+    </style>
 </head>
 <body>
     <div class="container">
@@ -19,6 +29,7 @@
                         <th>Time</th>
                         <th>Consultation Type</th>
                         <th>Status</th>
+                        <th>Meeting Link</th> <!-- New column for Meeting Link -->
                     </tr>
                 </thead>
                 <tbody>
@@ -30,10 +41,16 @@
                             <td><%= booking.time %></td>
                             <td><%= booking.consultationType %></td>
                             <td class="status-<%= booking.status %>"><%= booking.status %></td>
+                            <td>
+                                <% if (booking.consultationType === 'Video call' && booking.status === 'accepted' && booking.meetingLink) { %>
+                                    <a href="<%= booking.meetingLink %>">Link</a>
+                                <% } else { %>
+                                    N/A
+                                <% } %>
+                            </td>
                         </tr>
                     <% }) %>
                 </tbody>
-                
             </table>
         <% } else { %>
             <p>No bookings found.</p>

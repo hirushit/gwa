@@ -89,10 +89,15 @@ app.use('/patient', require('./routes/patient'));
 app.use('/doctor', require('./routes/doctor'));
 app.use('/admin', require('./routes/admin'));
 
-// Landing Page Route
+// Assuming you have an Express route handler like this
 app.get('/', (req, res) => {
-  res.render('index');
+  // Check if user is authenticated (you'll need your authentication logic here)
+  const user = req.user; // Assuming req.user contains user information after authentication
+
+  // Render the index.ejs template and pass the user object
+  res.render('index', { user: user });
 });
+
 
 // Logout route
 app.post('/auth/logout', (req, res) => {

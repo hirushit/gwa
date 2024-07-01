@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Calendar</title>
+  <style>
+    .container {
+      max-width: 1000px; /* Increase the max-width for a larger calendar */
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .day {
+      border: 1px solid #ccc;
+      padding: 20px; /* Increase padding for larger day blocks */
+      position: relative;
+      overflow: hidden; /* Ensure content stays within day block */
+    }
+    .confirmed {
+      background-color: #90EE90; /* Light green for confirmed bookings */
+      padding: 5px; /* Adjust padding for content within day block */
+    }
+    .past-time {
+      background-color: #f0f0f0; /* Light gray for past times */
+    }
+    .navigation {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .navigation a {
+      margin: 0 10px;
+      text-decoration: none;
+    }
+    .current-time {
+      position: absolute;
+      top: 50%; /* Center vertically */
+      transform: translateY(-50%);
+      width: calc(100% - 40px); /* Width minus padding of .day */
+      height: 2px;
+      background-color: red; /* Color for the current time line */
+      z-index: 1; /* Ensure it stays above other content */
+    }
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Doctor Calendar</h1>
+    <h2>Welcome, <%= doctor.name %></h2>
+
+    <!-- Navigation for Previous and Next Months -->
+    <div class="navigation">
+      <a href="/doctor/calendar?month=<%= currentMonth - 1 %>&year=<%= currentYear %>">Previous Month</a>
+      <span><%= months[currentMonth] %> <%= currentYear %></span>
+      <a href="/doctor/calendar?month=<%= currentMonth + 1 %>&year=<%= currentYear %>">Next Month</a>
+    </div>
+
+    <!-- Monthly Calendar -->
+    <div class="calendar">
+      <h3 class="calendar-header"><%= months[currentMonth] %> <%= currentYear %></h3>
+      <!-- Calendar Days -->
+      <% for (let i = 1; i <= daysInMonth; i++) { %>
+        <div class="day">
+          <strong><%= i %></strong><br>
+          <% const dayBookings = bookings.filter(booking => {
+                const bookingDate = new Date(booking.date);
+                return bookingDate.getDate() === i && bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear && booking.status === 'accepted';
+              });
+          %>
+          <% dayBookings.forEach(booking => { %>
+            <p class="confirmed"><%= booking.time %> - <%= booking.consultationType %></p>
+          <% }); %>
+          <% if (i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) { %>
+            <div class="current-time"></div>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+
+    <a href="/doctor/profile">Back to Profile</a>
+    <form action="/auth/logout" method="GET">
+      <button type="submit">Logout</button>
+    </form>
+  </div>
+
+  <!-- JavaScript for updating current time position -->
+  <script>
+    $(document).ready(function() {
+      // Function to update current time position every minute
+      function updateCurrentTimePosition() {
+        var currentTime = new Date();
+        var minutes = currentTime.getMinutes();
+        var hours = currentTime.getHours();
+
+        // Calculate percentage based on current time
+        var currentMinutePosition = (hours * 60 + minutes) / (24 * 60) * 100;
+
+        // Update the current-time element position using CSS
+        $('.current-time').css('left', currentMinutePosition + '%');
+      }
+
+      // Call the function immediately
+      updateCurrentTimePosition();
+
+      // Update current time position every minute
+      setInterval(updateCurrentTimePosition, 60000); // Update every minute (60 seconds * 1000 milliseconds)
+    });
+  </script>
+</body>
+</html>

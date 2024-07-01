@@ -31,7 +31,7 @@ const sendOTP = async (email, otp) => {
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      pass: process.env.EMAIL_PASSWORD
     }
   });
 
@@ -268,6 +268,90 @@ router.post('/select-role', async (req, res) => {
     console.error('Error in selecting role:', err);
     req.flash('error_msg', 'Server error');
     return res.redirect('/auth/signup');
+  }
+});
+
+router.get('/forgot-password', (req, res) => {
+  res.render('forgot-password');
+});
+
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    let user = await Patient.findOne({ email }) ||
+               await Doctor.findOne({ email }) ||
+               await Admin.findOne({ email });
+
+    if (!user) {
+      req.flash('error_msg', 'User not found');
+      return res.redirect('/auth/forgot-password');
+    }
+
+    const otp = otpGenerator.generate(6, { digits: true, upperCase: false, specialChars: false, alphabets: false });
+    await sendOTP(email, otp);
+
+    req.session.resetUser = { email, otp };
+
+    req.flash('success_msg', 'OTP has been sent to your email. Please verify.');
+    return res.redirect('/auth/reset-password');
+  } catch (err) {
+    console.error('Error in forgot password:', err);
+    req.flash('error_msg', 'Server error');
+    return res.redirect('/auth/forgot-password');
+  }
+});
+
+router.get('/reset-password', (req, res) => {
+  const { email } = req.session.resetUser || {};
+  if (!email) {
+    req.flash('error_msg', 'Session expired. Please try again.');
+    return res.redirect('/auth/forgot-password');
+  }
+  res.render('reset-password', { email });
+});
+
+router.post('/reset-password', async (req, res) => {
+  const { otp, newPassword, confirmPassword } = req.body;
+  const { email } = req.session.resetUser || {};
+
+  if (!email || !otp || !newPassword || !confirmPassword) {
+    req.flash('error_msg', 'Please fill all fields');
+    return res.redirect('/auth/reset-password');
+  }
+
+  if (newPassword !== confirmPassword) {
+    req.flash('error_msg', 'Passwords do not match');
+    return res.redirect('/auth/reset-password');
+  }
+
+  try {
+    let user = await Patient.findOne({ email }) ||
+               await Doctor.findOne({ email }) ||
+               await Admin.findOne({ email });
+
+    if (!user) {
+      req.flash('error_msg', 'User not found');
+      return res.redirect('/auth/forgot-password');
+    }
+
+    if (otp !== req.session.resetUser.otp) {
+      req.flash('error_msg', 'Invalid OTP');
+      return res.redirect('/auth/reset-password');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    req.session.resetUser = null;
+
+    req.flash('success_msg', 'Password reset successful. Please login with your new password.');
+    return res.redirect('/auth/login');
+  } catch (err) {
+    console.error('Error in password reset:', err);
+    req.flash('error_msg', 'Server error');
+    return res.redirect('/auth/reset-password');
   }
 });
 

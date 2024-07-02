@@ -21,7 +21,7 @@ const doctorSchema = new mongoose.Schema({
   },
   title: String,
   speciality: {
-    type: [String], // Allow multiple specialities as an array of strings
+    type: [String], 
     required: true
   },
   country: String,

@@ -41,7 +41,6 @@
     <div class="container">
         <h1>Find a Doctor</h1>
 
-        <!-- Authentication Links -->
         <div class="auth-container">
             <% if (user) { %>
                 <% if (user.role === 'patient' && patient) { %>
@@ -57,7 +56,6 @@
             <% } %>
         </div>
 
-        <!-- Search Filters -->
         <div class="filter-container">
             <form action="/patient/doctors" method="get">
                 <label for="what">What:</label>

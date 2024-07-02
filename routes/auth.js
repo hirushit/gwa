@@ -146,41 +146,120 @@ router.post('/login', async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
       req.flash('error_msg', 'Invalid Credentials');
       return res.redirect('/auth/login');
     }
 
     req.session.user = user;
-
-    if (user.role === 'patient') {
-      return res.redirect('/patient/profile');
-    } else if (user.role === 'doctor') {
-      return res.redirect('/doctor/profile');
-    } else if (user.role === 'admin') {
-      return res.redirect('/admin/dashboard');
-    } else {
-      req.flash('error_msg', 'Invalid role');
-      return res.redirect('/auth/login');
-    }
+    req.flash('success_msg', 'Logged in successfully');
+    return res.redirect('/');
   } catch (err) {
     console.error('Error in login:', err);
-    req.flash('error_msg', 'An error occurred. Please try again.');
+    req.flash('error_msg', 'Server error');
     return res.redirect('/auth/login');
   }
 });
 
-router.get('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Error in logout:', err);
-      req.flash('error_msg', 'Error in logging out');
-      return res.redirect('/auth/login');
+router.get('/google', (req, res) => {
+  const scopes = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'];
+  const url = oauth2Client.generateAuthUrl({ access_type: 'offline', scope: scopes });
+  res.redirect(url);
+});
+
+router.get('/google/callback', async (req, res) => {
+  const code = req.query.code;
+
+  try {
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({ auth: oauth2Client, version: 'v2' });
+    const { data } = await oauth2.userinfo.get();
+
+    const { name, email } = data;
+
+    let existingUser = await Patient.findOne({ email }) ||
+                       await Doctor.findOne({ email }) ||
+                       await Admin.findOne({ email });
+
+    if (existingUser) {
+      req.session.user = existingUser;
+      req.flash('success_msg', 'Logged in successfully');
+      return res.redirect('/');
+    } else {
+      req.session.selectRoleForm = { name, email };
+      return res.redirect('/auth/signup');
+    }
+  } catch (err) {
+    console.error('Error in Google OAuth callback:', err);
+    req.flash('error_msg', 'Server error');
+    return res.redirect('/auth/login');
+  }
+});
+
+router.post('/select-role', async (req, res) => {
+  const { name, email, role } = req.body;
+
+  try {
+    let user;
+
+    if (role === 'patient') {
+      user = new Patient({ name, email, role });
+    } else if (role === 'doctor') {
+      user = new Doctor({ name, email, role });
+    } else if (role === 'admin') {
+      user = new Admin({ name, email, role });
+    } else {
+      req.flash('error_msg', 'Invalid role');
+      return res.redirect('/auth/signup');
     }
 
+    await user.save();
+
+    req.session.selectRoleForm = null;
+    req.session.user = user;
+
+    req.flash('success_msg', 'User created successfully');
+    return res.redirect('/');
+  } catch (err) {
+    console.error('Error in selecting role:', err);
+    req.flash('error_msg', 'Server error');
+    return res.redirect('/auth/signup');
+  }
+});
+
+router.get('/logout', (req, res) => {
+  req.flash('success_msg', 'Logged out successfully');
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Error in session destruction:', err);
+      req.flash('error_msg', 'Error logging out');
+      return res.redirect('/');
+    }
+
+    res.clearCookie('connect.sid');
     res.redirect('/auth/login');
   });
 });
+
+router.get('/exit', (req, res) => {
+  req.flash('success_msg', 'Exited successfully');
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Error in session destruction:', err);
+      req.flash('error_msg', 'Error exiting');
+      return res.redirect('/auth/signup');
+    }
+
+    res.clearCookie('connect.sid');
+    res.redirect('/auth/signup');
+  });
+});
+
+module.exports = router;
+
 
 router.get('/google', (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
@@ -213,11 +292,11 @@ router.get('/google/callback', async (req, res) => {
       req.session.user = existingUser;
       req.flash('success_msg', 'Logged in successfully');
       if (existingUser.role === 'patient') {
-        return res.redirect('/patient/profile'); // Redirect to patient profile
+        return res.redirect('/patient/profile'); 
       } else if (existingUser.role === 'doctor') {
-        return res.redirect('/doctor/profile'); // Redirect to doctor profile
+        return res.redirect('/doctor/profile'); 
       } else if (existingUser.role === 'admin') {
-        return res.redirect('/admin/dashboard'); // Redirect to admin dashboard
+        return res.redirect('/admin/dashboard'); 
       } else {
         req.flash('error_msg', 'Invalid role');
         return res.redirect('/auth/login');
@@ -225,7 +304,7 @@ router.get('/google/callback', async (req, res) => {
     }
 
     req.session.selectRoleForm = { name, email };
-    return res.redirect('/auth/signup'); // Redirect to signup if new user needs to select role
+    return res.redirect('/auth/signup'); 
   } catch (err) {
     console.error('Error in Google OAuth callback:', err);
     req.flash('error_msg', 'Authentication failed. Please try again.');

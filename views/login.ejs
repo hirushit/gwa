@@ -50,7 +50,6 @@
             <div class="alert alert-danger"><%= error_msg %></div>
         <% } %>
 
-        <!-- Login Form -->
         <form id="login-form" action="/auth/login" method="POST">
             <div class="form-group">
                 <label for="email">Email:</label>
@@ -60,14 +59,12 @@
                 <label for="password">Password:</label>
                 <input type="password" class="form-control" id="password" name="password" required>
             </div>
-            <!-- Hidden field for reCAPTCHA response -->
             <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response">
             <button type="submit" class="btn btn-primary">Login</button>
         </form>
 
         <br>
 
-        <!-- Google Login Button -->
         <div class="mt-3">
             <a href="/auth/google" class="google-signin-btn">
                 <span>Continue with Google</span>
@@ -76,17 +73,14 @@
 
         <br>
         
-        <!-- Forgot Password link -->
         <div class="mt-3">
             <a href="/auth/forgot-password">Forgot Password?</a>
         </div>
 
-        <!-- Signup link -->
         <div class="mt-3">
             <a href="/auth/signup">Sign Up</a>
         </div>
 
-        <!-- Google reCAPTCHA script execution -->
         <script>
             grecaptcha.ready(function() {
                 grecaptcha.execute('6LcxzvcpAAAAANyqhQDvt1dgS4XGQxOBFT0O9jV3', { action: 'login' }).then(function(token) {

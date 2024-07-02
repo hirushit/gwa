@@ -12,36 +12,30 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
-// Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Initialize MongoStore with session
 const sessionStore = MongoStore.create({
   mongoUrl: process.env.MONGODB_URI,
   collectionName: 'sessions',
 });
 
-// Session middleware
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   store: sessionStore,
-  cookie: { maxAge: 180 * 60 * 1000 } // Session expiration (e.g., 3 hours)
+  cookie: { maxAge: 180 * 60 * 1000 } 
 }));
 
-// Flash messages middleware
 app.use(flash());
 
-// Passport middleware for Google OAuth
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -58,20 +52,18 @@ passport.deserializeUser((id, done) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: '/auth/google/callback', // Adjust callback URL as per your setup
+    callbackURL: '/auth/google/callback',
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      // Check if user exists in your database
       let user = await Doctor.findOne({ googleId: profile.id });
 
       if (!user) {
-        // If user doesn't exist, create a new user
         user = new Doctor({
           googleId: profile.id,
           name: profile.displayName,
           email: profile.emails[0].value,
-          role: null, // Initialize role as null for role selection
+          role: null, 
         });
         await user.save();
       }
@@ -83,23 +75,18 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-// Routes
 app.use('/auth', require('./routes/auth'));
 app.use('/patient', require('./routes/patient'));
 app.use('/doctor', require('./routes/doctor'));
 app.use('/admin', require('./routes/admin'));
 
-// Assuming you have an Express route handler like this
 app.get('/', (req, res) => {
-  // Check if user is authenticated (you'll need your authentication logic here)
-  const user = req.user; // Assuming req.user contains user information after authentication
+  const user = req.user; 
 
-  // Render the index.ejs template and pass the user object
   res.render('index', { user: user });
 });
 
 
-// Logout route
 app.post('/auth/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -109,13 +96,11 @@ app.post('/auth/logout', (req, res) => {
   });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
   res.status(500).send('Something broke!');
 });
 
-// Updated /auth/search-doctors endpoint
 app.get('/auth/search-doctors', async (req, res) => {
   const { what, where, country, state, city, speciality, languages, gender, hospitals, availability, dateAvailability } = req.query;
 
@@ -153,7 +138,6 @@ app.get('/auth/search-doctors', async (req, res) => {
   }
 });
 
-// Additional routes for fetching distinct values
 app.get('/auth/countries', async (req, res) => {
   try {
     const countries = await Doctor.distinct('country');
@@ -208,7 +192,6 @@ app.get('/auth/specialities', async (req, res) => {
   }
 });
 
-// Fetch combined list of specialities, conditions, and doctors' names
 app.get('/auth/what-options', async (req, res) => {
   try {
     const specialities = await Doctor.distinct('speciality');
@@ -217,7 +200,7 @@ app.get('/auth/what-options', async (req, res) => {
 
     res.json({
       specialities,
-      conditions: [], // Assuming conditions is another list you may want to fetch similarly
+      conditions: [], 
       doctors: doctorNames
     });
   } catch (error) {
@@ -225,7 +208,6 @@ app.get('/auth/what-options', async (req, res) => {
   }
 });
 
-// Fetch combined list of cities, states, and countries
 app.get('/auth/where-options', async (req, res) => {
   try {
     const cities = await Doctor.distinct('city');
@@ -242,6 +224,5 @@ app.get('/auth/where-options', async (req, res) => {
   }
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

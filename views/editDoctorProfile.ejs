@@ -14,7 +14,7 @@
     
       const input = document.createElement('input');
       input.type = 'text';
-      input.name = `${fieldName}[${newIndex}]`; // Use array notation for multiple inputs
+      input.name = `${fieldName}[${newIndex}]`; 
       input.className = 'form-control';
       input.placeholder = `${fieldName} ${newIndex}`;
       inputWrapper.appendChild(input);
@@ -165,7 +165,6 @@
       </select>
     </div>
 
-    <!-- Dynamic Input Fields -->
     <div>
       <label>Specialities:</label>
       <div id="speciality-container">

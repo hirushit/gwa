@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Doctor = require('../models/Doctor');
-const Admin = require('../models/Admin'); // Ensure consistent casing
+const Admin = require('../models/Admin'); 
 
-// Middleware to check if user is logged in as admin
 function isLoggedIn(req, res, next) {
   if (req.session.user && req.session.user.role === 'admin') {
     return next();
@@ -12,13 +11,10 @@ function isLoggedIn(req, res, next) {
   res.redirect('/auth/login');
 }
 
-// GET route to render admin dashboard
 router.get('/dashboard', isLoggedIn, async (req, res) => {
   try {
-    // Fetch all doctors with pending verification
     const doctors = await Doctor.find({ verified: { $ne: 'Verified' } }).lean();
 
-    // Render admin dashboard with doctors data and success message if exists
     res.render('adminDashboard', { doctors, success_msg: req.flash('success_msg') });
   } catch (err) {
     console.error(err.message);
@@ -26,7 +22,6 @@ router.get('/dashboard', isLoggedIn, async (req, res) => {
   }
 });
 
-// GET route to view a doctor's profile details
 router.get('/view/:id', isLoggedIn, async (req, res) => {
   try {
     const doctorId = req.params.id;
@@ -43,13 +38,11 @@ router.get('/view/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-// POST route to update doctor's verification status
 router.post('/verify/:id', isLoggedIn, async (req, res) => {
   try {
     const doctorId = req.params.id;
     const { verificationStatus } = req.body;
 
-    // Validate verificationStatus
     if (!['Verified', 'Pending', 'Not Verified'].includes(verificationStatus)) {
       return res.status(400).send('Invalid verification status');
     }
@@ -60,7 +53,6 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
       return res.status(404).send('Doctor not found');
     }
 
-    // Update doctor's verification status
     doctor.verified = verificationStatus;
     await doctor.save();
 

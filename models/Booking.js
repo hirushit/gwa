@@ -15,7 +15,7 @@ const bookingSchema = new mongoose.Schema({
         enum: ['waiting', 'accepted', 'rejected'],
         default: 'waiting'
     },
-    meetingLink: { type: String } // Add a field for meeting link
+    meetingLink: { type: String }
 });
 
 module.exports = mongoose.model('Booking', bookingSchema);

@@ -308,10 +308,9 @@ async function sendAppointmentEmail(to, name, subject, content) {
 }
 
 
-// Calendar Route - Display doctor's calendar with appointments
 router.get('/calendar', isLoggedIn, async (req, res) => {
     try {
-        const doctorId = req.session.user._id; // Assuming you have session management for authentication
+        const doctorId = req.session.user._id; 
         const doctor = await Doctor.findById(doctorId);
         if (!doctor) {
             return res.status(404).send('Doctor not found');
@@ -321,7 +320,6 @@ router.get('/calendar', isLoggedIn, async (req, res) => {
         let currentMonth = parseInt(req.query.month) || currentDate.getMonth();
         let currentYear = parseInt(req.query.year) || currentDate.getFullYear();
 
-        // Ensure valid month and year
         if (currentMonth < 0 || currentMonth > 11) {
             currentMonth = currentDate.getMonth();
         }
@@ -329,10 +327,8 @@ router.get('/calendar', isLoggedIn, async (req, res) => {
             currentYear = currentDate.getFullYear();
         }
 
-        // Calculate days in the current month
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-        // Fetch bookings for the current doctor and current month
         const bookings = await Booking.find({
             doctor: doctorId,
             date: {
@@ -342,14 +338,12 @@ router.get('/calendar', isLoggedIn, async (req, res) => {
             status: 'accepted'
         });
 
-        // Prepare current time data
         const currentTime = {
             hours: currentDate.getHours(),
             minutes: currentDate.getMinutes(),
             seconds: currentDate.getSeconds()
         };
 
-        // Render doctorCalendar.ejs with data
         res.render('doctorCalendar', {
             doctor,
             currentMonth,
@@ -357,7 +351,7 @@ router.get('/calendar', isLoggedIn, async (req, res) => {
             daysInMonth,
             bookings,
             today: currentDate,
-            currentTime, // Pass currentTime to the template
+            currentTime, 
             months: [
                 'January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'

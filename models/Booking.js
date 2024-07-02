@@ -10,7 +10,8 @@ const bookingSchema = new mongoose.Schema({
     enum: ['In-person', 'Video call'],
     required: true
   },
-  status: { type: String, enum: ['waiting', 'accepted', 'rejected'], default: 'waiting' }
+  status: { type: String, enum: ['waiting', 'accepted', 'rejected'], default: 'waiting' },
+  chatEnabled: { type: Boolean, default: false } 
 });
 
 module.exports = mongoose.model('Booking', bookingSchema);

@@ -4,6 +4,7 @@ const multer = require('multer');
 const methodOverride = require('method-override');
 const Doctor = require('../models/Doctor');
 const Booking = require('../models/Booking');
+const Chat = require('../models/Chat');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Blog = require('../models/Blog');
 
@@ -240,67 +241,45 @@ router.get('/bookings', isLoggedIn, async (req, res) => {
     }
 });
 
+// Assuming you have required necessary models and middleware
+
 router.post('/bookings/:id', isLoggedIn, async (req, res) => {
     try {
-    const { status } = req.body;
-    const bookingId = req.params.id;
-    
-    
-    const booking = await Booking.findById(bookingId);
-    if (!booking) {
-        return res.status(404).send('Booking not found');
-    }
-    
-    if (!booking.date || !booking.time) {
-        return res.status(400).send('Booking date or time is missing');
-    }
-    
-    const currentStatus = booking.status; // Get current status before update
-    
-    // Update booking status
-    booking.status = status;
-    await booking.save();
-    
-    const doctor = await Doctor.findById(booking.doctor);
-    if (!doctor) {
-        return res.status(404).send('Doctor not found');
-    }
-    
-    // Ensure doctor.timeSlots is initialized
-    doctor.timeSlots = doctor.timeSlots || [];
-    
-    // Find the index of the time slot to update
-    const timeSlotIndex = doctor.timeSlots.findIndex(slot =>
-        slot && slot.date && slot.date.toISOString() === booking.date.toISOString() &&
-        slot.startTime === booking.time.split(' - ')[0] // Extract start time from "14:05 - 14:10"
-    );
-    
-    if (timeSlotIndex !== -1) {
-        // Handle different status scenarios
-        if (currentStatus === 'rejected' && (status === 'waiting' || status === 'accepted')) {
-            // If status changes from rejected to waiting or accepted, mark time slot as booked
-            doctor.timeSlots[timeSlotIndex].status = 'booked';
-        } else if (status === 'rejected') {
-            // If status is rejected, mark time slot as free
-            doctor.timeSlots[timeSlotIndex].status = 'free';
-        } else {
-            // Default: mark time slot as booked for waiting or accepted status
-            doctor.timeSlots[timeSlotIndex].status = 'booked';
+        const { status } = req.body;
+        const bookingId = req.params.id;
+
+        const booking = await Booking.findById(bookingId);
+        if (!booking) {
+            return res.status(404).send('Booking not found');
         }
-    
-        await doctor.save();
-    } else {
-        return res.status(404).send('Time slot not found');
-    }
-    
-    res.redirect('/doctor/bookings');
-    
+
+        const currentStatus = booking.status; // Get current status before update
+
+        // Update booking status
+        booking.status = status;
+        await booking.save();
+
+        const doctor = await Doctor.findById(booking.doctor);
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        // Add message to chat if status is accepted
+        if (status === 'accepted') {
+            const chat = await Chat.findOneAndUpdate(
+                { doctorId: booking.doctor, patientId: booking.patient },
+                { $push: { messages: { senderId: booking.doctor, text: 'Your slot is booked.', timestamp: new Date() } } },
+                { upsert: true, new: true }
+            );
+        }
+
+        res.redirect('/doctor/bookings');
+
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
     }
-    });
-
+});
 
 
 router.get('/manage-time-slots', isLoggedIn, async (req, res) => {
@@ -530,4 +509,67 @@ router.post('/admin/verify-subscription/:id', isAdmin, async (req, res) => {
     }
   });
 
+// Route to render doctor dashboard with chats
+router.get('/dashboard', isLoggedIn, async (req, res) => {
+    try {
+      const doctor = await Doctor.findOne({ email: req.session.user.email }).lean();
+      if (!doctor) {
+        return res.status(404).send('Doctor not found');
+      }
+  
+      // Fetch all chats for the doctor
+      const chats = await Chat.find({ doctorId: doctor._id })
+        .populate('patientId', 'name') // Populate patient details
+        .sort({ updatedAt: -1 }); // Sort by latest updated chat
+  
+      res.render('doctorDashboard', { doctor, chats });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
+  router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
+    try {
+      const { message } = req.body;
+      const doctor = await Doctor.findOne({ email: req.session.user.email });
+      const chatId = req.params.chatId;
+  
+      // Ensure doctor exists
+      if (!doctor) {
+        return res.status(404).send('Doctor not found');
+      }
+  
+      // Find or create the chat based on chatId
+      let chat = await Chat.findOneAndUpdate(
+        { _id: chatId, doctorId: doctor._id },
+        { $push: { messages: { senderId: doctor._id, text: message, timestamp: new Date() } } },
+        { upsert: true, new: true }
+      );
+  
+      // Redirect to the chat page for the doctor after sending message
+      res.redirect(`/doctor/chat/${chat._id}`);
+  
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send('Server Error');
+    }
+  });  
+
+  router.get('/chat/:id', isLoggedIn, async (req, res) => {
+    try {
+      const chatId = req.params.id;
+      const chat = await Chat.findById(chatId).populate('patientId').lean();
+  
+      if (!chat) {
+        return res.status(404).send('Chat not found');
+      }
+  
+      res.render('doctorChat', { chat });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+  
 module.exports = router;

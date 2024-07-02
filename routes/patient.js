@@ -6,6 +6,7 @@ const Doctor = require('../models/Doctor');
 const Booking = require('../models/Booking');
 const Blog = require('../models/Blog');
 const Admin = require('../models/Admin');
+const Chat = require('../models/Chat');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
@@ -271,6 +272,72 @@ router.get('/priority-blogs', async (req, res) => {
     res.render('priorityblogs', { blogs });
   } catch (err) {
     console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Route to render patient dashboard with chats
+router.get('/dashboard', isLoggedIn, async (req, res) => {
+  try {
+      const patient = await Patient.findOne({ email: req.session.user.email }).lean();
+      if (!patient) {
+          return res.status(404).send('Patient not found');
+      }
+
+      // Fetch all chats for the patient
+      const chats = await Chat.find({ patientId: patient._id })
+          .populate('doctorId', 'name') // Populate doctor details
+          .sort({ updatedAt: -1 }); // Sort by latest updated chat
+
+      res.render('patientDashboard', { patient, chats });
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+// Corrected route to render patient chat based on chat ID
+router.get('/chat/:id', isLoggedIn, async (req, res) => {
+  try {
+    const chatId = req.params.id;
+    const chat = await Chat.findById(chatId).populate('doctorId').lean();
+
+    if (!chat) {
+      return res.status(404).send('Chat not found');
+    }
+
+    res.render('patientChat', { chat });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+// Route to send a message from patient to doctor
+router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
+  try {
+    const { message } = req.body;
+    const patient = await Patient.findOne({ email: req.session.user.email });
+    const chatId = req.params.chatId;
+
+    // Ensure patient exists
+    if (!patient) {
+      return res.status(404).send('Patient not found');
+    }
+
+    // Find or create the chat based on chatId
+    let chat = await Chat.findOneAndUpdate(
+      { _id: chatId, patientId: patient._id },
+      { $push: { messages: { senderId: patient._id, text: message, timestamp: new Date() } } },
+      { upsert: true, new: true }
+    );
+
+    // Redirect to the chat page for the patient after sending message
+    res.redirect(`/patient/chat/${chat._id}`);
+
+  } catch (error) {
+    console.error(error.message);
     res.status(500).send('Server Error');
   }
 });

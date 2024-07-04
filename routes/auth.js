@@ -25,7 +25,6 @@ router.use((req, res, next) => {
   next();
 });
 
-// Function to send OTP via email
 const sendOTP = async (email, otp) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -154,13 +153,24 @@ router.post('/login', async (req, res) => {
 
     req.session.user = user;
     req.flash('success_msg', 'Logged in successfully');
-    return res.redirect('/');
+
+    if (user.role === 'patient') {
+      return res.redirect('/patient/profile'); 
+    } else if (user.role === 'doctor') {
+      return res.redirect('/doctor/profile'); 
+    } else if (user.role === 'admin') {
+      return res.redirect('/admin/dashboard'); 
+    } else {
+      req.flash('error_msg', 'Invalid role');
+      return res.redirect('/auth/login');
+    }
   } catch (err) {
     console.error('Error in login:', err);
     req.flash('error_msg', 'Server error');
     return res.redirect('/auth/login');
   }
 });
+
 
 router.get('/google', (req, res) => {
   const scopes = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'];

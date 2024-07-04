@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Doctor Profile</title>
+
 </head>
 <body>
 <h1>Doctor Profile</h1>
@@ -32,7 +33,7 @@
     <p><strong>Name:</strong> <%= doctor.name %></p>
     <p><strong>Email:</strong> <%= doctor.email %></p>
     <p><strong>Title:</strong> <%= doctor.title %></p>
-    <p><strong>Speciality:</strong> <%= doctor.speciality %></p>
+    <p><strong>Speciality:</strong> <%= doctor.speciality.join(', ') %></p>
     <p><strong>Location:</strong> <%= doctor.city %>, <%= doctor.state %>, <%= doctor.country %></p>
     <p><strong>Gender:</strong> <%= doctor.gender %></p>
     <p><strong>Date of Birth:</strong> <%= doctor.dateOfBirth ? new Date(doctor.dateOfBirth).toLocaleDateString() : 'N/A' %></p>
@@ -44,6 +45,15 @@
     <p><strong>Consultation:</strong> <%= doctor.consultation %></p>
     <p><strong>Rating:</strong> <%= doctor.rating %></p>
     <p><strong>Consultations Completed:</strong> <%= doctor.consultationsCompleted %></p>
+    
+    <h3>Subscription Details</h3>
+    <p><strong>Subscription Type:</strong> <%= doctor.subscriptionType %></p>
+    <p><strong>Subscription Verification:</strong> <%= doctor.subscriptionVerification %></p>
+
+    <% if (doctor.subscriptionType === 'Free') { %>
+        <a href="/doctor/subscribe">Subscribe</a>
+    <% } %>
+    
     <h3>Social Media Handles</h3>
     <ul>
     <% if (doctor.socialHandles && doctor.socialHandles.twitter) { %>
@@ -59,18 +69,20 @@
         <li><a href="<%= doctor.socialHandles.instagram %>" target="_blank">Instagram</a></li>
     <% } %>
     </ul>
+
     <h3>Conditions Managed</h3>
-    <% if (doctor.speciality.length > 0) { %>
+    <% if (doctor.conditions && doctor.conditions.length > 0) { %>
     <ul>
-        <% doctor.speciality.forEach(condition => { %>
+        <% doctor.conditions.forEach(condition => { %>
         <li><%= condition %></li>
         <% }) %>
     </ul>
     <% } else { %>
     <p>No conditions managed listed.</p>
     <% } %>
+
     <h3>Languages Spoken</h3>
-    <% if (doctor.languages.length > 0) { %>
+    <% if (doctor.languages && doctor.languages.length > 0) { %>
     <ul>
         <% doctor.languages.forEach(language => { %>
         <li><%= language %></li>
@@ -79,8 +91,9 @@
     <% } else { %>
     <p>No languages listed.</p>
     <% } %>
+
     <h3>Hospitals/Clinics</h3>
-    <% if (doctor.hospitals.length > 0) { %>
+    <% if (doctor.hospitals && doctor.hospitals.length > 0) { %>
     <ul>
         <% doctor.hospitals.forEach(hospital => { %>
         <li><%= hospital %></li>
@@ -89,8 +102,9 @@
     <% } else { %>
     <p>No hospitals/clinics listed.</p>
     <% } %>
+
     <h3>Insurances Accepted</h3>
-    <% if (doctor.insurances.length > 0) { %>
+    <% if (doctor.insurances && doctor.insurances.length > 0) { %>
     <ul>
         <% doctor.insurances.forEach(insurance => { %>
         <li><%= insurance %></li>
@@ -99,8 +113,9 @@
     <% } else { %>
     <p>No insurances listed.</p>
     <% } %>
+
     <h3>Awards</h3>
-    <% if (doctor.awards.length > 0) { %>
+    <% if (doctor.awards && doctor.awards.length > 0) { %>
     <ul>
         <% doctor.awards.forEach(award => { %>
         <li><%= award %></li>
@@ -109,8 +124,9 @@
     <% } else { %>
     <p>No awards listed.</p>
     <% } %>
+
     <h3>FAQs</h3>
-    <% if (doctor.faqs.length > 0) { %>
+    <% if (doctor.faqs && doctor.faqs.length > 0) { %>
     <ul>
         <% doctor.faqs.forEach(faq => { %>
         <li><%= faq %></li>
@@ -132,17 +148,41 @@
                 </li>
             <% } %>
         <% }) %>
-        
     </ul>
-
-
-    <a href="/doctor/bookings">Manage Bookings</a>
+    <form action="/doctor/blog" method="GET">
+        <% if (doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') { %>
+            <% if (doctor.subscriptionVerification === 'Verified') { %>
+                <button type="submit">Upload Blog Post</button>
+            <% } else { %>
+                <button type="button" onclick="handleRestrictedAccess()">Upload Blog Post</button>
+            <% } %>
+        <% } else { %>
+            <button type="button" onclick="handleRestrictedAccess()">Upload Blog Post</button>
+        <% } %>
+    </form>
+    
     <a href="/doctor/edit">Edit Profile</a>
-    <a href="/doctor/manage-time-slots">Manage Time Slots</a>
+    <% if ((doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') && doctor.subscriptionVerification === 'Verified') { %>
+        <a href="/doctor/bookings">Manage Bookings</a>
+        <a href="/doctor/manage-time-slots">Manage Time Slots</a>
+        <a href="/doctor/profile/blogs">View My Blogs</a>
+    <% } else { %>
+        <button onclick="handleRestrictedAccess()">Manage Bookings</button>
+        <button onclick="handleRestrictedAccess()">Manage Time Slots</button>
+        <button onclick="handleRestrictedAccess()">Manage Blogs</button>
+    <% } %>
+
+    <a href="/doctor/dashboard">Chat Box</a>
     <a href="/doctor/calendar" class="btn">View Calendar</a>
     <form action="/auth/logout" method="GET">
     <button type="submit">Logout</button>
     </form>
 </div>
+
+<script>
+    function handleRestrictedAccess() {
+        alert('You need to subscribe to a package to access this feature.');
+    }
+</script>
 </body>
 </html>

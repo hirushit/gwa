@@ -12,12 +12,12 @@
             margin-top: 20px;
         }
 
-        .filter-container, .auth-container {
+        .filter-container, .auth-container, .blogs-container {
             width: 300px;
             margin-bottom: 20px;
         }
 
-        .filter-container select, .filter-container input, .filter-container button, .auth-container a {
+        .filter-container select, .filter-container input, .filter-container button, .auth-container a, .blogs-container button {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
@@ -54,6 +54,10 @@
                 <a href="/auth/login">Login</a>
                 <a href="/auth/signup">Signup</a>
             <% } %>
+        </div>
+
+        <div class="blogs-container">
+            <button onclick="window.location.href='/patient/blogs'">View Blogs</button>
         </div>
 
         <div class="filter-container">

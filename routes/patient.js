@@ -4,6 +4,9 @@ const multer = require('multer');
 const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 const Booking = require('../models/Booking');
+const Blog = require('../models/Blog');
+const Chat = require('../models/Chat');
+
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -181,48 +184,6 @@ router.get('/bookings', isLoggedIn, async (req, res) => {
   }
 });
 
-router.get('/search-doctors', async (req, res) => {
-  try {
-    const { what, where, country, state, city, speciality, languages, gender, hospital, availability, dateAvailability, consultation } = req.query;
-
-    const filter = {};
-
-    if (what) {
-      filter.$or = [
-        { speciality: new RegExp(what, 'i') },
-        { conditionsTreated: new RegExp(what, 'i') },
-        { name: new RegExp(what, 'i') }
-      ];
-    }
-
-    if (where) {
-      if (!filter.$or) filter.$or = [];
-      filter.$or.push(
-        { city: new RegExp(where, 'i') },
-        { state: new RegExp(where, 'i') },
-        { country: new RegExp(where, 'i') }
-      );
-    }
-
-    if (country) filter.country = country;
-    if (state) filter.state = state;
-    if (city) filter.city = city;
-    if (speciality) filter.speciality = speciality;
-    if (languages) filter.languagesSpoken = { $in: languages.split(',') };
-    if (gender) filter.gender = gender;
-    if (hospital) filter.hospitals = hospital; 
-    if (availability) filter.availability = availability === 'true';
-    if (dateAvailability) filter.dateAvailability = new Date(dateAvailability);
-    if (consultation) filter.consultation = consultation;
-
-    const doctors = await Doctor.find(filter);
-    res.json(doctors);
-  } catch (error) {
-    console.error('Error searching doctors:', error);
-    res.status(500).send('Server error');
-  }
-});
-
 router.post('/add-to-favorites', isLoggedIn, async (req, res) => {
   try {
     const { doctorId } = req.body;
@@ -321,5 +282,176 @@ router.get('/calendar', isLoggedIn, async (req, res) => {
       res.status(500).send('Server error');
   }
 });
+
+router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
+  try {
+      const blogId = req.params.id;
+      const blog = await Blog.findById(blogId).lean();
+
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+
+      res.render('PatientViewBlog', { blog });
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+
+
+router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
+  try {
+      const { comment } = req.body;
+      const blogId = req.params.id;
+      const blog = await Blog.findById(blogId);
+
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+      console.log(req.session.user.name)
+      blog.comments.push({
+          username: req.session.user.name, 
+          comment: comment
+      });
+
+      await blog.save();
+
+      req.flash('success_msg', 'Comment added successfully');
+      res.redirect(`/patient/blogs/view/${blogId}`);
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.get('/author/:id', async (req, res) => {
+  try {
+    const authorId = req.params.id;
+
+    let author = await Doctor.findById(authorId);
+
+    if (!author) {
+      author = await Admin.findById(authorId);
+    }
+
+    if (!author) {
+      return res.status(404).send('Author not found');
+    }
+
+    const blogCount = await Blog.countDocuments({ authorId });
+
+    res.render('author-info', {
+      author,
+      blogCount
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+  router.get('/priority-blogs', async (req, res) => {
+    try {
+      const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).lean();
+
+      res.render('priorityblogs', { blogs });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
+router.get('/blogs', async (req, res) => {
+  try {
+    let filter = { verificationStatus: 'Verified' }; 
+
+    if (req.query.search) {
+      const regex = new RegExp(escapeRegex(req.query.search), 'gi'); 
+
+      filter = {
+        verificationStatus: 'Verified',
+        $or: [
+          { title: regex },
+          { categories: regex },
+          { hashtags: regex }
+        ]
+      };
+    }
+
+    const verifiedBlogs = await Blog.find(filter).lean();
+
+    res.render('blogs', { blogs: verifiedBlogs, searchQuery: req.query.search });
+
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+}
+
+router.get('/dashboard', isLoggedIn, async (req, res) => {
+  try {
+      const patient = await Patient.findOne({ email: req.session.user.email }).lean();
+      if (!patient) {
+          return res.status(404).send('Patient not found');
+      }
+
+      const chats = await Chat.find({ patientId: patient._id })
+          .populate('doctorId', 'name') 
+          .sort({ updatedAt: -1 }); 
+
+      res.render('patientDashboard', { patient, chats });
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.get('/chat/:id', isLoggedIn, async (req, res) => {
+  try {
+    const chatId = req.params.id;
+    const chat = await Chat.findById(chatId).populate('doctorId').lean();
+
+    if (!chat) {
+      return res.status(404).send('Chat not found');
+    }
+
+    res.render('patientChat', { chat });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
+  try {
+    const { message } = req.body;
+    const patient = await Patient.findOne({ email: req.session.user.email });
+    const chatId = req.params.chatId;
+
+    if (!patient) {
+      return res.status(404).send('Patient not found');
+    }
+
+    let chat = await Chat.findOneAndUpdate(
+      { _id: chatId, patientId: patient._id },
+      { $push: { messages: { senderId: patient._id, text: message, timestamp: new Date() } } },
+      { upsert: true, new: true }
+    );
+
+    res.redirect(`/patient/chat/${chat._id}`);
+
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
 
 module.exports = router;

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Blogs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .blog-item {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .blog-item:last-child {
+            border-bottom: none;
+        }
+        .blog-image {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .blog-title {
+            margin: 10px 0;
+            font-size: 24px;
+            color: #333;
+        }
+        .blog-summary {
+            font-size: 16px;
+            color: #555;
+        }
+        .verification-status {
+            font-size: 14px;
+            color: #999;
+            margin-top: 5px;
+        }
+        .read-more {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 15px;
+            color: #fff;
+            background-color: #007bff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .read-more:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>My Blogs</h1>
+        <ul>
+            <% blogs.forEach(blog => { %>
+                <li class="blog-item">
+                    <% if (blog.image && blog.image.data) { %>
+                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="<%= blog.title %>" class="blog-image">
+                    <% } %>
+                    <h3 class="blog-title"><%= blog.title %></h3>
+                    <p class="blog-summary"><%= blog.summary %></p>
+                    <p class="verification-status">Verification Status: <%= blog.verificationStatus %></p>
+                    <a href="/doctor/blogs/edit/<%= blog._id %>" class="read-more">Edit Blogs</a>
+                </li>
+            <% }) %>
+        </ul>
+    </div>
+</body>
+</html>
+

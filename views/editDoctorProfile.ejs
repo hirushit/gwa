@@ -7,7 +7,7 @@
   <script>
     function addInput(fieldName) {
       const container = document.getElementById(fieldName + '-container');
-      const newIndex = container.getElementsByClassName('form-control').length + 1;
+      const newIndex = container.getElementsByClassName('form-control').length;
     
       const inputWrapper = document.createElement('div');
       inputWrapper.className = 'input-group';
@@ -16,7 +16,7 @@
       input.type = 'text';
       input.name = `${fieldName}[${newIndex}]`; 
       input.className = 'form-control';
-      input.placeholder = `${fieldName} ${newIndex}`;
+      input.placeholder = `${fieldName} ${newIndex + 1}`;
       inputWrapper.appendChild(input);
     
       const removeButton = document.createElement('button');
@@ -33,7 +33,7 @@
 
     function addTimeSlot() {
       const container = document.getElementById('time-slots-container');
-      const newIndex = container.getElementsByClassName('input-group').length + 1;
+      const newIndex = container.getElementsByClassName('input-group').length;
   
       const timeSlotWrapper = document.createElement('div');
       timeSlotWrapper.className = 'input-group';
@@ -69,8 +69,7 @@
       timeSlotWrapper.appendChild(removeButton);
   
       container.appendChild(timeSlotWrapper);
-  }
-    
+    }
   </script>
 </head>
 <body>
@@ -107,6 +106,7 @@
         <option value="false" <%= doctor.availability === 'false' ? 'selected' : '' %>>Not Available</option>
       </select>
     </div>
+    <div>
       <label>Gender:</label>
       <input type="radio" name="gender" value="Male" <%= doctor.gender === 'Male' ? 'checked' : '' %>> Male
       <input type="radio" name="gender" value="Female" <%= doctor.gender === 'Female' ? 'checked' : '' %>> Female
@@ -178,86 +178,103 @@
       <button type="button" onclick="addInput('speciality')">Add Speciality</button>
     </div>
     
-      
     <div>
-      <label>Languages Spoken:</label>
+      <label>Conditions:</label>
+      <div id="conditions-container">
+        <% doctor.conditions.forEach((condition, index) => { %>
+          <div class="input-group">
+            <input type="text" name="conditions[<%= index %>]" value="<%= condition %>" class="form-control">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" onclick="addInput('conditions')">Add Condition</button>
+    </div>
+    
+    <div>
+      <label>Languages:</label>
       <div id="languages-container">
-          <% doctor.languages.forEach((language, index) => { %>
-              <div class="input-group">
-                  <input type="text" name="languages[<%= index %>]" value="<%= language %>" class="form-control">
-                  <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
-              </div>
-          <% }) %>
+        <% doctor.languages.forEach((language, index) => { %>
+          <div class="input-group">
+            <input type="text" name="languages[<%= index %>]" value="<%= language %>" class="form-control">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+          </div>
+        <% }) %>
       </div>
       <button type="button" onclick="addInput('languages')">Add Language</button>
-  </div>
-
-  </div>
-
+    </div>
     
-            
-        </div>
-        <div>
-            <label>Hospitals/Clinics:</label>
-            <div id="hospitals-container">
-                <% doctor.hospitals.forEach((hospital, index) => { %>
-                    <div class="input-group">
-                        <input type="text" name="hospitals" value="<%= hospital %>" class="form-control">
-                        <% if (index > 0) { %>
-                            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
-                        <% } %>
-                    </div>
-                <% }) %>
-            </div>
-            <button type="button" onclick="addInput('hospitals')">Add Hospital/Clinic</button>
-        </div>
-        <div>
-            <label>Insurances Accepted:</label>
-            <div id="insurances-container">
-                <% doctor.insurances.forEach((insurance, index) => { %>
-                    <div class="input-group">
-                        <input type="text" name="insurances" value="<%= insurance %>" class="form-control">
-                        <% if (index > 0) { %>
-                            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
-                        <% } %>
-                    </div>
-                <% }) %>
-            </div>
-            <button type="button" onclick="addInput('insurances')">Add Insurance</button>
-        </div>
-        <div>
-            <label>Awards:</label>
-            <div id="awards-container">
-                <% doctor.awards.forEach((award, index) => { %>
-                    <div class="input-group">
-                        <input type="text" name="awards" value="<%= award %>" class="form-control">
-                        <% if (index > 0) { %>
-                            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
-                        <% } %>
-                    </div>
-                <% }) %>
-            </div>
-            <button type="button" onclick="addInput('awards')">Add Award</button>
-        </div>
-        <div>
-            <label>FAQs:</label>
-            <div id="faqs-container">
-                <% doctor.faqs.forEach((faq, index) => { %>
-                    <div class="input-group">
-                        <input type="text" name="faqs" value="<%= faq %>" class="form-control">
-                        <% if (index > 0) { %>
-                            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
-                        <% } %>
-                    </div>
-                <% }) %>
-            </div>
-            <button type="button" onclick="addInput('faqs')">Add FAQ</button>
-        </div>
-        <div>
-            <label>Profile Picture:</label>
-            <input type="file" name="profilePicture">
-        </div>
-        <button type="submit">Save Changes</button>
-    </form>
+    <div>
+      <label>Hospitals:</label>
+      <div id="hospitals-container">
+        <% doctor.hospitals.forEach((hospital, index) => { %>
+          <div class="input-group">
+            <input type="text" name="hospitals[<%= index %>]" value="<%= hospital %>" class="form-control">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" onclick="addInput('hospitals')">Add Hospital</button>
+    </div>
+    
+    <div>
+      <label>Insurances:</label>
+      <div id="insurances-container">
+        <% doctor.insurances.forEach((insurance, index) => { %>
+          <div class="input-group">
+            <input type="text" name="insurances[<%= index %>]" value="<%= insurance %>" class="form-control">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" onclick="addInput('insurances')">Add Insurance</button>
+    </div>
+    
+    <div>
+      <label>Awards:</label>
+      <div id="awards-container">
+        <% doctor.awards.forEach((award, index) => { %>
+          <div class="input-group">
+            <input type="text" name="awards[<%= index %>]" value="<%= award %>" class="form-control">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" onclick="addInput('awards')">Add Award</button>
+    </div>
+    
+    <div>
+      <label>FAQs:</label>
+      <div id="faqs-container">
+        <% doctor.faqs.forEach((faq, index) => { %>
+          <div class="input-group">
+            <input type="text" name="faqs[<%= index %>]" value="<%= faq %>" class="form-control">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" onclick="addInput('faqs')">Add FAQ</button>
+    </div>
+    
+    <!-- Time Slots -->
+    <div>
+      <label>Time Slots:</label>
+      <div id="time-slots-container">
+        <% doctor.timeSlots.forEach((timeSlot, index) => { %>
+          <div class="input-group">
+            <input type="date" name="timeSlots[<%= index %>][date]" value="<%= timeSlot.date %>" class="form-control">
+            <input type="time" name="timeSlots[<%= index %>][startTime]" value="<%= timeSlot.startTime %>" class="form-control">
+            <input type="time" name="timeSlots[<%= index %>][endTime]" value="<%= timeSlot.endTime %>" class="form-control">
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" onclick="addTimeSlot()">Add Time Slot</button>
+    </div>
+    
+    <div>
+      <button type="submit">Update Profile</button>
+    </div>
+  </form>
 </body>
 </html>

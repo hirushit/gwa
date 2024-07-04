@@ -86,7 +86,6 @@ app.get('/', (req, res) => {
   res.render('index', { user: user });
 });
 
-
 app.post('/auth/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -102,7 +101,7 @@ app.use((err, req, res, next) => {
 });
 
 app.get('/auth/search-doctors', async (req, res) => {
-  const { what, where, country, state, city, speciality, languages, gender, hospitals, availability, dateAvailability } = req.query;
+  const { what, where, country, state, city, speciality, conditions, languages, gender, hospitals, availability, dateAvailability, consultation } = req.query;
 
   try {
     let query = { role: 'doctor', verified: 'Verified', 'timeSlots.status': 'free' };
@@ -115,6 +114,13 @@ app.get('/auth/search-doctors', async (req, res) => {
     if (gender) query.gender = gender;
     if (hospitals) query.hospitals = { $regex: new RegExp(hospitals, 'i') };
     if (availability) query.availability = availability === 'true';
+    if (consultation) query.consultation = consultation;
+
+    if (conditions) {
+      const conditionsArray = conditions.split(',').map(cond => new RegExp(cond.trim(), 'i'));
+      query.conditions = { $in: conditionsArray };
+    }
+
     if (what) {
       query.$or = [
         { speciality: { $regex: new RegExp(what, 'i') } },
@@ -129,6 +135,16 @@ app.get('/auth/search-doctors', async (req, res) => {
         { state: { $regex: new RegExp(where, 'i') } },
         { country: { $regex: new RegExp(where, 'i') } }
       ];
+    }
+
+    if (dateAvailability) {
+      const searchDate = new Date(dateAvailability);
+      query.timeSlots = {
+        $elemMatch: {
+          date: searchDate,
+          status: 'free'
+        }
+      };
     }
 
     const doctors = await Doctor.find(query);
@@ -189,6 +205,15 @@ app.get('/auth/specialities', async (req, res) => {
     res.json(specialities);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching specialities', error });
+  }
+});
+
+app.get('/auth/conditions', async (req, res) => {
+  try {
+      const conditions = await Doctor.distinct('conditions');
+      res.json(conditions);
+  } catch (error) {
+      res.status(500).json({ message: 'Error fetching conditions', error });
   }
 });
 

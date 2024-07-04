@@ -16,7 +16,7 @@
             border: 1px solid #ccc;
             padding: 10px;
             margin-bottom: 10px;
-            width: 300px; /
+            width: 300px;
         }
 
         .container {
@@ -31,7 +31,7 @@
         #results-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px; 
+            gap: 10px;
         }
     </style>
 </head>
@@ -76,6 +76,11 @@
                 <option value="">Select Speciality</option>
             </select>
 
+            <label for="conditions">Conditions:</label>
+            <select id="conditions" multiple onchange="searchDoctors()">
+                <option value="">Select Conditions</option>
+            </select>
+
             <label for="languages">Language Spoken:</label>
             <select id="languages" multiple onchange="searchDoctors()">
                 <option value="">Select Languages</option>
@@ -101,8 +106,9 @@
                 <option value="false">No</option>
             </select>
 
-            <label for="dateAvailability">Date Availability:</label>
+            <label for="dateAvailability">Date Availability:</label> 
             <input type="date" id="dateAvailability" onchange="searchDoctors()">
+
 
             <label for="consultation">Consultation Type:</label>
             <select id="consultation" onchange="searchDoctors()">
@@ -134,6 +140,7 @@
             await populateStateDropdown();
             await populateCityDropdown();
             await populateSpecialityDropdown();
+            await populateConditionsDropdown(); 
             await populateLanguagesDropdown();
             await populateHospitalDropdown();
         }
@@ -206,6 +213,23 @@
             }
         }
 
+        async function populateConditionsDropdown() {
+            try {
+                const response = await fetch('/auth/conditions');
+                const conditions = await response.json();
+                const conditionsSelect = document.getElementById('conditions');
+
+                conditions.forEach(condition => {
+                    const option = document.createElement('option');
+                    option.value = condition;
+                    option.textContent = condition;
+                    conditionsSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching conditions:', error);
+            }
+        }
+
         async function populateLanguagesDropdown() {
             try {
                 const response = await fetch('/auth/languages');
@@ -262,10 +286,13 @@
             const hospitalsSelect = document.getElementById('hospital');
             const hospital = Array.from(hospitalsSelect.selectedOptions).map(option => option.value);
             const availability = document.getElementById('availability').value;
-            const dateAvailability = document.getElementById('dateAvailability').value;
+            const dateAvailability = document.getElementById('dateAvailability').value;            
             const consultation = document.getElementById('consultation').value;
 
-            const url = `/auth/search-doctors?what=${what}&where=${where}&country=${country}&state=${state}&city=${city}&speciality=${speciality}&languages=${languages}&gender=${gender}&hospitals=${hospital}&availability=${availability}&dateAvailability=${dateAvailability}&consultation=${consultation}`;
+            const conditionsSelect = document.getElementById('conditions');
+            const conditions = Array.from(conditionsSelect?.selectedOptions || []).map(option => option.value).join(',');
+
+            const url = `/auth/search-doctors?what=${what}&where=${where}&country=${country}&state=${state}&city=${city}&speciality=${speciality}&languages=${languages}&gender=${gender}&hospitals=${hospital}&availability=${availability}&dateAvailability=${dateAvailability}&consultation=${consultation}&conditions=${conditions}`;
 
             try {
                 const response = await fetch(url);
@@ -353,6 +380,7 @@
             document.getElementById('availability').value = '';
             document.getElementById('dateAvailability').value = '';
             document.getElementById('consultation').value = '';
+            document.getElementById('conditions').value = ''; 
 
             searchDoctors();
         }

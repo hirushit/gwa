@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Subscriptions</title>
+</head>
+<body>
+    <h1>Doctor Subscriptions</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Doctor Name</th>
+                <th>Subscription Type</th>
+                <th>Verification Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% doctors.forEach(doctor => { %>
+                <tr>
+                    <td><%= doctor.name %></td>
+                    <td><%= doctor.subscriptionType %></td>
+                    <td>
+                        <% if (doctor.subscriptionVerification === 'Verified') { %>
+                            Verified
+                        <% } else if (doctor.subscriptionVerification === 'Rejected') { %>
+                            Rejected
+                        <% } else { %>
+                            Pending
+                        <% } %>
+                    </td>
+                    <td>
+                        <form action="/admin/verify-subscription/<%= doctor._id %>" method="post">
+                            <select name="verificationStatus">
+                                <option value="Verified" <%= doctor.subscriptionVerification === 'Verified' ? 'selected' : '' %>>Verify</option>
+                                <option value="Rejected" <%= doctor.subscriptionVerification === 'Rejected' ? 'selected' : '' %>>Reject</option>
+                                <option value="Pending" <%= doctor.subscriptionVerification === 'Pending' ? 'selected' : '' %>>Pending</option>
+                            </select>
+                            <button type="submit">Submit</button>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</body>
+</html>

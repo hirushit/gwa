@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Author Information</title>
+</head>
+<body>
+    <h1>Author Information</h1>
+    <p><strong>Name:</strong> <%= author.name %></p>
+    <p><strong>Email ID:</strong> <%= author.email %></p>
+    <p><strong>Speciality:</strong> <%= author.speciality %></p>
+    <p><strong>Number of Blogs Posted:</strong> <%= blogCount %></p>
+    <% if (author.speciality) { %>
+        <a href="/patient/doctors/<%= author._id %>">Book The Doctor</a>
+    <% } %>
+
+    <br><br>
+    <button onclick="goBack()">Back</button>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>

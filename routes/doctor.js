@@ -8,8 +8,10 @@ const { google } = require('googleapis');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Blog = require('../models/Blog');
 const Doctor = require('../models/Doctor');
+const Admin = require('../models/Admin'); 
 const Booking = require('../models/Booking');
 const Chat = require('../models/Chat');
+
 
 
 require('dotenv').config();
@@ -162,9 +164,16 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
 
                 if (status === 'accepted') {
                     emailSubject = 'Appointment Confirmation';
+                    let locationInfo = '';
+                    if (booking.consultationType === 'Videocall') {
+                        locationInfo = `<p>Join the meeting using the following link: <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>`;
+                    } else if (booking.consultationType === 'In-person') {
+                        locationInfo = `<p>Please visit the hospital at:</p>
+                                        <p>${doctor.hospital.address}</p>`;
+                    }
                     emailContent = `<p>Dear ${booking.patient.name},</p>
                                     <p>Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
-                                    <p>Join the meeting using the following link: <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
+                                    ${locationInfo}
                                     <p>Best regards,</p>
                                     <p>Global Wellness Alliance Team</p>`;
 
@@ -172,7 +181,7 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
 
                     const acceptanceEmailContent = `<p>Dear Dr. ${doctor.name},</p>
                                                     <p>The appointment with ${booking.patient.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
-                                                    <p>Join the meeting using the following link: <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
+                                                    ${locationInfo}
                                                     <p>Best regards,</p>
                                                     <p>Global Wellness Alliance Team</p>`;
                     await sendAppointmentEmail(doctor.email, doctor.name, 'Appointment Confirmation Notification', acceptanceEmailContent);
@@ -197,8 +206,20 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                 });
             }
 
+            // Modify the chat message here based on consultation type
+            let chatMessage = '';
+            if (booking.consultationType === 'Video call') {
+                chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Join the meeting using the following link: ${booking.meetingLink}`;
+            } else if (booking.consultationType === 'In-person') {
+                chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Please visit the hospital at ${doctor.hospital.address}`;
+            }
+            console.log(chatMessage)
 
-            await chat.save();
+            const chat1 = await Chat.findOneAndUpdate(
+                { doctorId: booking.doctor, patientId: booking.patient },
+                { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
+                { upsert: true, new: true }
+            );
 
         } else {
             console.error('Time slot not found for the given date and time');
@@ -639,40 +660,188 @@ router.get('/dashboard', isLoggedIn, async (req, res) => {
     }
   });
 
+
   router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
     try {
-      const { message } = req.body;
-      const doctor = await Doctor.findOne({ email: req.session.user.email });
-      const chatId = req.params.chatId;
+        const { message } = req.body;
+        const doctor = await Doctor.findOne({ email: req.session.user.email });
+        const chatId = req.params.chatId;
+
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        let chat = await Chat.findOneAndUpdate(
+            { _id: chatId, doctorId: doctor._id },
+            { $push: { messages: { senderId: doctor._id, text: message, timestamp: new Date() } } },
+            { upsert: true, new: true }
+        ).populate('patientId');
+
+        if (!chat) {
+            return res.status(404).send('Chat not found');
+        }
+
+        // Determine the consultation type from the chat
+        const consultationType = chat.consultationType;
+
+        // Determine the message content based on consultation type
+        let messageContent = '';
+        if (consultationType === 'Video call') {
+            // Create Google Meet link
+            const booking = {
+                doctor: {
+                    name: doctor.name,
+                    email: doctor.email,
+                },
+                patient: {
+                    name: chat.patientId.name, // Assuming patient's name is available in chat.patientId
+                    email: chat.patientId.email, // Assuming patient's email is available in chat.patientId
+                },
+                date: new Date(), // Adjust this based on your actual booking date/time
+            };
+            
+            const videoCallLink = await createGoogleMeetLink(booking);
+            console.log(videoCallLink);
+            messageContent = `Here is the link to join the video call: ${videoCallLink}`;
+        } else if (consultationType === 'In-person') {
+            // Assuming you have a hospital address field in your Doctor model
+            const address = doctor.hospital.address; // Adjust this based on your actual schema
+            messageContent = `Your appointment is scheduled at the hospital. Here is the address: ${address}`;
+        } else {
+            // Default message if consultationType is not recognized
+            messageContent = `Appointment details: ${consultationType}`;
+        }
+
+        // Push the message content to the chat
+        chat = await Chat.findByIdAndUpdate(
+            chatId,
+            { $push: { messages: { senderId: doctor._id, text: messageContent, timestamp: new Date() } } },
+            { new: true }
+        );
+
+        res.redirect(`/doctor/chat/${chat._id}`);
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+router.get('/chat/:id', isLoggedIn, async (req, res) => {
+    try {
+        const chatId = req.params.id;
+        const chat = await Chat.findById(chatId).populate('patientId').lean();
+
+        if (!chat) {
+            return res.status(404).send('Chat not found');
+        }
+
+        res.render('doctorChat', { chat });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
+    try {
+        const blogId = req.params.id;
+        const blog = await Blog.findById(blogId).lean();
   
-      if (!doctor) {
-        return res.status(404).send('Doctor not found');
+        if (!blog) {
+            return res.status(404).send('Blog not found');
+        }
+  
+        res.render('DoctorViewBlog', { blog });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+  });
+  
+router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
+    try {
+        const { comment } = req.body;
+        const blogId = req.params.id;
+        const blog = await Blog.findById(blogId);
+  
+        if (!blog) {
+            return res.status(404).send('Blog not found');
+        }
+        console.log(req.session.user.name)
+        blog.comments.push({
+            username: req.session.user.name, 
+            comment: comment
+        });
+  
+        await blog.save();
+  
+        req.flash('success_msg', 'Comment added successfully');
+        res.redirect(`/doctor/blogs/view/${blogId}`);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+  });
+  
+  router.get('/author/:id', async (req, res) => {
+    try {
+      const authorId = req.params.id;
+  
+      let author = await Doctor.findById(authorId);
+  
+      if (!author) {
+        author = await Admin.findById(authorId);
       }
   
-      let chat = await Chat.findOneAndUpdate(
-        { _id: chatId, doctorId: doctor._id },
-        { $push: { messages: { senderId: doctor._id, text: message, timestamp: new Date() } } },
-        { upsert: true, new: true }
-      );
+      if (!author) {
+        return res.status(404).send('Author not found');
+      }
   
-      res.redirect(`/doctor/chat/${chat._id}`);
+      const blogCount = await Blog.countDocuments({ authorId });
   
-    } catch (error) {
-      console.error(error.message);
+      res.render('doctor-author-info', {
+        author,
+        blogCount
+      });
+    } catch (err) {
+      console.error(err.message);
       res.status(500).send('Server Error');
     }
-  });  
-
-  router.get('/chat/:id', isLoggedIn, async (req, res) => {
-    try {
-      const chatId = req.params.id;
-      const chat = await Chat.findById(chatId).populate('patientId').lean();
+  });
+router.get('/priority-blogs', async (req, res) => {
+      try {
+        const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).lean();
   
-      if (!chat) {
-        return res.status(404).send('Chat not found');
+        res.render('priorityblogs', { blogs });
+      } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+      }
+    });
+  
+router.get('/blogs', async (req, res) => {
+    try {
+      let filter = { verificationStatus: 'Verified' }; 
+  
+      if (req.query.search) {
+        const regex = new RegExp(escapeRegex(req.query.search), 'gi'); 
+  
+        filter = {
+          verificationStatus: 'Verified',
+          $or: [
+            { title: regex },
+            { categories: regex },
+            { hashtags: regex }
+          ]
+        };
       }
   
-      res.render('doctorChat', { chat });
+      const verifiedBlogs = await Blog.find(filter).lean();
+  
+      res.render('Doctorblogs', { blogs: verifiedBlogs, searchQuery: req.query.search });
+  
     } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');

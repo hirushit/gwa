@@ -7,6 +7,9 @@ const flash = require('connect-flash');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const Doctor = require('./models/Doctor');
+const Blog = require('./models/Blog');
+const Admin = require('./models/Admin');
+
 
 dotenv.config();
 
@@ -80,10 +83,44 @@ app.use('/patient', require('./routes/patient'));
 app.use('/doctor', require('./routes/doctor'));
 app.use('/admin', require('./routes/admin'));
 
-app.get('/', (req, res) => {
-  const user = req.user; 
+app.get('/', async (req, res) => {
+  try {
+      const highPriorityBlogs = await Blog.find({ priority: 'high' }).limit(5).exec();
+      const user = req.user; // Assuming you have user information in req.user
+      const patient = req.patient; // Assuming you have patient information in req.patient
+      const doctor = req.doctor; // Assuming you have doctor information in req.doctor
 
-  res.render('index', { user: user });
+      res.render('index', { blogs: highPriorityBlogs, user, patient, doctor });
+  } catch (error) {
+      console.error('Error fetching high-priority blogs:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/doctor-home', async (req, res) => {
+  try {
+      const highPriorityBlogs = await Blog.find({ priority: 'high' }).limit(5).exec();
+      const doctorEmail = req.session.user.email;
+      const doctor = await Doctor.findOne({ email: doctorEmail }).lean(); // Assuming you have doctor information in req.doctor
+
+      res.render('doctor-index', { blogs: highPriorityBlogs, doctor });
+  } catch (error) {
+      console.error('Error fetching high-priority blogs:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/admin-home', async (req, res) => {
+  try {
+      const highPriorityBlogs = await Blog.find({ priority: 'high' }).limit(5).exec();
+      const adminEmail = req.session.user.email;
+      const admin = await Admin.findOne({ email: adminEmail }).lean(); // Assuming you have doctor information in req.doctor
+
+      res.render('admin-index', { blogs: highPriorityBlogs, admin});
+  } catch (error) {
+      console.error('Error fetching high-priority blogs:', error);
+      res.status(500).send('Internal Server Error');
+  }
 });
 
 app.post('/auth/logout', (req, res) => {

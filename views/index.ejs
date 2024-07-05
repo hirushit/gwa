@@ -35,11 +35,60 @@
             right: 10px;
             font-weight: bold;
         }
+        .blogs-container {
+            width: 80%;
+            margin: auto;
+        }
+
+        .blogs-container ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .blog-card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .blog-card img {
+            width: 100px;
+            height: auto;
+            margin-right: 20px;
+            border-radius: 5px;
+        }
+
+        .blog-card h3 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+
+        .blog-card p {
+            margin: 0.5em 0 0 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Find a Doctor</h1>
+
 
         <div class="auth-container">
             <% if (user) { %>
@@ -57,7 +106,20 @@
         </div>
 
         <div class="blogs-container">
-            <button onclick="window.location.href='/patient/blogs'">View Blogs</button>
+            <h2> Blogs</h2>
+            <ul>
+                <% blogs.forEach(blog => { %>
+                    <li class="blog-card">
+                        <% if (blog.image && blog.image.data) { %>
+                            <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                        <% } %>
+                        <h3><%= blog.title %></h3>
+                        <p><%= blog.content %></p>
+                        <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
+                    </li>
+                <% }) %>
+            </ul>
+            <button onclick="window.location.href='/patient/blogs'">View All Blogs</button>
         </div>
 
         <div class="filter-container">

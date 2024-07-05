@@ -4,6 +4,7 @@ const multer = require('multer');
 const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 const Booking = require('../models/Booking');
+const Admin = require('../models/Admin'); 
 const Blog = require('../models/Blog');
 const Chat = require('../models/Chat');
 
@@ -351,7 +352,7 @@ router.get('/author/:id', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-  router.get('/priority-blogs', async (req, res) => {
+router.get('/priority-blogs', async (req, res) => {
     try {
       const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).lean();
 

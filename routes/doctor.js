@@ -8,6 +8,7 @@ const { google } = require('googleapis');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Blog = require('../models/Blog');
 const Doctor = require('../models/Doctor');
+const Admin = require('../models/Admin'); 
 const Booking = require('../models/Booking');
 const Chat = require('../models/Chat');
 
@@ -28,6 +29,24 @@ function isLoggedIn(req, res, next) {
     }
     res.redirect('/auth/login');
 }
+
+router.get('/doctor-index', isLoggedIn, async (req, res) => {
+    try {
+        const doctorEmail = req.session.user.email;
+
+        const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        const blogs = await Blog.find().lean(); 
+
+        res.render('doctor-index', { doctor, blogs });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
 
 router.get('/profile', isLoggedIn, async (req, res) => {
     try {
@@ -67,6 +86,7 @@ router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, asyn
             insurances: Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances],
             awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
             faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
+            hospitalAddress: req.body.hospitalAddress, 
         };
 
         doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });
@@ -117,7 +137,6 @@ router.get('/bookings', isLoggedIn, async (req, res) => {
     }
 });
 
-// Update booking status and start chat
 router.post('/bookings/:id', isLoggedIn, async (req, res) => {
     try {
         const { status } = req.body;
@@ -131,7 +150,7 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
         const currentStatus = booking.status;
 
         booking.status = status;
-        if (status === 'accepted' && !booking.meetingLink) {
+        if (status === 'accepted' && !booking.meetingLink && booking.consultationType === 'Video call') {
             booking.meetingLink = await createGoogleMeetLink(booking);
         }
         await booking.save();
@@ -161,12 +180,21 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                 let emailSubject, emailContent;
 
                 if (status === 'accepted') {
-                    emailSubject = 'Appointment Confirmation';
-                    emailContent = `<p>Dear ${booking.patient.name},</p>
-                                    <p>Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
-                                    <p>Join the meeting using the following link: <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
-                                    <p>Best regards,</p>
-                                    <p>Global Wellness Alliance Team</p>`;
+                    if (booking.consultationType === 'Video call') {
+                        emailSubject = 'Appointment Confirmation';
+                        emailContent = `<p>Dear ${booking.patient.name},</p>
+                                        <p>Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
+                                        <p>Join the meeting using the following link: <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
+                                        <p>Best regards,</p>
+                                        <p>Global Wellness Alliance Team</p>`;
+                    } else if (booking.consultationType === 'In-person') {
+                        emailSubject = 'Appointment Confirmation';
+                        emailContent = `<p>Dear ${booking.patient.name},</p>
+                                        <p>Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
+                                        <p>Please visit the hospital at ${doctor.hospitalAddress}</p>
+                                        <p>Best regards,</p>
+                                        <p>Global Wellness Alliance Team</p>`;
+                    }
 
                     await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
 
@@ -197,8 +225,18 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                 });
             }
 
+            let chatMessage = '';
+            if (booking.consultationType === 'Video call') {
+                chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Join the meeting using the following link: ${booking.meetingLink}`;
+            } else if (booking.consultationType === 'In-person') {
+                chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Please visit the hospital at ${doctor.hospitalAddress}`;
+            }
 
-            await chat.save();
+            await Chat.findOneAndUpdate(
+                { doctorId: booking.doctor, patientId: booking.patient },
+                { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
+                { upsert: true, new: true }
+            );
 
         } else {
             console.error('Time slot not found for the given date and time');
@@ -210,6 +248,7 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
 
 router.get('/manage-time-slots', isLoggedIn, async (req, res) => {
     try {
@@ -566,24 +605,38 @@ router.get('/profile/blogs', isLoggedIn, async (req, res) => {
     }
   });
 
-  router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
+router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
     try {
-        const blog = await Blog.findById(req.params.id);
-
-        if (!blog) {
-            return res.status(404).send('Blog not found');
-        }
-
-        if (blog.authorId.toString() !== req.session.user._id.toString()) {
-            return res.status(403).send('Unauthorized');
-        }
-
-        res.render('edit-blog', { blog });
+      const blog = await Blog.findById(req.params.id);
+  
+      if (!blog) {
+        console.error('Blog not found');
+        return res.status(404).send('Blog not found');
+      }
+  
+      if (!req.session.user || !req.session.user._id) {
+        console.error('Unauthorized: No user session found');
+        return res.status(403).send('Unauthorized');
+      }
+  
+      if (!blog.authorId) {
+        console.error('Blog author ID is not defined');
+        return res.status(403).send('Unauthorized');
+      }
+  
+      if (blog.authorId.toString() !== req.session.user._id.toString()) {
+        return res.status(403).send('Unauthorized');
+      }
+  
+      res.render('edit-blog', { blog });
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
+      console.error(err);
+      res.status(500).send('Server Error');
     }
-});
+  });
+  
+  
+  
 
 router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, res) => {
     try {
@@ -639,40 +692,182 @@ router.get('/dashboard', isLoggedIn, async (req, res) => {
     }
   });
 
+
   router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
     try {
-      const { message } = req.body;
-      const doctor = await Doctor.findOne({ email: req.session.user.email });
-      const chatId = req.params.chatId;
+        const { message } = req.body;
+        const doctor = await Doctor.findOne({ email: req.session.user.email });
+        const chatId = req.params.chatId;
+
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        let chat = await Chat.findOneAndUpdate(
+            { _id: chatId, doctorId: doctor._id },
+            { $push: { messages: { senderId: doctor._id, text: message, timestamp: new Date() } } },
+            { upsert: true, new: true }
+        ).populate('patientId');
+
+        if (!chat) {
+            return res.status(404).send('Chat not found');
+        }
+
+        const consultationType = chat.consultationType;
+
+        let messageContent = '';
+        if (consultationType === 'Video call') {
+            const booking = {
+                doctor: {
+                    name: doctor.name,
+                    email: doctor.email,
+                },
+                patient: {
+                    name: chat.patientId.name, 
+                    email: chat.patientId.email, 
+                },
+                date: new Date(), 
+            };
+            
+            const videoCallLink = await createGoogleMeetLink(booking);
+            console.log(videoCallLink);
+            messageContent = `Here is the link to join the video call: ${videoCallLink}`;
+        } else if (consultationType === 'In-person') {
+            const address = doctor.hospital.address; 
+            messageContent = `Your appointment is scheduled at the hospital. Here is the address: ${address}`;
+        } else {
+            messageContent = `Appointment details: ${consultationType}`;
+        }
+
+        chat = await Chat.findByIdAndUpdate(
+            chatId,
+            { $push: { messages: { senderId: doctor._id, text: messageContent, timestamp: new Date() } } },
+            { new: true }
+        );
+
+        res.redirect(`/doctor/chat/${chat._id}`);
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+router.get('/chat/:id', isLoggedIn, async (req, res) => {
+    try {
+        const chatId = req.params.id;
+        const chat = await Chat.findById(chatId).populate('patientId').lean();
+
+        if (!chat) {
+            return res.status(404).send('Chat not found');
+        }
+
+        res.render('doctorChat', { chat });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
+    try {
+        const blogId = req.params.id;
+        const blog = await Blog.findById(blogId).lean();
   
-      if (!doctor) {
-        return res.status(404).send('Doctor not found');
+        if (!blog) {
+            return res.status(404).send('Blog not found');
+        }
+  
+        res.render('DoctorViewBlog', { blog });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+  });
+  
+router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
+    try {
+        const { comment } = req.body;
+        const blogId = req.params.id;
+        const blog = await Blog.findById(blogId);
+  
+        if (!blog) {
+            return res.status(404).send('Blog not found');
+        }
+        console.log(req.session.user.name)
+        blog.comments.push({
+            username: req.session.user.name, 
+            comment: comment
+        });
+  
+        await blog.save();
+  
+        req.flash('success_msg', 'Comment added successfully');
+        res.redirect(`/doctor/blogs/view/${blogId}`);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+  });
+  
+  router.get('/author/:id', async (req, res) => {
+    try {
+      const authorId = req.params.id;
+  
+      let author = await Doctor.findById(authorId);
+  
+      if (!author) {
+        author = await Admin.findById(authorId);
       }
   
-      let chat = await Chat.findOneAndUpdate(
-        { _id: chatId, doctorId: doctor._id },
-        { $push: { messages: { senderId: doctor._id, text: message, timestamp: new Date() } } },
-        { upsert: true, new: true }
-      );
+      if (!author) {
+        return res.status(404).send('Author not found');
+      }
   
-      res.redirect(`/doctor/chat/${chat._id}`);
+      const blogCount = await Blog.countDocuments({ authorId });
   
-    } catch (error) {
-      console.error(error.message);
+      res.render('doctor-author-info', {
+        author,
+        blogCount
+      });
+    } catch (err) {
+      console.error(err.message);
       res.status(500).send('Server Error');
     }
-  });  
-
-  router.get('/chat/:id', isLoggedIn, async (req, res) => {
-    try {
-      const chatId = req.params.id;
-      const chat = await Chat.findById(chatId).populate('patientId').lean();
+  });
+router.get('/priority-blogs', async (req, res) => {
+      try {
+        const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).lean();
   
-      if (!chat) {
-        return res.status(404).send('Chat not found');
+        res.render('priorityblogs', { blogs });
+      } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+      }
+    });
+  
+router.get('/blogs', async (req, res) => {
+    try {
+      let filter = { verificationStatus: 'Verified' }; 
+  
+      if (req.query.search) {
+        const regex = new RegExp(escapeRegex(req.query.search), 'gi'); 
+  
+        filter = {
+          verificationStatus: 'Verified',
+          $or: [
+            { title: regex },
+            { categories: regex },
+            { hashtags: regex }
+          ]
+        };
       }
   
-      res.render('doctorChat', { chat });
+      const verifiedBlogs = await Blog.find(filter).lean();
+  
+      res.render('Doctorblogs', { blogs: verifiedBlogs, searchQuery: req.query.search });
+  
     } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');

@@ -214,9 +214,10 @@
           </div>
         <% }) %>
       </div>
+      <label>Hospital Address:</label>
       <button type="button" onclick="addInput('hospitals')">Add Hospital</button>
     </div>
-    
+    <input type="text" name="hospitalAddress" value="<%= doctor.hospitalAddress %>" placeholder="Hospital Address" required>
     <div>
       <label>Insurances:</label>
       <div id="insurances-container">
@@ -256,7 +257,6 @@
       <button type="button" onclick="addInput('faqs')">Add FAQ</button>
     </div>
     
-    <!-- Time Slots -->
     <div>
       <label>Time Slots:</label>
       <div id="time-slots-container">

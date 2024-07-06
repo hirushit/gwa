@@ -23,6 +23,19 @@ function isAdmin(req, res, next) {
   res.status(403).send('Access denied.');
 };
 
+router.get('/admin-home', async (req, res) => {
+  try {
+      const highPriorityBlogs = await Blog.find({ priority: 'high' }).limit(5).exec();
+      const adminEmail = req.session.user.email;
+      const admin = await Admin.findOne({ email: adminEmail }).lean(); // Assuming you have doctor information in req.doctor
+
+      res.render('admin-index', { blogs: highPriorityBlogs, admin});
+  } catch (error) {
+      console.error('Error fetching high-priority blogs:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
 router.get('/dashboard', isLoggedIn, async (req, res) => {
   try {
     const doctors = await Doctor.find({ verified: { $ne: 'Verified' } }).lean();
@@ -209,7 +222,7 @@ router.get('/blog', (req, res) => {
 });
 
 
-router.post('/blog', upload.single('image'), async (req, res) => {
+router.post('/blog-all', upload.single('image'), async (req, res) => {
   try {
       const authorEmail = req.session.user.email;
       const { title, author, description, summary, categories, hashtags, priority } = req.body;
@@ -244,6 +257,112 @@ router.post('/blog', upload.single('image'), async (req, res) => {
   } catch (err) {
       console.error(err);
       res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/blogs-all/view/:id', isLoggedIn, async (req, res) => {
+  try {
+      const blogId = req.params.id;
+      const blog = await Blog.findById(blogId).lean();
+
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+
+      res.render('AdminViewAllBlog', { blog });
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+
+
+router.post('/blogs-all/comment/:id', isLoggedIn, async (req, res) => {
+  try {
+      const { comment } = req.body;
+      const blogId = req.params.id;
+      const blog = await Blog.findById(blogId);
+
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+      console.log(req.session.user.name)
+      blog.comments.push({
+          username: req.session.user.name, 
+          comment: comment
+      });
+
+      await blog.save();
+
+      req.flash('success_msg', 'Comment added successfully');
+      res.redirect(`/admin/blogs-all/view/${blogId}`);
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.get('/author/:id', async (req, res) => {
+  try {
+    const authorId = req.params.id;
+
+    let author = await Doctor.findById(authorId);
+
+    if (!author) {
+      author = await Admin.findById(authorId);
+    }
+
+    if (!author) {
+      return res.status(404).send('Author not found');
+    }
+
+    const blogCount = await Blog.countDocuments({ authorId });
+
+    res.render('Adminauthor-info', {
+      author,
+      blogCount
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+router.get('/priority-blogs', async (req, res) => {
+    try {
+      const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).lean();
+
+      res.render('priorityblogs', { blogs });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
+router.get('/blogs-all', async (req, res) => {
+  try {
+    let filter = { verificationStatus: 'Verified' }; 
+
+    if (req.query.search) {
+      const regex = new RegExp(escapeRegex(req.query.search), 'gi'); 
+
+      filter = {
+        verificationStatus: 'Verified',
+        $or: [
+          { title: regex },
+          { categories: regex },
+          { hashtags: regex }
+        ]
+      };
+    }
+
+    const verifiedBlogs = await Blog.find(filter).lean();
+
+    res.render('AdminSearchBlogs', { blogs: verifiedBlogs, searchQuery: req.query.search });
+
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
 

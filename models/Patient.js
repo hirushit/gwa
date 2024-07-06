@@ -26,7 +26,9 @@ const patientSchema = new mongoose.Schema({
         enum: ['patient'],
         default: 'patient',
     },
-    phoneNumber: String,
+    phoneNumber: {
+        type:String
+    },
     dateOfBirth: Date,
     bloodGroup: String,
     address: String,

@@ -23,11 +23,10 @@
             <tbody>
                 <% bookings.forEach(booking => { %>
                     <tr>
-                        <td><%= booking.patient.name %></td>
-                        <td><%= booking.date.toDateString() %></td>
-                        <td><%= booking.time %></td>
-                        <td><%= booking.consultationType %></td>
-                        <td><%= booking.status %></td>
+                        <td><%= booking.patient ? booking.patient.name : 'N/A' %></td>
+        <td><%= booking.date ? booking.date.toDateString() : 'N/A' %></td>
+        <td><%= booking.time %></td>
+        <td><%= booking.consultationType %></td>
                         <td>
                             <form action="/doctor/bookings/<%= booking._id %>" method="POST" style="display: inline;">
                                 <select name="status" required>

@@ -1,3 +1,4 @@
+<!-- views/blogs.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,7 +22,7 @@
 </head>
 <body>
     <h1>Blogs</h1>
-    <form action="/patient/blogs" method="GET">
+    <form action="/admin/priority-blogs" method="GET">
         <label for="search">Search:</label>
         <input type="text" id="search" name="search" value="<%= searchQuery %>">
         <button type="submit">Search</button>
@@ -35,11 +36,11 @@
                 <div>
                     <h3><%= blog.title %></h3>
                     <p><%= blog.summary %></p>
-                    <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
+                    <a href="/admin/blogs/view/<%= blog._id %>">Read More</a>
                 </div>
             </li>
         <% }) %>
     </ul>
-    
+   
 </body>
 </html>

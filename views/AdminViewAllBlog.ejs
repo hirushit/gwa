@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Details</title>
+</head>
+<body>
+    <h1><%= blog.title %></h1>
+    
+    <% if (blog.image && blog.image.data && blog.image.contentType) { %>
+        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="<%= blog.title %> Image" width="200">
+    <% } else { %>
+        <p>No image available</p>
+    <% } %>
+    
+    <h2>Author Information</h2>
+    <p><strong>Author:</strong> <%= blog.author %></p>
+    <p><strong>Author Email:</strong> <%= blog.authorEmail %></p>
+    <a href="/admin/author/<%= blog.authorId %>">View Author Info</a>
+    <h2>Description</h2>
+    <p><%= blog.description %></p>
+    <h2>Summary</h2>
+    <p><%= blog.summary %></p>
+
+    <h2>Categories</h2>
+    <ul>
+        <% blog.categories.forEach(category => { %>
+            <li><%= category %></li>
+        <% }); %>
+    </ul>
+
+    <h2>Hashtags</h2>
+    <ul>
+        <% blog.hashtags.forEach(hashtag => { %>
+            <li><%= hashtag %></li>
+        <% }); %>
+    </ul>
+    
+    <h2>Comments:</h2>
+    <ul>
+        <% blog.comments.forEach(comment => { %>
+            <li><strong><%= comment.username %>:</strong> <%= comment.comment %> (<%= comment.date.toLocaleString() %>)</li>
+        <% }); %>
+    </ul>
+    <form action="/admin/blogs-all/comment/<%= blog._id %>" method="POST">
+        <label for="comment">Add Comment:</label>
+        <textarea name="comment" id="comment" cols="30" rows="5" required></textarea>
+        <button type="submit">Submit Comment</button>
+    </form>
+</body>
+</html>

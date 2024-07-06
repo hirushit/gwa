@@ -11,19 +11,20 @@
     <ul>
         <% chats.forEach(chat => { %>
             <li>
-                <h3><%= chat.patientId.name %></h3>
-                <% if (chat.messages.length > 0) { %>
-                    <p>Last Message: <%= chat.messages[chat.messages.length - 1].text %></p>
-                    <p>Timestamp: <%= chat.messages[chat.messages.length - 1].timestamp %></p>
+                <% if (chat.patientId && chat.patientId.name) { %>
+                    <h3><%= chat.patientId.name %></h3>
+                    <% if (chat.messages.length > 0) { %>
+                        <p>Last Message: <%= chat.messages[chat.messages.length - 1].text %></p>
+                        <p>Timestamp: <%= chat.messages[chat.messages.length - 1].timestamp %></p>
+                    <% } else { %>
+                        <p>No messages yet</p>
+                    <% } %>
+                    <a href="/doctor/chat/<%= chat._id %>">Chat with <%= chat.patientId.name %></a>
                 <% } else { %>
-                    <p>No messages yet</p>
+                    <p>Error: Patient information not available</p>
                 <% } %>
-                <a href="/doctor/chat/<%= chat._id %>">Chat with <%= chat.patientId.name %></a>
             </li>
         <% }) %>
     </ul>
-
-
-
 </body>
 </html>

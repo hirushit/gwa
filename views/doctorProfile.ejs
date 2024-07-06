@@ -160,19 +160,21 @@
             <button type="button" onclick="handleRestrictedAccess()">Upload Blog Post</button>
         <% } %>
     </form>
+    <a href="/doctor/doctor-index">Home</a>
     
     <a href="/doctor/edit">Edit Profile</a>
     <% if ((doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') && doctor.subscriptionVerification === 'Verified') { %>
         <a href="/doctor/bookings">Manage Bookings</a>
         <a href="/doctor/manage-time-slots">Manage Time Slots</a>
         <a href="/doctor/profile/blogs">View My Blogs</a>
+        <a href="/doctor/dashboard">Chat Box</a>
     <% } else { %>
         <button onclick="handleRestrictedAccess()">Manage Bookings</button>
         <button onclick="handleRestrictedAccess()">Manage Time Slots</button>
         <button onclick="handleRestrictedAccess()">Manage Blogs</button>
+        <button onclick="handleRestrictedAccess()">Chat box</button>
     <% } %>
 
-    <a href="/doctor/dashboard">Chat Box</a>
     <a href="/doctor/calendar" class="btn">View Calendar</a>
     <form action="/auth/logout" method="GET">
     <button type="submit">Logout</button>

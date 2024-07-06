@@ -3,11 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Blog Upload</title>
+    <title>Admin Blog Upload</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #007bff;
+            border: 1px solid #007bff;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <h1>Admin Blog Upload Form</h1>
-    <form id="blogForm" action="/admin/blog" method="POST" enctype="multipart/form-data">
+    <form id="blogForm" action="/admin/blog-all" method="POST" enctype="multipart/form-data">
         <label for="title">Title:</label><br>
         <input type="text" id="title" name="title" required><br><br>
         
@@ -20,129 +28,54 @@
         <label for="summary">Summary:</label><br>
         <textarea id="summary" name="summary" rows="4" required></textarea><br><br>
         
-        
         <label for="image">Upload Image:</label><br>
         <input type="file" id="image" name="image" accept="image/*" required><br><br>
         
-        <fieldset>
-            <legend>Categories:</legend>
-            <input type="checkbox" id="generalSurgery" name="categories" value="General surgery">
-            <label for="generalSurgery">General Surgery</label><br>
-            
-            <input type="checkbox" id="orientalMedicine" name="categories" value="Oriental medicine">
-            <label for="orientalMedicine">Oriental Medicine</label><br>
-            
-            <input type="checkbox" id="latestMedicalResearch" name="categories" value="Latest Medical Research">
-            <label for="latestMedicalResearch">Latest Medical Research</label><br>
-            
-            <input type="checkbox" id="commonMedicalCondition" name="categories" value="Common Medical Condition">
-            <label for="commonMedicalCondition">Common Medical Condition</label><br>
-            
-            <input type="checkbox" id="mentalHealth" name="categories" value="Mental Health">
-            <label for="mentalHealth">Mental Health</label><br>
-            
-            <input type="checkbox" id="conventionalMedicine" name="categories" value="Conventional medicine">
-            <label for="conventionalMedicine">Conventional Medicine</label><br>
-            
-            <input type="checkbox" id="medicalEducation" name="categories" value="Medical education">
-            <label for="medicalEducation">Medical Education</label><br>
-            
-            <input type="checkbox" id="psychology" name="categories" value="Psychology">
-            <label for="psychology">Psychology</label><br>
-        </fieldset><br>
+        <label for="categories">Categories:</label><br>
+        <select id="categories" name="categories" multiple="multiple" style="width: 100%;">
+            <option value="General surgery">General Surgery</option>
+            <option value="Oriental medicine">Oriental Medicine</option>
+            <option value="Latest Medical Research">Latest Medical Research</option>
+            <option value="Common Medical Condition">Common Medical Condition</option>
+            <option value="Mental Health">Mental Health</option>
+            <option value="Conventional medicine">Conventional Medicine</option>
+            <option value="Medical education">Medical Education</option>
+            <option value="Psychology">Psychology</option>
+        </select><br><br>
         
-        <fieldset>
-            <legend>Hashtags:</legend>
-            <input type="checkbox" id="blogger" name="hashtags" value="#blogger">
-            <label for="blogger">#blogger</label><br>
-            
-            <input type="checkbox" id="medfluencer" name="hashtags" value="#medfluencer">
-            <label for="medfluencer">#medfluencer</label><br>
-            
-            <input type="checkbox" id="wms" name="hashtags" value="#wms">
-            <label for="wms">#wms</label><br>
-            
-            <input type="checkbox" id="mbchb" name="hashtags" value="#mbchb">
-            <label for="mbchb">#mbchb</label><br>
-            
-            <input type="checkbox" id="mbbs" name="hashtags" value="#mbbs">
-            <label for="mbbs">#mbbs</label><br>
-            
-            <input type="checkbox" id="neurograd" name="hashtags" value="#neurograd">
-            <label for="neurograd">#neurograd</label><br>
-            
-            <input type="checkbox" id="usmle" name="hashtags" value="#usmle">
-            <label for="usmle">#usmle</label><br>
-            
-            <input type="checkbox" id="studyinspiration" name="hashtags" value="#studyinspiration">
-            <label for="studyinspiration">#studyinspiration</label><br>
-            
-            <input type="checkbox" id="acceleratedmedicine" name="hashtags" value="#acceleratedmedicine">
-            <label for="acceleratedmedicine">#acceleratedmedicine</label><br>
-            
-            <input type="checkbox" id="exams" name="hashtags" value="#exams">
-            <label for="exams">#exams</label><br>
-            
-            <input type="checkbox" id="nursesofinstagram" name="hashtags" value="#nursesofinstagram">
-            <label for="nursesofinstagram">#nursesofinstagram</label><br>
-            
-            <input type="checkbox" id="premed" name="hashtags" value="#premed">
-            <label for="premed">#premed</label><br>
-            
-            <input type="checkbox" id="neet" name="hashtags" value="#neet">
-            <label for="neet">#neet</label><br>
-            
-            <input type="checkbox" id="graduateentrymedicine" name="hashtags" value="#graduateentrymedicine">
-            <label for="graduateentrymedicine">#graduateentrymedicine</label><br>
-            
-            <input type="checkbox" id="hospital" name="hashtags" value="#hospital">
-            <label for="hospital">#hospital</label><br>
-            
-            <input type="checkbox" id="anatomy" name="hashtags" value="#anatomy">
-            <label for="anatomy">#anatomy</label><br>
-            
-            <input type="checkbox" id="md" name="hashtags" value="#md">
-            <label for="md">#md</label><br>
-            
-            <input type="checkbox" id="futurevet" name="hashtags" value="#futurevet">
-            <label for="futurevet">#futurevet</label><br>
-            
-            <input type="checkbox" id="blog" name="hashtags" value="#blog">
-            <label for="blog">#blog</label><br>
-            
-            <input type="checkbox" id="surgery" name="hashtags" value="#surgery">
-            <label for="surgery">#surgery</label><br>
-            
-            <input type="checkbox" id="medvet" name="hashtags" value="#medvet">
-            <label for="medvet">#medvet</label><br>
-            
-            <input type="checkbox" id="medicina" name="hashtags" value="#medicina">
-            <label for="medicina">#medicina</label><br>
-            
-            <input type="checkbox" id="vet" name="hashtags" value="#vet">
-            <label for="vet">#vet</label><br>
-            
-            <input type="checkbox" id="medico" name="hashtags" value="#medico">
-            <label for="medico">#medico</label><br>
-            
-            <input type="checkbox" id="doctorlife" name="hashtags" value="#doctorlife">
-            <label for="doctorlife">#doctorlife</label><br>
-            
-            <input type="checkbox" id="nursestyle" name="hashtags" value="#nursestyle">
-            <label for="nursestyle">#nursestyle</label><br>
-            
-            <input type="checkbox" id="tiermedizin" name="hashtags" value="#tiermedizin">
-            <label for="tiermedizin">#tiermedizin</label><br>
-            
-            <input type="checkbox" id="medicalscrubs" name="hashtags" value="#medicalscrubs">
-            <label for="medicalscrubs">#medicalscrubs</label><br>
-            
-            <input type="checkbox" id="cutescrubs" name="hashtags" value="#cutescrubs">
-            <label for="cutescrubs">#cutescrubs</label><br>
-            
-            <input type="checkbox" id="doctorsofinstagram" name="hashtags" value="#doctorsofinstagram">
-            <label for="doctorsofinstagram">#doctorsofinstagram</label><br>
-        </fieldset><br>
+        <label for="hashtags">Hashtags:</label><br>
+        <select id="hashtags" name="hashtags" multiple="multiple" style="width: 100%;">
+            <option value="#blogger">#blogger</option>
+            <option value="#medfluencer">#medfluencer</option>
+            <option value="#wms">#wms</option>
+            <option value="#mbchb">#mbchb</option>
+            <option value="#mbbs">#mbbs</option>
+            <option value="#neurograd">#neurograd</option>
+            <option value="#usmle">#usmle</option>
+            <option value="#studyinspiration">#studyinspiration</option>
+            <option value="#acceleratedmedicine">#acceleratedmedicine</option>
+            <option value="#exams">#exams</option>
+            <option value="#nursesofinstagram">#nursesofinstagram</option>
+            <option value="#premed">#premed</option>
+            <option value="#neet">#neet</option>
+            <option value="#graduateentrymedicine">#graduateentrymedicine</option>
+            <option value="#hospital">#hospital</option>
+            <option value="#anatomy">#anatomy</option>
+            <option value="#md">#md</option>
+            <option value="#futurevet">#futurevet</option>
+            <option value="#blog">#blog</option>
+            <option value="#surgery">#surgery</option>
+            <option value="#medvet">#medvet</option>
+            <option value="#medicina">#medicina</option>
+            <option value="#vet">#vet</option>
+            <option value="#medico">#medico</option>
+            <option value="#doctorlife">#doctorlife</option>
+            <option value="#nursestyle">#nursestyle</option>
+            <option value="#tiermedizin">#tiermedizin</option>
+            <option value="#medicalscrubs">#medicalscrubs</option>
+            <option value="#cutescrubs">#cutescrubs</option>
+            <option value="#doctorsofinstagram">#doctorsofinstagram</option>
+        </select><br><br>
 
         <label for="priority">Priority:</label><br>
         <select id="priority" name="priority">
@@ -153,8 +86,19 @@
         <button type="submit">Upload Blog</button>
     </form>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        
+        $(document).ready(function() {
+            $('#categories').select2({
+                placeholder: "Select categories",
+                allowClear: true
+            });
+            $('#hashtags').select2({
+                placeholder: "Select hashtags",
+                allowClear: true
+            });
+        });
     </script>
 </body>
 </html>

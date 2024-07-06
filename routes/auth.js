@@ -37,52 +37,78 @@ const sendOTP = async (email, otp) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: 'Verification OTP for Password Reset',
-    text: `Your OTP for password reset is: ${otp}`
+    subject: 'Verification OTP for Signup',
+    text: `Your OTP for signup is: ${otp}`
   };
 
   await transporter.sendMail(mailOptions);
 };
 
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
 
-const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-
-router.get('/signup', (req, res) => {
+// Patient Signup Page
+router.get('/signup/patient', (req, res) => {
   const showOtpForm = req.session.newUser && req.session.newUser.otp;
-  const selectRoleForm = req.session.selectRoleForm;
-  res.render('signup', { showOtpForm, selectRoleForm });
+  res.render('signup_patient', { showOtpForm });
 });
 
-router.post('/signup', async (req, res) => {
-  const { name, email, password, role } = req.body;
+// Patient Signup Form Submission
+router.post('/signup/patient', async (req, res) => {
+  const { name, email, password, phoneNumber } = req.body;
 
   try {
-    let existingUser = await Patient.findOne({ email }) ||
-                       await Doctor.findOne({ email }) ||
-                       await Admin.findOne({ email });
+    let existingUser = await Patient.findOne({ email });
 
     if (existingUser) {
       req.flash('error_msg', 'User already exists');
-      return res.redirect('/auth/signup');
+      return res.redirect('/auth/signup/patient');
     }
 
     const otp = otpGenerator.generate(6, { digits: true, upperCase: false, specialChars: false, alphabets: false });
     await sendOTP(email, otp);
 
-    req.session.newUser = { name, email, password, role, otp };
+    req.session.newUser = { name, email, password, phoneNumber, otp, role: 'patient' };
 
     req.flash('success_msg', 'OTP has been sent to your email. Please verify.');
-    return res.redirect('/auth/signup');
+    return res.redirect('/auth/signup/patient');
   } catch (err) {
-    console.error('Error in signup:', err);
+    console.error('Error in patient signup:', err);
     req.flash('error_msg', 'Server error');
-    return res.redirect('/auth/signup');
+    return res.redirect('/auth/signup/patient');
+  }
+});
+// Doctor Signup Page
+router.get('/signup/doctor', (req, res) => {
+  const showOtpForm = req.session.newUser && req.session.newUser.otp;
+  res.render('signup_doctor', { showOtpForm });
+});
+
+// Doctor Signup Form Submission
+router.post('/signup/doctor', async (req, res) => {
+  const { name, email, password, phoneNumber } = req.body;
+
+  try {
+    let existingUser = await Doctor.findOne({ email });
+
+    if (existingUser) {
+      req.flash('error_msg', 'User already exists');
+      return res.redirect('/auth/signup/doctor');
+    }
+
+    const otp = otpGenerator.generate(6, { digits: true, upperCase: false, specialChars: false, alphabets: false });
+    await sendOTP(email, otp);
+
+    req.session.newUser = { name, email, password, phoneNumber, otp, role: 'doctor' };
+
+    req.flash('success_msg', 'OTP has been sent to your email. Please verify.');
+    return res.redirect('/auth/signup/doctor');
+  } catch (err) {
+    console.error('Error in doctor signup:', err);
+    req.flash('error_msg', 'Server error');
+    return res.redirect('/auth/signup/doctor');
   }
 });
 
+// OTP Verification and User Creation
 router.post('/verify', async (req, res) => {
   const { otp } = req.body;
   const newUser = req.session.newUser;
@@ -94,26 +120,28 @@ router.post('/verify', async (req, res) => {
 
   if (newUser.otp !== otp) {
     req.flash('error_msg', 'Invalid OTP');
-    return res.redirect('/auth/signup');
+    return res.redirect(req.headers.referer); // Redirect back to the signup page
   }
 
   try {
-    const { name, email, password, role } = newUser;
+    const { name, email, password, phoneNumber, role } = newUser;
     let user;
 
     if (role === 'patient') {
-      user = new Patient({ name, email, password, role });
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      user = new Patient({ name, email, password: hashedPassword, phoneNumber, role });
     } else if (role === 'doctor') {
-      user = new Doctor({ name, email, password, role });
-    } else if (role === 'admin') {
-      user = new Admin({ name, email, password, role });
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      user = new Doctor({ name, email, password: hashedPassword, phoneNumber, role });
     } else {
       req.flash('error_msg', 'Invalid role');
       return res.redirect('/auth/signup');
     }
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
     await user.save();
 
     req.session.newUser = null;
@@ -126,6 +154,7 @@ router.post('/verify', async (req, res) => {
     return res.redirect('/auth/signup');
   }
 });
+
 
 router.get('/login', (req, res) => {
   res.render('login');
@@ -155,11 +184,11 @@ router.post('/login', async (req, res) => {
     req.flash('success_msg', 'Logged in successfully');
 
     if (user.role === 'patient') {
-      return res.redirect('/patient/profile'); 
+      return res.redirect('/'); 
     } else if (user.role === 'doctor') {
-      return res.redirect('/doctor/profile'); 
+      return res.redirect('/doctor/doctor-index'); 
     } else if (user.role === 'admin') {
-      return res.redirect('/admin/dashboard'); 
+      return res.redirect('/admin/admin-home'); 
     } else {
       req.flash('error_msg', 'Invalid role');
       return res.redirect('/auth/login');
@@ -172,71 +201,118 @@ router.post('/login', async (req, res) => {
 });
 
 
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
+
+const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+
+router.get('/google/patient', (req, res) => {
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['profile', 'email'],
+    state: JSON.stringify({ role: 'patient' }) 
+  });
+  res.redirect(authUrl);
+});
+
+router.get('/google/doctor', (req, res) => {
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['profile', 'email'],
+    state: JSON.stringify({ role: 'doctor' }) 
+  });
+  res.redirect(authUrl);
+});
+
 router.get('/google', (req, res) => {
-  const scopes = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'];
-  const url = oauth2Client.generateAuthUrl({ access_type: 'offline', scope: scopes });
+  const url = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: [
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.email'
+    ],
+    prompt: 'consent', 
+  });
   res.redirect(url);
 });
 
+
+
 router.get('/google/callback', async (req, res) => {
-  const code = req.query.code;
+  const { code } = req.query;
 
   try {
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
 
-    const oauth2 = google.oauth2({ auth: oauth2Client, version: 'v2' });
-    const { data } = await oauth2.userinfo.get();
+    const oauth2 = google.oauth2({
+      auth: oauth2Client,
+      version: 'v2'
+    });
 
+    const { data } = await oauth2.userinfo.get();
     const { name, email } = data;
 
-    let existingUser = await Patient.findOne({ email }) ||
-                       await Doctor.findOne({ email }) ||
-                       await Admin.findOne({ email });
+    let existingUser = await Patient.findOne({ email })
+                       || await Doctor.findOne({ email })
+                       || await Admin.findOne({ email });
 
     if (existingUser) {
       req.session.user = existingUser;
       req.flash('success_msg', 'Logged in successfully');
-      return res.redirect('/');
+      if (existingUser.role === 'patient') {
+        return res.redirect('/patient/profile'); 
+      } else if (existingUser.role === 'doctor') {
+        return res.redirect('/doctor/profile'); 
+      } else if (existingUser.role === 'admin') {
+        return res.redirect('/admin/dashboard'); 
+      } else {
+        req.flash('error_msg', 'Invalid role');
+        return res.redirect('/auth/login');
+      }
     } else {
-      req.session.selectRoleForm = { name, email };
-      return res.redirect('/auth/signup');
+      const { role } = JSON.parse(req.query.state); 
+
+      let newUser;
+      if (role === 'patient') {
+        newUser = new Patient({
+          name,
+          email,
+          role: 'patient', 
+        });
+      } else if (role === 'doctor') {
+        newUser = new Doctor({
+          name,
+          email,
+          role: 'doctor', 
+        });
+      } else {
+        req.flash('error_msg', 'Invalid role');
+        return res.redirect('/auth/login');
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      newUser.password = await bcrypt.hash(email, salt); 
+
+      await newUser.save();
+
+      req.session.user = newUser;
+      req.flash('success_msg', 'Logged in successfully');
+      
+      if (role === 'patient') {
+        return res.redirect('/patient/profile');
+      } else if (role === 'doctor') {
+        return res.redirect('/doctor/profile');
+      } else {
+        req.flash('error_msg', 'Invalid role');
+        return res.redirect('/auth/login');
+      }
     }
   } catch (err) {
     console.error('Error in Google OAuth callback:', err);
-    req.flash('error_msg', 'Server error');
+    req.flash('error_msg', 'Authentication failed. Please try again.');
     return res.redirect('/auth/login');
-  }
-});
-
-router.post('/select-role', async (req, res) => {
-  const { name, email, role } = req.body;
-
-  try {
-    let user;
-
-    if (role === 'patient') {
-      user = new Patient({ name, email, role });
-    } else if (role === 'doctor') {
-      user = new Doctor({ name, email, role });
-    } else if (role === 'admin') {
-      user = new Admin({ name, email, role });
-    } else {
-      req.flash('error_msg', 'Invalid role');
-      return res.redirect('/auth/signup');
-    }
-
-    await user.save();
-
-    req.session.selectRoleForm = null;
-    req.session.user = user;
-
-    req.flash('success_msg', 'User created successfully');
-    return res.redirect('/');
-  } catch (err) {
-    console.error('Error in selecting role:', err);
-    req.flash('error_msg', 'Server error');
-    return res.redirect('/auth/signup');
   }
 });
 
@@ -271,94 +347,6 @@ router.get('/exit', (req, res) => {
 module.exports = router;
 
 
-router.get('/google', (req, res) => {
-  const authUrl = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: ['profile', 'email']
-  });
-  res.redirect(authUrl);
-});
-
-router.get('/google/callback', async (req, res) => {
-  const { code } = req.query;
-
-  try {
-    const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
-
-    const oauth2 = google.oauth2({
-      auth: oauth2Client,
-      version: 'v2'
-    });
-
-    const { data } = await oauth2.userinfo.get();
-    const { name, email } = data;
-
-    let existingUser = await Patient.findOne({ email }) ||
-                       await Doctor.findOne({ email }) ||
-                       await Admin.findOne({ email });
-
-    if (existingUser) {
-      req.session.user = existingUser;
-      req.flash('success_msg', 'Logged in successfully');
-      if (existingUser.role === 'patient') {
-        return res.redirect('/patient/profile'); 
-      } else if (existingUser.role === 'doctor') {
-        return res.redirect('/doctor/profile'); 
-      } else if (existingUser.role === 'admin') {
-        return res.redirect('/admin/dashboard'); 
-      } else {
-        req.flash('error_msg', 'Invalid role');
-        return res.redirect('/auth/login');
-      }
-    }
-
-    req.session.selectRoleForm = { name, email };
-    return res.redirect('/auth/signup'); 
-  } catch (err) {
-    console.error('Error in Google OAuth callback:', err);
-    req.flash('error_msg', 'Authentication failed. Please try again.');
-    return res.redirect('/auth/signup');
-  }
-});
-
-router.post('/select-role', async (req, res) => {
-  const { name, email, role } = req.body;
-
-  if (!req.session.selectRoleForm || req.session.selectRoleForm.email !== email) {
-    req.flash('error_msg', 'Session expired or invalid email');
-    return res.redirect('/auth/signup');
-  }
-
-  const password = otpGenerator.generate(8, { digits: true, upperCase: true, lowerCase: true, specialChars: true });
-
-  try {
-    let user;
-    if (role === 'patient') {
-      user = new Patient({ name, email, password, role });
-    } else if (role === 'doctor') {
-      user = new Doctor({ name, email, password, role });
-    } else if (role === 'admin') {
-      user = new Admin({ name, email, password, role });
-    } else {
-      req.flash('error_msg', 'Invalid role');
-      return res.redirect('/auth/signup');
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-    await user.save();
-
-    req.session.selectRoleForm = null;
-
-    req.flash('success_msg', 'User created successfully, please log in');
-    return res.redirect('/auth/login');
-  } catch (err) {
-    console.error('Error in selecting role:', err);
-    req.flash('error_msg', 'Server error');
-    return res.redirect('/auth/signup');
-  }
-});
 
 router.get('/forgot-password', (req, res) => {
   res.render('forgot-password');

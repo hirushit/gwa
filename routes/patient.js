@@ -4,6 +4,7 @@ const multer = require('multer');
 const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 const Booking = require('../models/Booking');
+const Admin = require('../models/Admin'); 
 const Blog = require('../models/Blog');
 const Chat = require('../models/Chat');
 
@@ -145,23 +146,24 @@ router.post('/book', isLoggedIn, async (req, res) => {
     const { doctorId, date, time, consultationType } = req.body;
     const patientId = req.session.user._id;
 
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).send('Doctor not found');
+    }
+
     const booking = new Booking({
       patient: patientId,
       doctor: doctorId,
       date: new Date(date),
       time: time,
       consultationType: consultationType,
-      status: 'waiting' 
+      status: 'waiting',
+      hospitalAddress: doctor.hospitalAddress 
     });
 
     await booking.save();
 
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) {
-      return res.status(404).send('Doctor not found');
-    }
-
-    const slotToUpdate = doctor.timeSlots.find(slot => slot && slot.date && slot.date.toISOString() === date && slot.startTime === time.split(' - ')[0]);
+    const slotToUpdate = doctor.timeSlots.find(slot => slot && slot.date && slot.date.toISOString() === new Date(date).toISOString() && slot.startTime === time.split(' - ')[0]);
     if (slotToUpdate) {
       slotToUpdate.status = 'booked';
       await doctor.save();
@@ -173,6 +175,7 @@ router.post('/book', isLoggedIn, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 router.get('/bookings', isLoggedIn, async (req, res) => {
   try {
@@ -351,7 +354,7 @@ router.get('/author/:id', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-  router.get('/priority-blogs', async (req, res) => {
+router.get('/priority-blogs', async (req, res) => {
     try {
       const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).lean();
 

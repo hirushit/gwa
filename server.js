@@ -7,6 +7,8 @@ const flash = require('connect-flash');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const Doctor = require('./models/Doctor');
+const Blog = require('./models/Blog');
+const Patient = require('./models/Patient');
 
 dotenv.config();
 
@@ -80,11 +82,26 @@ app.use('/patient', require('./routes/patient'));
 app.use('/doctor', require('./routes/doctor'));
 app.use('/admin', require('./routes/admin'));
 
-app.get('/', (req, res) => {
-  const user = req.user; 
+function isLoggedIn(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect('/auth/login');
+}
 
-  res.render('index', { user: user });
+app.get('/', async (req, res) => {
+  try {
+      const highPriorityBlogs = await Blog.find({ priority: 'high' }).limit(5).exec();
+      const patientEmail = req.session.user.email; // Assuming you have user information in req.user
+      const patient = await Patient.findOne({email: patientEmail}).lean(); // Assuming you have doctor information in req.doctor
+
+      res.render('index', { blogs: highPriorityBlogs, patient });
+  } catch (error) {
+      console.error('Error fetching high-priority blogs:', error);
+      res.status(500).send('Internal Server Error');
+  }
 });
+
 
 app.post('/auth/logout', (req, res) => {
   req.session.destroy((err) => {
@@ -94,7 +111,6 @@ app.post('/auth/logout', (req, res) => {
     res.redirect('/auth/login');
   });
 });
-
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
   res.status(500).send('Something broke!');

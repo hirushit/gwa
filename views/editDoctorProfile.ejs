@@ -157,26 +157,22 @@
       <input type="url" name="website" value="<%= doctor.website %>">
     </div>
     <div>
-      <label>Social Media Handles:</label>
-      <div>
-        <label>Twitter:</label>
-        <input type="url" name="socialHandles[twitter]" value="<%= doctor.socialHandles.twitter %>">
-      </div>
-      <div>
-        <label>Facebook:</label>
-        <input type="url" name="socialHandles[facebook]" value="<%= doctor.socialHandles.facebook %>">
-      </div>
-      <div>
-        <label>LinkedIn:</label>
-        <input type="url" name="socialHandles[linkedin]" value="<%= doctor.socialHandles.linkedin %>">
-      </div>
-      <div>
-        <label>Instagram:</label>
-        <input type="url" name="socialHandles[instagram]" value="<%= doctor.socialHandles.instagram %>">
-      </div>
+      <label>Twitter:</label>
+      <input type="url" name="socialHandles[twitter]" value="<%= doctor.socialHandles && doctor.socialHandles.twitter ? doctor.socialHandles.twitter : '' %>">
     </div>
-
-    <!-- Consultation Options -->
+    <div>
+      <label>Facebook:</label>
+      <input type="url" name="socialHandles[facebook]" value="<%= doctor.socialHandles && doctor.socialHandles.facebook ? doctor.socialHandles.facebook : '' %>">
+    </div>
+    <div>
+      <label>LinkedIn:</label>
+      <input type="url" name="socialHandles[linkedin]" value="<%= doctor.socialHandles && doctor.socialHandles.linkedin ? doctor.socialHandles.linkedin : '' %>">
+    </div>
+    <div>
+      <label>Instagram:</label>
+      <input type="url" name="socialHandles[instagram]" value="<%= doctor.socialHandles && doctor.socialHandles.instagram ? doctor.socialHandles.instagram : '' %>">
+    </div>
+    
     <div>
       <label>Consultation:</label>
       <select name="consultation">

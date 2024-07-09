@@ -126,13 +126,12 @@ app.get('/auth/search-doctors', async (req, res) => {
       speciality: 1,
       rating: 1,
       availability: 1,
-      city: '$timeSlots.hospitalLocation.city', // Fetch city from timeSlots
-      state: '$timeSlots.hospitalLocation.state', // Fetch state from timeSlots
-      country: '$timeSlots.hospitalLocation.country', // Fetch country from timeSlots
-      hospitals: '$timeSlots.hospital' // Fetch hospitals from timeSlots
+      city: '$timeSlots.hospitalLocation.city', 
+      state: '$timeSlots.hospitalLocation.state', 
+      country: '$timeSlots.hospitalLocation.country', 
+      hospitals: '$timeSlots.hospital'
     };
 
-    // Apply filters based on query parameters
     if (country) matchQuery['timeSlots.hospitalLocation.country'] = { $regex: new RegExp(country, 'i') };
     if (state) matchQuery['timeSlots.hospitalLocation.state'] = { $regex: new RegExp(state, 'i') };
     if (city) matchQuery['timeSlots.hospitalLocation.city'] = { $regex: new RegExp(city, 'i') };

@@ -117,13 +117,20 @@ router.get('/doctors', async (req, res) => {
         sortCriteria = {};
     }
 
-    const doctors = await Doctor.find({ verified: 'Verified' }).sort(sortCriteria);
+    // Fetch doctors with populated hospitals from time slots
+    const doctors = await Doctor.find({ verified: 'Verified' })
+      .populate({
+        path: 'hospitals',
+        select: 'name city -_id' // Include only name and city fields
+      })
+      .sort(sortCriteria);
+
+    // Prepare other dropdown options and data needed for rendering
     const countries = await Doctor.distinct('country');
     const states = await Doctor.distinct('state');
     const cities = await Doctor.distinct('city');
     const specialities = await Doctor.distinct('speciality');
     const languages = await Doctor.distinct('languages');
-    const hospitals = await Doctor.distinct('hospitals');
     const genders = await Doctor.distinct('gender');
 
     res.render('patientDoctors', {
@@ -133,7 +140,6 @@ router.get('/doctors', async (req, res) => {
       cities,
       specialities,
       languages,
-      hospitals,
       genders
     });
   } catch (err) {
@@ -141,6 +147,7 @@ router.get('/doctors', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
   try {

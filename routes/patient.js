@@ -7,6 +7,7 @@ const Booking = require('../models/Booking');
 const Admin = require('../models/Admin'); 
 const Blog = require('../models/Blog');
 const Chat = require('../models/Chat');
+const Prescription = require('../models/Prescription');
 
 
 const storage = multer.memoryStorage();
@@ -18,6 +19,19 @@ function isLoggedIn(req, res, next) {
   }
   res.redirect('/auth/login');
 }
+
+router.get('/patient-index', async (req, res) => {
+  try {
+      const highPriorityBlogs = await Blog.find({ priority: 'high' }).limit(5).exec();
+      const patientEmail = req.session.user.email; 
+      const patient = await Patient.findOne({email: patientEmail}).lean(); 
+
+      res.render('patient-index', { blogs: highPriorityBlogs, patient });
+  } catch (error) {
+      console.error('Error fetching high-priority blogs:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
 
 router.get('/profile', isLoggedIn, async (req, res) => {
   try {
@@ -143,38 +157,47 @@ router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
 
 router.post('/book', isLoggedIn, async (req, res) => {
   try {
-    const { doctorId, date, time, consultationType } = req.body;
-    const patientId = req.session.user._id;
+      const { doctorId, date, time, consultationType } = req.body;
+      const patientId = req.session.user._id;
 
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) {
-      return res.status(404).send('Doctor not found');
-    }
+      const doctor = await Doctor.findById(doctorId);
+      if (!doctor) {
+          return res.status(404).send('Doctor not found');
+      }
 
-    const booking = new Booking({
-      patient: patientId,
-      doctor: doctorId,
-      date: new Date(date),
-      time: time,
-      consultationType: consultationType,
-      status: 'waiting',
-      hospitalAddress: doctor.hospitalAddress 
-    });
+      const slot = doctor.timeSlots.find(slot =>
+          slot && slot.date && slot.date.toISOString() === new Date(date).toISOString() && slot.startTime === time.split(' - ')[0]
+      );
 
-    await booking.save();
+      if (!slot) {
+          return res.status(400).send('Time slot not found');
+      }
 
-    const slotToUpdate = doctor.timeSlots.find(slot => slot && slot.date && slot.date.toISOString() === new Date(date).toISOString() && slot.startTime === time.split(' - ')[0]);
-    if (slotToUpdate) {
-      slotToUpdate.status = 'booked';
+      const booking = new Booking({
+          patient: patientId,
+          doctor: doctorId,
+          date: new Date(date),
+          time: time,
+          consultationType: consultationType,
+          status: 'waiting',
+          hospital: {
+              name: slot.hospital,
+              location: slot.hospitalLocation
+          }
+      });
+
+      await booking.save();
+
+      slot.status = 'booked';
       await doctor.save();
-    }
 
-    res.redirect('/patient/bookings');
+      res.redirect('/patient/bookings');
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Server Error');
+      console.error(error.message);
+      res.status(500).send('Server Error');
   }
 });
+
 
 
 router.get('/bookings', isLoggedIn, async (req, res) => {
@@ -455,6 +478,20 @@ router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
   }
 });
 
+router.get('/prescriptions', isLoggedIn, async (req, res) => {
+  try {
+      const patientId = req.session.user._id; 
 
+      const patientPrescriptions = await Prescription.find({ patientId: patientId })
+                                                    .sort({ createdAt: 'desc' });
+
+      console.log(patientPrescriptions);
+
+      res.render('patient-prescriptions', { prescriptions: patientPrescriptions });
+  } catch (error) {
+      console.error(error.message);
+      res.status(500).send('Server Error');
+  }
+});
 
 module.exports = router;

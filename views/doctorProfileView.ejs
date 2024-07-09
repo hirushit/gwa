@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Profile</title>
+    <title>Doctor Profile: <%= doctor.name %></title>
 </head>
+
 <body>
     <h1>Doctor Profile: <%= doctor.name %></h1>
-    <p>Specialty: <%= doctor.speciality %></p>
-    <p>Location: <%= doctor.city %>, <%= doctor.state %>, <%= doctor.country %></p>
-    <p>Languages Spoken: <%= doctor.languages.join(', ') %></p>
-    <p>Gender: <%= doctor.gender %></p>
-    <p>Availability: <%= doctor.availability ? 'Available' : 'Not Available' %></p>
-    <p>Profile Views: <%= doctor.profileViews || 0 %></p>
+    <p><strong>Specialty:</strong> <%= doctor.speciality.join(', ') %></p>
+    <p><strong>Location:</strong> <%= doctor.city %>, <%= doctor.state %>, <%= doctor.country %></p>
+    <p><strong>Languages Spoken:</strong> <%= doctor.languages.join(', ') %></p>
+    <p><strong>Gender:</strong> <%= doctor.gender %></p>
+    <p><strong>Availability:</strong> <%= doctor.availability ? 'Available' : 'Not Available' %></p>
+    <p><strong>Profile Views:</strong> <%= doctor.profileViews || 0 %></p>
 
     <h2>Consultation Information</h2>
-    <p>Consultation Type: <%= doctor.consultation %></p>
+    <p><strong>Consultation Type:</strong> <%= doctor.consultation %></p>
 
     <% if (doctor.timeSlots && doctor.timeSlots.length > 0) { %>
         <h2>Available Time Slots</h2>
@@ -23,15 +25,27 @@
             <% doctor.timeSlots.forEach(slot => { %>
                 <li>
                     <% if (slot.date) { %>
-                        <p>Date: <%= slot.date.toDateString() %></p>
+                        <p><strong>Date:</strong> <%= slot.date.toDateString() %></p>
                     <% } else { %>
-                        <p>Date: N/A</p>
+                        <p><strong>Date:</strong> N/A</p>
                     <% } %>
 
                     <% if (slot.startTime && slot.endTime) { %>
-                        <p>Time: <%= slot.startTime %> - <%= slot.endTime %></p>
+                        <p><strong>Time:</strong> <%= slot.startTime %> - <%= slot.endTime %></p>
                     <% } else { %>
-                        <p>Time: N/A</p>
+                        <p><strong>Time:</strong> N/A</p>
+                    <% } %>
+
+                    <% if (slot.hospital) { %>
+                        <p><strong>Hospital:</strong> <%= slot.hospital %></p>
+                    <% } else { %>
+                        <p><strong>Hospital:</strong> N/A</p>
+                    <% } %>
+
+                    <% if (slot.hospitalLocation) { %>
+                        <p><strong>Location:</strong> <%= slot.hospitalLocation.street %>, <%= slot.hospitalLocation.city %>, <%= slot.hospitalLocation.state %>, <%= slot.hospitalLocation.country %>, <%= slot.hospitalLocation.zip %></p>
+                    <% } else { %>
+                        <p><strong>Location:</strong> N/A</p>
                     <% } %>
 
                     <% if (slot.status === 'free') { %>
@@ -40,7 +54,7 @@
                             <input type="hidden" name="date" value="<%= slot.date.toISOString() %>">
                             <input type="hidden" name="time" value="<%= slot.startTime %> - <%= slot.endTime %>">
                             
-                            <label for="consultationType">Consultation Type:</label>
+                            <label for="consultationType"><strong>Consultation Type:</strong></label>
                             <select id="consultationType" name="consultationType">
                                 <option value="In-person">In-person</option>
                                 <option value="Video call">Video call</option>
@@ -49,7 +63,7 @@
                             <button type="submit">Book Slot</button>
                         </form>
                     <% } else { %>
-                        <p>Status: <%= slot.status %></p>
+                        <p><strong>Status:</strong> <%= slot.status %></p>
                     <% } %>
                 </li>
             <% }) %>
@@ -65,4 +79,5 @@
 
     <a href="/patient/doctors">Back to Doctors List</a>
 </body>
+
 </html>

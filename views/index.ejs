@@ -12,12 +12,12 @@
             margin-top: 20px;
         }
 
-        .filter-container, .auth-container, .blogs-container {
+        .filter-container, .auth-container {
             width: 300px;
             margin-bottom: 20px;
         }
 
-        .filter-container select, .filter-container input, .filter-container button, .auth-container a, .blogs-container button {
+        .filter-container select, .filter-container input, .filter-container button, .auth-container a {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
@@ -35,89 +35,16 @@
             right: 10px;
             font-weight: bold;
         }
-        .blogs-container {
-            width: 80%;
-            margin: auto;
-        }
-
-        .blogs-container ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .blog-card {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-        }
-
-        .blog-card img {
-            width: 100px;
-            height: auto;
-            margin-right: 20px;
-            border-radius: 5px;
-        }
-
-        .blog-card h3 {
-            margin: 0;
-            font-size: 1.2em;
-        }
-
-        .blog-card p {
-            margin: 0.5em 0 0 0;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 1em;
-            cursor: pointer;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 5px;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Find a Doctor</h1>
 
-
         <div class="auth-container">
-            <% if (patient) { %>
-                <h1>Welcome,  <%= patient.name %></h1>
-            <% } else { %>
+
                 <a href="/auth/login">Login</a>
                 <a href="/auth/signup">Signup</a>
-            <% } %>
-            <a href="patient/profile">View Profile</a>
-            <form action="/auth/logout" method="POST" style="display: inline;">
-                <button type="submit">Logout</button>
-            </form>
-        </div>
-
-        <div class="blogs-container">
-            <h2> Blogs</h2>
-            <ul>
-                <% blogs.forEach(blog => { %>
-                    <li class="blog-card">
-                        <% if (blog.image && blog.image.data) { %>
-                            <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
-                        <% } %>
-                        <h3><%= blog.title %></h3>
-                        <p><%= blog.content %></p>
-                        <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
-                    </li>
-                <% }) %>
-            </ul>
-            <button onclick="window.location.href='/patient/blogs'">View All Blogs</button>
         </div>
 
         <div class="filter-container">
@@ -135,45 +62,47 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            populateWhatOptions();
-            populateWhereOptions();
+<!-- Update the script section in index.ejs -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      populateWhatOptions();
+      populateWhereOptions();
+    });
+  
+    async function populateWhatOptions() {
+      try {
+        const response = await fetch('/auth/what-options');
+        const { specialities, conditions, doctors } = await response.json();
+        const whatOptions = [...specialities, ...conditions, ...doctors];
+        const dataList = document.getElementById('what-options');
+  
+        whatOptions.forEach(option => {
+          const optionElement = document.createElement('option');
+          optionElement.value = option;
+          dataList.appendChild(optionElement);
         });
-
-        async function populateWhatOptions() {
-            try {
-                const response = await fetch('/auth/what-options');
-                const { specialities, conditions, doctors } = await response.json();
-                const whatOptions = [...specialities, ...conditions, ...doctors];
-                const dataList = document.getElementById('what-options');
-
-                whatOptions.forEach(option => {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = option;
-                    dataList.appendChild(optionElement);
-                });
-            } catch (error) {
-                console.error('Error fetching what options:', error);
-            }
-        }
-
-        async function populateWhereOptions() {
-            try {
-                const response = await fetch('/auth/where-options');
-                const { cities, states, countries } = await response.json();
-                const whereOptions = [...cities, ...states, ...countries];
-                const dataList = document.getElementById('where-options');
-
-                whereOptions.forEach(option => {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = option;
-                    dataList.appendChild(optionElement);
-                });
-            } catch (error) {
-                console.error('Error fetching where options:', error);
-            }
-        }
-    </script>
+      } catch (error) {
+        console.error('Error fetching what options:', error);
+      }
+    }
+  
+    async function populateWhereOptions() {
+      try {
+        const response = await fetch('/auth/where-options');
+        const { cities, states, countries } = await response.json();
+        const whereOptions = [...cities, ...states, ...countries];
+        const dataList = document.getElementById('where-options');
+  
+        whereOptions.forEach(option => {
+          const optionElement = document.createElement('option');
+          optionElement.value = option;
+          dataList.appendChild(optionElement);
+        });
+      } catch (error) {
+        console.error('Error fetching where options:', error);
+      }
+    }
+  </script>
+  
 </body>
 </html>

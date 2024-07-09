@@ -1,0 +1,46 @@
+<!-- patient-prescription.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Prescriptions</title>
+</head>
+<body>
+    <h1>Your Prescriptions</h1>
+    
+    <% if (prescriptions.length === 0) { %>
+        <p>No prescriptions found.</p>
+    <% } else { %>
+        <ul>
+            <% prescriptions.forEach(prescription => { %>
+                <li>
+                    <strong>Doctor Name:</strong> <%= prescription.doctorId.name %> (<%= prescription.doctorId.speciality %>)<br>
+                    <strong>Doctor Email:</strong> <%= prescription.doctorId.email %><br>
+                    <strong>Patient Age:</strong> <%= prescription.patientAge %><br>
+                    <strong>Date Uploaded:</strong> <%= new Date(prescription.createdAt).toLocaleDateString() %><br>
+                    <strong>Meeting Date:</strong> <%= new Date(prescription.meetingDate).toLocaleDateString() %><br>
+                    <strong>Meeting Time:</strong> <%= prescription.meetingTime %><br>
+                    <h3>Medicines:</h3>
+                    <ul>
+                        <% prescription.medicines.forEach(medicine => { %>
+                            <li>
+                                <strong>Name:</strong> <%= medicine.name %><br>
+                                <strong>Dosage:</strong> <%= medicine.dosage %><br>
+                                <strong>Before Food:</strong> <%= medicine.beforeFood ? 'Yes' : 'No' %><br>
+                                <strong>After Food:</strong> <%= medicine.afterFood ? 'Yes' : 'No' %><br>
+                                <strong>Timing:</strong> 
+                                Morning: <%= medicine.timing.morning ? 'Yes' : 'No' %>, 
+                                Afternoon: <%= medicine.timing.afternoon ? 'Yes' : 'No' %>, 
+                                Night: <%= medicine.timing.night ? 'Yes' : 'No' %><br>
+                            </li>
+                        <% }); %>
+                    </ul>
+                    <hr>
+                </li>
+            <% }); %>
+        </ul>
+    <% } %>
+</body>
+</html>

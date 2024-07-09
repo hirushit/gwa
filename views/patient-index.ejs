@@ -87,20 +87,22 @@
 </head>
 <body>
     <div class="container">
+        <h1>Find a Doctor</h1>
 
 
         <div class="auth-container">
-            <% if (doctor) { %>
-                <h1>Welcome, Dr. <%= doctor.name %></h1>
+            <% if (patient) { %>
+                <h1>Welcome,  <%= patient.name %></h1>
             <% } else { %>
                 <a href="/auth/login">Login</a>
                 <a href="/auth/signup">Signup</a>
             <% } %>
-            <a href="/doctor/profile">View Profile</a>
+            <a href="/patient/profile">View Profile</a>
+            <form action="/auth/logout" method="POST" style="display: inline;">
+                <button type="submit">Logout</button>
+            </form>
         </div>
-        <form action="/auth/logout" method="POST" style="display: inline;">
-            <button type="submit">Logout</button>
-        </form>
+
         <div class="blogs-container">
             <h2> Blogs</h2>
             <ul>
@@ -111,16 +113,67 @@
                         <% } %>
                         <h3><%= blog.title %></h3>
                         <p><%= blog.content %></p>
-                        <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                        <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
                     </li>
                 <% }) %>
             </ul>
-            <button onclick="window.location.href='/doctor/blogs'">View All Blogs</button>
+            <button onclick="window.location.href='/patient/blogs'">View All Blogs</button>
         </div>
 
-        
+        <div class="filter-container">
+            <form action="/patient/doctors" method="get">
+                <label for="what">What:</label>
+                <input type="text" id="what" name="what" placeholder="Select Speciality, Condition or Doctor" list="what-options">
+                <datalist id="what-options"></datalist>
+
+                <label for="where">Where:</label>
+                <input type="text" id="where" name="where" placeholder="Enter City, State or Country" list="where-options">
+                <datalist id="where-options"></datalist>
+
+                <button type="submit">Search</button>
+            </form>
+        </div>
     </div>
 
-    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            populateWhatOptions();
+            populateWhereOptions();
+        });
+
+        async function populateWhatOptions() {
+            try {
+                const response = await fetch('/auth/what-options');
+                const { specialities, conditions, doctors } = await response.json();
+                const whatOptions = [...specialities, ...conditions, ...doctors];
+                const dataList = document.getElementById('what-options');
+
+                whatOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option;
+                    dataList.appendChild(optionElement);
+                });
+            } catch (error) {
+                console.error('Error fetching what options:', error);
+            }
+        }
+
+        async function populateWhereOptions() {
+            try {
+                const response = await fetch('/auth/where-options');
+                const { cities, states, countries } = await response.json();
+                const whereOptions = [...cities, ...states, ...countries];
+                const dataList = document.getElementById('where-options');
+
+                whereOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option;
+                    dataList.appendChild(optionElement);
+                });
+            } catch (error) {
+                console.error('Error fetching where options:', error);
+            }
+        }
+    </script>
 </body>
 </html>

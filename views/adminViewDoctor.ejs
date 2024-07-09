@@ -33,7 +33,7 @@
     <p><strong>Name:</strong> <%= doctor.name %></p>
     <p><strong>Email:</strong> <%= doctor.email %></p>
     <p><strong>Title:</strong> <%= doctor.title %></p>
-    <p><strong>Speciality:</strong> <%= doctor.speciality %></p>
+    <p><strong>Speciality:</strong> <%= doctor.speciality.join(', ') %></p>
     <p><strong>Location:</strong> <%= doctor.location %></p>
     <p><strong>Gender:</strong> <%= doctor.gender %></p>
     <p><strong>Website:</strong> <a href="<%= doctor.website %>" target="_blank"><%= doctor.website %></a></p>
@@ -52,16 +52,9 @@
         <li><a href="<%= doctor.socialHandles.instagram %>" target="_blank">Instagram</a></li>
       <% } %>
     </ul>
-    <h3>Speciality</h3>
-    <% if (doctor.speciality && doctor.speciality.length > 0) { %>
-      <ul>
-        <% doctor.speciality.forEach(speciality => { %>
-          <li><%= speciality %></li>
-        <% }) %>
-      </ul>
-    <% } else { %>
-      <p>No specialities listed.</p>
-    <% } %>
+    <h3>Subscription Details</h3>
+    <p><strong>Subscription Type:</strong> <%= doctor.subscriptionType %></p>
+    <p><strong>Subscription Verification:</strong> <%= doctor.subscriptionVerification %></p>
     <h3>Languages Spoken</h3>
     <% if (doctor.languages.length > 0) { %>
       <ul>
@@ -72,16 +65,35 @@
     <% } else { %>
       <p>No languages listed.</p>
     <% } %>
-    <h3>Hospitals/Clinics</h3>
-    <% if (doctor.hospitals.length > 0) { %>
-      <ul>
-        <% doctor.hospitals.forEach(hospital => { %>
-          <li><%= hospital %></li>
+
+    <h3>Conditions Managed</h3>
+    <% if (doctor.conditions && doctor.conditions.length > 0) { %>
+    <ul>
+        <% doctor.conditions.forEach(condition => { %>
+        <li><%= condition %></li>
         <% }) %>
-      </ul>
+    </ul>
     <% } else { %>
-      <p>No hospitals/clinics listed.</p>
+    <p>No conditions managed listed.</p>
     <% } %>
+
+
+    <div class="hospitals-section">
+      <h2>Hospitals</h2>
+      <% if (doctor && doctor.hospitals && doctor.hospitals.length > 0) { %>
+          <ul>
+              <% doctor.hospitals.forEach(hospital => { %>
+                  <li>
+                      <p><strong>Name:</strong> <%= hospital.name %></p>
+                      <p><strong>Location:</strong> <%= hospital.street %>, <%= hospital.city %>, <%= hospital.state %>, <%= hospital.country %>, <%= hospital.zip %></p>
+                  </li>
+              <% }) %>
+          </ul>
+      <% } else { %>
+          <p>No hospitals available.</p>
+      <% } %>
+  </div>
+  
     <h3>Insurances Accepted</h3>
     <% if (doctor.insurances.length > 0) { %>
       <ul>

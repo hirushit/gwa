@@ -45,13 +45,11 @@ const sendOTP = async (email, otp) => {
 };
 
 
-// Patient Signup Page
 router.get('/signup/patient', (req, res) => {
   const showOtpForm = req.session.newUser && req.session.newUser.otp;
   res.render('signup_patient', { showOtpForm });
 });
 
-// Patient Signup Form Submission
 router.post('/signup/patient', async (req, res) => {
   const { name, email, password, phoneNumber } = req.body;
 
@@ -76,13 +74,12 @@ router.post('/signup/patient', async (req, res) => {
     return res.redirect('/auth/signup/patient');
   }
 });
-// Doctor Signup Page
+
 router.get('/signup/doctor', (req, res) => {
   const showOtpForm = req.session.newUser && req.session.newUser.otp;
   res.render('signup_doctor', { showOtpForm });
 });
 
-// Doctor Signup Form Submission
 router.post('/signup/doctor', async (req, res) => {
   const { name, email, password, phoneNumber } = req.body;
 
@@ -108,7 +105,6 @@ router.post('/signup/doctor', async (req, res) => {
   }
 });
 
-// OTP Verification and User Creation
 router.post('/verify', async (req, res) => {
   const { otp } = req.body;
   const newUser = req.session.newUser;
@@ -120,7 +116,7 @@ router.post('/verify', async (req, res) => {
 
   if (newUser.otp !== otp) {
     req.flash('error_msg', 'Invalid OTP');
-    return res.redirect(req.headers.referer); // Redirect back to the signup page
+    return res.redirect(req.headers.referer); 
   }
 
   try {
@@ -184,7 +180,7 @@ router.post('/login', async (req, res) => {
     req.flash('success_msg', 'Logged in successfully');
 
     if (user.role === 'patient') {
-      return res.redirect('/'); 
+      return res.redirect('/patient/patient-index'); 
     } else if (user.role === 'doctor') {
       return res.redirect('/doctor/doctor-index'); 
     } else if (user.role === 'admin') {
@@ -262,11 +258,11 @@ router.get('/google/callback', async (req, res) => {
       req.session.user = existingUser;
       req.flash('success_msg', 'Logged in successfully');
       if (existingUser.role === 'patient') {
-        return res.redirect('/patient/profile'); 
+        return res.redirect('/patient/patient-index'); 
       } else if (existingUser.role === 'doctor') {
-        return res.redirect('/doctor/profile'); 
+        return res.redirect('/doctor/doctor-index'); 
       } else if (existingUser.role === 'admin') {
-        return res.redirect('/admin/dashboard'); 
+        return res.redirect('/admin/admin-home'); 
       } else {
         req.flash('error_msg', 'Invalid role');
         return res.redirect('/auth/login');

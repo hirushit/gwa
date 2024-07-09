@@ -12,11 +12,20 @@ const bookingSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['waiting', 'accepted', 'rejected'],
+        enum: ['waiting', 'accepted', 'rejected', 'completed'],
         default: 'waiting'
     },
     meetingLink: { type: String },
-    hospitalAddress: String
+    hospital: {
+        name: { type: String },
+        location: {
+            street: { type: String },
+            city: { type: String },
+            state: { type: String },
+            country: { type: String },
+            zip: { type: String }
+        }
+    }
 });
 
 module.exports = mongoose.model('Booking', bookingSchema);

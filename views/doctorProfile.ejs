@@ -91,17 +91,23 @@
     <% } else { %>
     <p>No languages listed.</p>
     <% } %>
-
-    <h3>Hospitals/Clinics</h3>
-    <% if (doctor.hospitals && doctor.hospitals.length > 0) { %>
-    <ul>
-        <% doctor.hospitals.forEach(hospital => { %>
-        <li><%= hospital %></li>
-        <% }) %>
-    </ul>
-    <% } else { %>
-    <p>No hospitals/clinics listed.</p>
-    <% } %>
+    <div class="hospitals-section">
+        <h2>Hospitals</h2>
+        <% if (doctor && doctor.hospitals && doctor.hospitals.length > 0) { %>
+            <ul>
+                <% doctor.hospitals.forEach(hospital => { %>
+                    <li>
+                        <p><strong>Name:</strong> <%= hospital.name %></p>
+                        <p><strong>Location:</strong> <%= hospital.street %>, <%= hospital.city %>, <%= hospital.state %>, <%= hospital.country %>, <%= hospital.zip %></p>
+                    </li>
+                <% }) %>
+            </ul>
+        <% } else { %>
+            <p>No hospitals available.</p>
+        <% } %>
+    </div>
+    
+    
 
     <h3>Insurances Accepted</h3>
     <% if (doctor.insurances && doctor.insurances.length > 0) { %>
@@ -137,18 +143,20 @@
     <% } %>
 
     <h3>Time Slots</h3>
-    <ul>
-        <% doctor.timeSlots.forEach((timeSlot, index) => { %>
-            <% if (timeSlot) { %>
-                <li>
-                    <strong>Date:</strong> <%= timeSlot.date ? new Date(timeSlot.date).toLocaleDateString() : 'N/A' %><br>
-                    <strong>Start Time:</strong> <%= timeSlot.startTime %><br>
-                    <strong>End Time:</strong> <%= timeSlot.endTime %><br>
-                    <strong>Status:</strong> <%= timeSlot.status %><br>
-                </li>
-            <% } %>
-        <% }) %>
-    </ul>
+<ul>
+    <% doctor.timeSlots.forEach((timeSlot, index) => { %>
+        <% if (timeSlot) { %>
+            <li>
+                <strong>Date:</strong> <%= timeSlot.date ? new Date(timeSlot.date).toLocaleDateString() : 'N/A' %><br>
+                <strong>Start Time:</strong> <%= timeSlot.startTime %><br>
+                <strong>End Time:</strong> <%= timeSlot.endTime %><br>
+                <strong>Hospital:</strong> <%= timeSlot.hospital %><br> 
+                <strong>Status:</strong> <%= timeSlot.status %><br>
+            </li>
+        <% } %>
+    <% }) %>
+</ul>
+
     <form action="/doctor/blog" method="GET">
         <% if (doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') { %>
             <% if (doctor.subscriptionVerification === 'Verified') { %>

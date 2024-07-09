@@ -21,26 +21,30 @@
                 <thead>
                     <tr>
                         <th>Doctor</th>
-                        <th>Speciality</th>
+                        <th>Specialty</th>
                         <th>Date</th>
                         <th>Time</th>
                         <th>Consultation Type</th>
                         <th>Status</th>
-                        <th>Meeting Link</th> 
+                        <th>Hospital</th>
+                        <th>Meeting Link/Location</th>
                     </tr>
                 </thead>
                 <tbody>
                     <% bookings.forEach(booking => { %>
                         <tr>
                             <td><%= booking.doctor ? booking.doctor.name : 'N/A' %></td>
-                            <td><%= booking.doctor ? booking.doctor.speciality : 'N/A' %></td>
+                            <td><%= booking.doctor ? booking.doctor.speciality.join(', ') : 'N/A' %></td>
                             <td><%= new Date(booking.date).toLocaleDateString() %></td>
                             <td><%= booking.time %></td>
                             <td><%= booking.consultationType %></td>
                             <td class="status-<%= booking.status %>"><%= booking.status %></td>
+                            <td><%= booking.hospital ? booking.hospital.name : 'N/A' %></td>
                             <td>
                                 <% if (booking.consultationType === 'Video call' && booking.status === 'accepted' && booking.meetingLink) { %>
                                     <a href="<%= booking.meetingLink %>">Link</a>
+                                <% } else if (booking.consultationType === 'In-person') { %>
+                                    <%= booking.hospital && booking.hospital.location ? `${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}` : 'N/A' %>
                                 <% } else { %>
                                     N/A
                                 <% } %>

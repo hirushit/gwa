@@ -11,6 +11,8 @@ const Doctor = require('../models/Doctor');
 const Admin = require('../models/Admin'); 
 const Booking = require('../models/Booking');
 const Chat = require('../models/Chat');
+const Patient = require('../models/Patient');
+const Prescription = require('../models/Prescription');
 
 
 require('dotenv').config();
@@ -24,10 +26,16 @@ const upload = multer({ storage: storage });
 router.use(methodOverride('_method'));
 
 function isLoggedIn(req, res, next) {
-    if (req.session.user && req.session.user.role === 'doctor') {
+    if (req.session && req.session.user && req.session.user.role === 'doctor') {
         return next();
+    } else {
+        console.warn('Unauthorized access attempt:', {
+            ip: req.ip,
+            originalUrl: req.originalUrl,
+            user: req.session.user ? req.session.user.email : 'Guest'
+        });
+        res.redirect('/auth/login');
     }
-    res.redirect('/auth/login');
 }
 
 router.get('/doctor-index', isLoggedIn, async (req, res) => {
@@ -50,63 +58,88 @@ router.get('/doctor-index', isLoggedIn, async (req, res) => {
 
 router.get('/profile', isLoggedIn, async (req, res) => {
     try {
-        const doctorEmail = req.session.user.email;
-        const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
-        if (!doctor) {
-            return res.status(404).send('Doctor not found');
-        }
-        res.render('doctorProfile', { doctor });
+      const doctorEmail = req.session.user.email;
+      const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
+      if (!doctor) {
+        return res.status(404).send('Doctor not found');
+      }
+      res.render('doctorProfile', { doctor });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
+      console.error(err.message);
+      res.status(500).send('Server Error');
     }
-});
-
-router.get('/edit', isLoggedIn, async (req, res) => {
+  });
+  
+  router.get('/edit', isLoggedIn, async (req, res) => {
     try {
-        const doctorEmail = req.session.user.email;
-        const doctor = await Doctor.findOne({ email: doctorEmail });
-        res.render('editDoctorProfile', { doctor });
+      const doctorEmail = req.session.user.email;
+      const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
+  
+      if (!doctor.hospitals) {
+        doctor.hospitals = [];
+      }
+  
+      res.render('editDoctorProfile', { doctor });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
+      console.error(err.message);
+      res.status(500).send('Server Error');
     }
-});
-
-router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, async (req, res) => {
+  });
+  
+  router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, async (req, res) => {
     try {
-        const doctorEmail = req.session.user.email;
-        let doctor = await Doctor.findOne({ email: doctorEmail });
-
-        const updateData = {
-            ...req.body,
-            speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
-            languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
-            hospitals: Array.isArray(req.body.hospitals) ? req.body.hospitals : [req.body.hospitals],
-            insurances: Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances],
-            awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
-            faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
-            hospitalAddress: req.body.hospitalAddress, 
+      const doctorEmail = req.session.user.email;
+      let doctor = await Doctor.findOne({ email: doctorEmail });
+  
+      let hospitals = [];
+      if (Array.isArray(req.body.hospitals)) {
+        hospitals = req.body.hospitals.map(hospital => ({
+          name: hospital.name,
+          street: hospital.street,
+          city: hospital.city,
+          state: hospital.state,
+          country: hospital.country,
+          zip: hospital.zip
+        }));
+      } else if (req.body.hospitals && req.body.hospitals.name) {
+        hospitals = [{
+          name: req.body.hospitals.name,
+          street: req.body.hospitals.street,
+          city: req.body.hospitals.city,
+          state: req.body.hospitals.state,
+          country: req.body.hospitals.country,
+          zip: req.body.hospitals.zip
+        }];
+      }
+  
+      const updateData = {
+        ...req.body,
+        speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
+        languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
+        insurances: Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances],
+        awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
+        faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
+        hospitals: hospitals
+      };
+  
+      if (req.file) {
+        updateData.profilePicture = {
+          data: req.file.buffer,
+          contentType: req.file.mimetype
         };
-
-        doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });
-
-        if (req.file) {
-            doctor.profilePicture = {
-                data: req.file.buffer,
-                contentType: req.file.mimetype
-            };
-        }
-
-        await doctor.save();
-
-        res.redirect('/doctor/profile');
+      }
+  
+      doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });
+  
+      await doctor.save();
+  
+      res.redirect('/doctor/profile');
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
+      console.error(err.message);
+      res.status(500).send('Server Error');
     }
-});
-
+  });
+  
 router.post('/profile/verify', isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
@@ -142,20 +175,46 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
         const { status } = req.body;
         const bookingId = req.params.id;
 
-        const booking = await Booking.findById(bookingId).populate('doctor').populate('patient');
+        const booking = await Booking.findById(bookingId)
+            .populate('doctor')
+            .populate('patient');
+
         if (!booking) {
             return res.status(404).send('Booking not found');
         }
 
         const currentStatus = booking.status;
 
-        booking.status = status;
+        const now = moment();
+
+        const bookingDate = moment(booking.date);
+        const bookingTimeStart = moment(booking.time.split(' - ')[0], 'HH:mm');
+        const bookingTimeEnd = moment(booking.time.split(' - ')[1], 'HH:mm');
+
+        const bookingStartDateTime = moment(bookingDate).set({
+            hour: bookingTimeStart.get('hour'),
+            minute: bookingTimeStart.get('minute')
+        });
+
+        const bookingEndDateTime = moment(bookingDate).set({
+            hour: bookingTimeEnd.get('hour'),
+            minute: bookingTimeEnd.get('minute')
+        });
+
+        if (now.isAfter(bookingEndDateTime)) {
+            booking.status = 'completed';
+        } else {
+            booking.status = status;
+        }
+
         if (status === 'accepted' && !booking.meetingLink && booking.consultationType === 'Video call') {
             booking.meetingLink = await createGoogleMeetLink(booking);
         }
+
         await booking.save();
 
         const doctor = booking.doctor;
+
         if (!doctor) {
             return res.status(404).send('Doctor not found');
         }
@@ -187,23 +246,37 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                                         <p>Join the meeting using the following link: <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
                                         <p>Best regards,</p>
                                         <p>Global Wellness Alliance Team</p>`;
+                        await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
+
+                        const acceptanceEmailContent = `<p>Dear Dr. ${doctor.name},</p>
+                                                        <p>The appointment with ${booking.patient.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
+                                                        <p>Join the meeting using the following link: <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
+                                                        <p>Best regards,</p>
+                                                        <p>Global Wellness Alliance Team</p>`;
+                        await sendAppointmentEmail(doctor.email, doctor.name, 'Appointment Confirmation Notification', acceptanceEmailContent);
+
+                        let chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Join the meeting using the following link: ${booking.meetingLink}`;
+                        await Chat.findOneAndUpdate(
+                            { doctorId: booking.doctor, patientId: booking.patient },
+                            { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
+                            { upsert: true, new: true }
+                        );
                     } else if (booking.consultationType === 'In-person') {
                         emailSubject = 'Appointment Confirmation';
                         emailContent = `<p>Dear ${booking.patient.name},</p>
                                         <p>Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
-                                        <p>Please visit the hospital at ${doctor.hospitalAddress}</p>
+                                        <p>Please visit the hospital at ${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}</p>
                                         <p>Best regards,</p>
                                         <p>Global Wellness Alliance Team</p>`;
+                        await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
+
+                        let chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Please visit the hospital at ${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}`;
+                        await Chat.findOneAndUpdate(
+                            { doctorId: booking.doctor, patientId: booking.patient },
+                            { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
+                            { upsert: true, new: true }
+                        );
                     }
-
-                    await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
-
-                    const acceptanceEmailContent = `<p>Dear Dr. ${doctor.name},</p>
-                                                    <p>The appointment with ${booking.patient.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
-                                                    <p>Join the meeting using the following link: <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
-                                                    <p>Best regards,</p>
-                                                    <p>Global Wellness Alliance Team</p>`;
-                    await sendAppointmentEmail(doctor.email, doctor.name, 'Appointment Confirmation Notification', acceptanceEmailContent);
                 } else if (status === 'rejected') {
                     emailSubject = 'Appointment Rejection';
                     emailContent = `<p>Dear ${booking.patient.name},</p>
@@ -212,32 +285,15 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                                     <p>Best regards,</p>
                                     <p>Global Wellness Alliance Team</p>`;
                     await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
+
+                    let chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been rejected. Please contact us for further assistance.`;
+                    await Chat.findOneAndUpdate(
+                        { doctorId: booking.doctor, patientId: booking.patient },
+                        { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
+                        { upsert: true, new: true }
+                    );
                 }
             }
-
-            let chat = await Chat.findOne({ doctorId: booking.doctor, patientId: booking.patient });
-
-            if (!chat) {
-                chat = new Chat({
-                    doctorId: booking.doctor,
-                    patientId: booking.patient,
-                    messages: []
-                });
-            }
-
-            let chatMessage = '';
-            if (booking.consultationType === 'Video call') {
-                chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Join the meeting using the following link: ${booking.meetingLink}`;
-            } else if (booking.consultationType === 'In-person') {
-                chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Please visit the hospital at ${doctor.hospitalAddress}`;
-            }
-
-            await Chat.findOneAndUpdate(
-                { doctorId: booking.doctor, patientId: booking.patient },
-                { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
-                { upsert: true, new: true }
-            );
-
         } else {
             console.error('Time slot not found for the given date and time');
         }
@@ -250,19 +306,114 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
 });
 
 
+router.get('/completed-bookings', isLoggedIn, async (req, res) => {
+    try {
+        const doctorId = req.session.user._id; 
+        const completedBookings = await Booking.find({ doctor: doctorId, status: 'completed' })
+                                               .populate('patient') 
+                                               .sort({ date: 'desc' }); 
+
+        res.render('completed-bookings', { bookings: completedBookings });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+router.get('/bookings/:id/prescription', async (req, res) => {
+    try {
+        const bookingId = req.params.id;
+        const booking = await Booking.findById(bookingId).populate('patient').populate('doctor');
+        
+        if (!booking) {
+            return res.status(404).send('Booking not found');
+        }
+
+        const patient = booking.patient;
+        const doctor = booking.doctor;
+
+        res.render('uploadPrescription', {
+            booking,
+            patient,
+            doctor
+        });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+router.post('/prescriptions/upload', async (req, res) => {
+    try {
+        const { patientId, doctorId, patientName, doctorName, doctorSpeciality, doctorEmail, patientAge, medicines, meetingDate, meetingTime } = req.body;
+
+        const processedMedicines = medicines.map(medicine => ({
+            name: medicine.name,
+            dosage: medicine.dosage,
+            beforeFood: !!medicine.beforeFood,
+            afterFood: !!medicine.afterFood,
+            timing: {
+                morning: !!medicine.timing.morning,
+                afternoon: !!medicine.timing.afternoon,
+                night: !!medicine.timing.night
+            }
+        }));
+
+        const prescription = new Prescription({
+            patientId,
+            doctorId,
+            patientName,
+            doctorName,
+            doctorSpeciality,
+            doctorEmail,
+            patientAge,
+            medicines: processedMedicines,
+            meetingDate: new Date(meetingDate),
+            meetingTime
+        });
+
+        await prescription.save();
+        res.redirect('/doctor/completed-bookings');
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+router.get('/doctor-view/:id/prescriptions', async (req, res) => {
+    try {
+        const patientId = req.params.id;
+        const prescriptions = await Prescription.find({ patientId }).populate('doctorId').populate('patientId');
+
+        if (!prescriptions) {
+            return res.status(404).send('No prescriptions found for this patient');
+        }
+
+        res.render('view-prescriptions', {
+            prescriptions
+        });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 router.get('/manage-time-slots', isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
-        const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
+        const doctor = await Doctor.findOne({ email: doctorEmail }).populate('timeSlots.hospital').exec();
+        
         if (!doctor) {
             return res.status(404).send('Doctor not found');
         }
+        
         res.render('manageTimeSlots', { doctor });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
+
 
 router.delete('/manage-time-slots/:index', isLoggedIn, async (req, res) => {
     try {
@@ -288,18 +439,32 @@ router.delete('/manage-time-slots/:index', isLoggedIn, async (req, res) => {
 router.post('/add-time-slot', isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
-        const { date, startTime, endTime } = req.body;
+        const { date, startTime, endTime, hospital } = req.body;
 
         const doctor = await Doctor.findOne({ email: doctorEmail });
         if (!doctor) {
             return res.status(404).send('Doctor not found');
         }
 
+        const selectedHospital = doctor.hospitals.find(h => h.name === hospital);
+
+        if (!selectedHospital) {
+            return res.status(404).send('Hospital not found');
+        }
+
         const newTimeSlot = {
-            date: moment(date).toDate(),
+            date: new Date(date),
             startTime,
             endTime,
-            status: 'free'
+            status: 'free',
+            hospital: hospital,
+            hospitalLocation: {
+                street: selectedHospital.street,
+                city: selectedHospital.city,
+                state: selectedHospital.state,
+                country: selectedHospital.country,
+                zip: selectedHospital.zip
+            }
         };
 
         doctor.timeSlots.push(newTimeSlot);
@@ -311,6 +476,7 @@ router.post('/add-time-slot', isLoggedIn, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
 
 async function createGoogleMeetLink(booking) {
     const oauth2Client = new google.auth.OAuth2(
@@ -385,7 +551,6 @@ async function sendAppointmentEmail(to, name, subject, content) {
         throw new Error('Unable to send email');
     }
 }
-
 
 router.get('/calendar', isLoggedIn, async (req, res) => {
     try {

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Prescription</title>
+</head>
+<body>
+    <h1>Upload Prescription for <%= patient.name %></h1>
+
+    <% if (booking.status === 'completed') { %>
+        <form id="uploadPrescriptionForm" action="/doctor/prescriptions/upload" method="POST">
+            <input type="hidden" name="patientId" value="<%= patient._id %>">
+            <input type="hidden" name="doctorId" value="<%= doctor._id %>">
+            <input type="hidden" name="patientName" value="<%= patient.name %>">
+            <input type="hidden" name="doctorName" value="<%= doctor.name %>">
+            <input type="hidden" name="doctorSpeciality" value="<%= doctor.speciality %>">
+            <input type="hidden" name="doctorEmail" value="<%= doctor.email %>">
+          
+            <input type="hidden" name="meetingDate" value="<%= booking.date %>">
+            <input type="hidden" name="meetingTime" value="<%= booking.time %>">
+
+            <label>Patient Age: <input type="number" name="patientAge" required></label>
+
+            <div id="medicines">
+                <div class="medicine">
+                    <label>Medicine Name: <input type="text" name="medicines[0][name]" required></label>
+                    <label>Dosage: <input type="text" name="medicines[0][dosage]" required></label>
+                    <label>Before Food: <input type="checkbox" name="medicines[0][beforeFood]"></label>
+                    <label>After Food: <input type="checkbox" name="medicines[0][afterFood]"></label>
+                    <label>Timing:</label>
+                    <label>Morning: <input type="checkbox" name="medicines[0][timing][morning]"></label>
+                    <label>Afternoon: <input type="checkbox" name="medicines[0][timing][afternoon]"></label>
+                    <label>Night: <input type="checkbox" name="medicines[0][timing][night]"></label>
+                </div>
+            </div>
+
+            <button type="button" onclick="addMedicine()">Add Another Medicine</button>
+            <button type="submit">Upload Prescription</button>
+        </form>
+    <% } else { %>
+        <p>Prescription can only be uploaded once the booking is completed.</p>
+    <% } %>
+
+    <script>
+        let medicineIndex = 1;
+
+        function addMedicine() {
+            const medicineDiv = document.createElement('div');
+            medicineDiv.classList.add('medicine');
+            medicineDiv.innerHTML = `
+                <label>Medicine Name: <input type="text" name="medicines[${medicineIndex}][name]" required></label>
+                <label>Dosage: <input type="text" name="medicines[${medicineIndex}][dosage]" required></label>
+                <label>Before Food: <input type="checkbox" name="medicines[${medicineIndex}][beforeFood]"></label>
+                <label>After Food: <input type="checkbox" name="medicines[${medicineIndex}][afterFood]"></label>
+                <label>Timing:</label>
+                <label>Morning: <input type="checkbox" name="medicines[${medicineIndex}][timing][morning]"></label>
+                <label>Afternoon: <input type="checkbox" name="medicines[${medicineIndex}][timing][afternoon]"></label>
+                <label>Night: <input type="checkbox" name="medicines[${medicineIndex}][timing][night]"></label>
+            `;
+            document.getElementById('medicines').appendChild(medicineDiv);
+            medicineIndex++;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - Completed Bookings</title>
+</head>
+<body>
+    <h1>Doctor Dashboard - Completed Bookings</h1>
+
+    <ul>
+        <% bookings.forEach(booking => { %>
+            <li>
+                <strong>Patient Name:</strong> <%= booking.patient.name %><br>
+                <strong>Patient Email:</strong> <%= booking.patient.email %><br>
+                <strong>Date:</strong> <%= booking.date.toDateString() %><br>
+                <strong>Time:</strong> <%= booking.time %><br>
+                <strong>Consultation Type:</strong> <%= booking.consultationType %><br>
+                
+                <a href="/doctor/bookings/<%= booking._id %>/prescription">Upload Prescription</a>
+                <a href="/doctor/doctor-view/<%= booking.patient._id %>/prescriptions">View Prescriptions</a>
+            </li>
+            <hr>
+        <% }); %>
+    </ul>
+</body>
+</html>

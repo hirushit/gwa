@@ -8,17 +8,17 @@
     function addInput(fieldName) {
       const container = document.getElementById(fieldName + '-container');
       const newIndex = container.getElementsByClassName('form-control').length;
-    
+
       const inputWrapper = document.createElement('div');
       inputWrapper.className = 'input-group';
-    
+
       const input = document.createElement('input');
       input.type = 'text';
-      input.name = `${fieldName}[${newIndex}]`; 
+      input.name = `${fieldName}[${newIndex}]`;
       input.className = 'form-control';
       input.placeholder = `${fieldName} ${newIndex + 1}`;
       inputWrapper.appendChild(input);
-    
+
       const removeButton = document.createElement('button');
       removeButton.type = 'button';
       removeButton.className = 'btn btn-danger';
@@ -27,48 +27,69 @@
         inputWrapper.remove();
       });
       inputWrapper.appendChild(removeButton);
-    
+
       container.appendChild(inputWrapper);
     }
 
-    function addTimeSlot() {
-      const container = document.getElementById('time-slots-container');
+    function addHospital() {
+      const container = document.getElementById('hospitals-container');
       const newIndex = container.getElementsByClassName('input-group').length;
-  
-      const timeSlotWrapper = document.createElement('div');
-      timeSlotWrapper.className = 'input-group';
-  
-      const dateInput = document.createElement('input');
-      dateInput.type = 'date';
-      dateInput.name = `timeSlots[${newIndex}][date]`;
-      dateInput.className = 'form-control';
-      dateInput.placeholder = 'Date';
-      timeSlotWrapper.appendChild(dateInput);
-  
-      const startTimeInput = document.createElement('input');
-      startTimeInput.type = 'time';
-      startTimeInput.name = `timeSlots[${newIndex}][startTime]`;
-      startTimeInput.className = 'form-control';
-      startTimeInput.placeholder = 'Start Time';
-      timeSlotWrapper.appendChild(startTimeInput);
-  
-      const endTimeInput = document.createElement('input');
-      endTimeInput.type = 'time';
-      endTimeInput.name = `timeSlots[${newIndex}][endTime]`;
-      endTimeInput.className = 'form-control';
-      endTimeInput.placeholder = 'End Time';
-      timeSlotWrapper.appendChild(endTimeInput);
-  
+
+      const hospitalWrapper = document.createElement('div');
+      hospitalWrapper.className = 'input-group';
+
+      const hospitalNameInput = document.createElement('input');
+      hospitalNameInput.type = 'text';
+      hospitalNameInput.name = `hospitals[${newIndex}][name]`;
+      hospitalNameInput.className = 'form-control';
+      hospitalNameInput.placeholder = 'Hospital Name';
+      hospitalWrapper.appendChild(hospitalNameInput);
+
+      const hospitalStreetInput = document.createElement('input');
+      hospitalStreetInput.type = 'text';
+      hospitalStreetInput.name = `hospitals[${newIndex}][street]`;
+      hospitalStreetInput.className = 'form-control';
+      hospitalStreetInput.placeholder = 'Hospital Street';
+      hospitalWrapper.appendChild(hospitalStreetInput);
+
+      const hospitalCityInput = document.createElement('input');
+      hospitalCityInput.type = 'text';
+      hospitalCityInput.name = `hospitals[${newIndex}][city]`;
+      hospitalCityInput.className = 'form-control';
+      hospitalCityInput.placeholder = 'Hospital City';
+      hospitalWrapper.appendChild(hospitalCityInput);
+
+      const hospitalStateInput = document.createElement('input');
+      hospitalStateInput.type = 'text';
+      hospitalStateInput.name = `hospitals[${newIndex}][state]`;
+      hospitalStateInput.className = 'form-control';
+      hospitalStateInput.placeholder = 'Hospital State';
+      hospitalWrapper.appendChild(hospitalStateInput);
+
+      const hospitalCountryInput = document.createElement('input');
+      hospitalCountryInput.type = 'text';
+      hospitalCountryInput.name = `hospitals[${newIndex}][country]`;
+      hospitalCountryInput.className = 'form-control';
+      hospitalCountryInput.placeholder = 'Hospital Country';
+      hospitalWrapper.appendChild(hospitalCountryInput);
+
+      const hospitalZipInput = document.createElement('input');
+      hospitalZipInput.type = 'text';
+      hospitalZipInput.name = `hospitals[${newIndex}][zip]`;
+      hospitalZipInput.className = 'form-control';
+      hospitalZipInput.placeholder = 'Hospital ZIP';
+      hospitalWrapper.appendChild(hospitalZipInput);
+
       const removeButton = document.createElement('button');
       removeButton.type = 'button';
       removeButton.className = 'btn btn-danger';
       removeButton.textContent = 'Remove';
       removeButton.addEventListener('click', function() {
-          timeSlotWrapper.remove();
+        hospitalWrapper.remove();
       });
-      timeSlotWrapper.appendChild(removeButton);
-  
-      container.appendChild(timeSlotWrapper);
+      hospitalWrapper.appendChild(removeButton);
+
+      container.appendChild(hospitalWrapper);
     }
   </script>
 </head>
@@ -209,16 +230,18 @@
       <div id="hospitals-container">
         <% doctor.hospitals.forEach((hospital, index) => { %>
           <div class="input-group">
-            <input type="text" name="hospitals[<%= index %>]" value="<%= hospital %>" class="form-control">
+            <input type="text" name="hospitals[<%= index %>][name]" class="form-control" value="<%= hospital.name %>" placeholder="Hospital Name" required>
+            <input type="text" name="hospitals[<%= index %>][street]" class="form-control" value="<%= hospital.street %>" placeholder="Hospital Street" required>
+            <input type="text" name="hospitals[<%= index %>][city]" class="form-control" value="<%= hospital.city %>" placeholder="Hospital City" required>
+            <input type="text" name="hospitals[<%= index %>][state]" class="form-control" value="<%= hospital.state %>" placeholder="Hospital State" required>
+            <input type="text" name="hospitals[<%= index %>][country]" class="form-control" value="<%= hospital.country %>" placeholder="Hospital Country" required>
+            <input type="text" name="hospitals[<%= index %>][zip]" class="form-control" value="<%= hospital.zip %>" placeholder="Hospital ZIP" required>
             <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
           </div>
         <% }) %>
       </div>
-      <label>Hospital Address:</label>
-      <button type="button" onclick="addInput('hospitals')">Add Hospital</button>
+      <button type="button" class="btn btn-primary" onclick="addHospital()">Add Hospital</button>
     </div>
-    <input type="text" name="hospitalAddress" value="<%= doctor.hospitalAddress %>" placeholder="Hospital Address" required>
-    <div>
       <label>Insurances:</label>
       <div id="insurances-container">
         <% doctor.insurances.forEach((insurance, index) => { %>
@@ -256,21 +279,12 @@
       </div>
       <button type="button" onclick="addInput('faqs')">Add FAQ</button>
     </div>
-    
+
     <div>
-      <label>Time Slots:</label>
-      <div id="time-slots-container">
-        <% doctor.timeSlots.forEach((timeSlot, index) => { %>
-          <div class="input-group">
-            <input type="date" name="timeSlots[<%= index %>][date]" value="<%= timeSlot.date %>" class="form-control">
-            <input type="time" name="timeSlots[<%= index %>][startTime]" value="<%= timeSlot.startTime %>" class="form-control">
-            <input type="time" name="timeSlots[<%= index %>][endTime]" value="<%= timeSlot.endTime %>" class="form-control">
-            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
-          </div>
-        <% }) %>
-      </div>
-      <button type="button" onclick="addTimeSlot()">Add Time Slot</button>
-    </div>
+      <label>Profile Picture:</label>
+      <input type="file" name="profilePicture">
+  </div>
+    
     
     <div>
       <button type="submit">Update Profile</button>

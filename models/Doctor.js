@@ -17,8 +17,14 @@ const doctorSchema = new mongoose.Schema({
   dateOfBirth: Date,
   bloodGroup: String,
   languages: [String],
-  hospitalAddress: String,
-  hospitals: [String],
+  hospitals: [{
+    name: { type: String, required: true },
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    country: { type: String, required: true },
+    zip: { type: String, required: true }
+  }],
   insurances: [String],
   consultation: { type: String, enum: ['In-person', 'Video call', 'Both'], default: 'In-person' },
   awards: [String],
@@ -39,7 +45,15 @@ const doctorSchema = new mongoose.Schema({
     date: { type: Date, required: true },
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
-    status: { type: String, enum: ['free', 'booked'], default: 'free' }
+    status: { type: String, enum: ['free', 'booked'], default: 'free' },
+    hospital: { type: String, required: true },
+    hospitalLocation: {
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      country: { type: String, required: true },
+      zip: { type: String, required: true }
+    }
   }],
   rating: { type: Number, default: 5 },
   consultationsCompleted: { type: Number, default: 0 },

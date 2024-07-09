@@ -27,7 +27,7 @@ router.get('/admin-home', async (req, res) => {
   try {
       const highPriorityBlogs = await Blog.find({ priority: 'high' }).limit(5).exec();
       const adminEmail = req.session.user.email;
-      const admin = await Admin.findOne({ email: adminEmail }).lean(); // Assuming you have doctor information in req.doctor
+      const admin = await Admin.findOne({ email: adminEmail }).lean(); 
 
       res.render('admin-index', { blogs: highPriorityBlogs, admin});
   } catch (error) {

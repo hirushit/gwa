@@ -22,7 +22,7 @@ function isLoggedIn(req, res, next) {
 
 router.get('/patient-index', async (req, res) => {
   try {
-      const highPriorityBlogs = await Blog.find({ priority: 'high' }).limit(5).exec();
+    const highPriorityBlogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).limit(5).exec();
       const patientEmail = req.session.user.email; 
       const patient = await Patient.findOne({email: patientEmail}).lean(); 
 

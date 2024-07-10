@@ -47,7 +47,8 @@ router.get('/doctor-index', isLoggedIn, async (req, res) => {
             return res.status(404).send('Doctor not found');
         }
 
-        const blogs = await Blog.find().lean(); 
+        // Fetch only blogs that are verified
+        const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).limit(5).exec();
 
         res.render('doctor-index', { doctor, blogs });
     } catch (err) {
@@ -55,6 +56,7 @@ router.get('/doctor-index', isLoggedIn, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
 
 router.get('/profile', isLoggedIn, async (req, res) => {
     try {

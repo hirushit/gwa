@@ -336,7 +336,7 @@ router.get('/exit', (req, res) => {
     }
 
     res.clearCookie('connect.sid');
-    res.redirect('/auth/signup');
+    res.redirect('/auth/login');
   });
 });
 

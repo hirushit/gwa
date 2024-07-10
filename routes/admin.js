@@ -25,16 +25,17 @@ function isAdmin(req, res, next) {
 
 router.get('/admin-home', async (req, res) => {
   try {
-      const highPriorityBlogs = await Blog.find({ priority: 'high' }).limit(5).exec();
+      const highPriorityBlogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).limit(5).exec();
       const adminEmail = req.session.user.email;
       const admin = await Admin.findOne({ email: adminEmail }).lean(); 
 
-      res.render('admin-index', { blogs: highPriorityBlogs, admin});
+      res.render('admin-index', { blogs: highPriorityBlogs, admin });
   } catch (error) {
       console.error('Error fetching high-priority blogs:', error);
       res.status(500).send('Internal Server Error');
   }
 });
+
 
 router.get('/dashboard', isLoggedIn, async (req, res) => {
   try {
@@ -91,7 +92,11 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
 
 router.get('/subscriptions', isAdmin, async (req, res) => {
   try {
-      const doctors = await Doctor.find({}).lean(); 
+      // Fetch all doctors including their proof documents
+      const doctors = await Doctor.find({}, 'name subscriptionType subscriptionVerification documents').lean(); 
+
+      // Log the doctors to ensure the data is being fetched correctly
+      console.log(doctors);
 
       res.render('adminSubscriptions', { doctors });
   } catch (err) {
@@ -99,6 +104,7 @@ router.get('/subscriptions', isAdmin, async (req, res) => {
       res.status(500).send('Server Error');
   }
 });
+
 
 router.post('/verify-subscription/:id', isLoggedIn, async (req, res) => {
   try {
@@ -328,16 +334,16 @@ router.get('/author/:id', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-router.get('/priority-blogs', async (req, res) => {
-    try {
-      const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).lean();
+// router.get('/priority-blogs', async (req, res) => {
+//     try {
+//       const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).lean();
 
-      res.render('priorityblogs', { blogs });
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
-    }
-  });
+//       res.render('priorityblogs', { blogs });
+//     } catch (err) {
+//       console.error(err.message);
+//       res.status(500).send('Server Error');
+//     }
+//   });
 
 router.get('/blogs-all', async (req, res) => {
   try {

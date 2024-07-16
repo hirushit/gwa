@@ -114,6 +114,8 @@ router.post('/verify', async (req, res) => {
     return res.redirect('/auth/signup');
   }
 
+  console.log(`Entered OTP for ${newUser.email}: ${otp}`);
+
   if (newUser.otp !== otp) {
     req.flash('error_msg', 'Invalid OTP');
     return res.redirect(req.headers.referer); 
@@ -363,7 +365,7 @@ router.post('/forgot-password', async (req, res) => {
 
     const otp = otpGenerator.generate(6, { digits: true, upperCase: false, specialChars: false, alphabets: false });
     await sendOTP(email, otp);
-
+    console.log(`Generated OTP for ${email}: ${otp}`);
     req.session.resetUser = { email, otp };
 
     req.flash('success_msg', 'OTP has been sent to your email. Please verify.');

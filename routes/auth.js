@@ -8,6 +8,7 @@ const { google } = require('googleapis');
 const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 const Admin = require('../models/Admin');
+const crypto = require('crypto');
 
 const router = express.Router();
 
@@ -43,7 +44,31 @@ const sendOTP = async (email, otp) => {
 
   await transporter.sendMail(mailOptions);
 };
+const generateVerificationToken = () => {
+  return crypto.randomBytes(20).toString('hex');
+};
 
+const sendVerificationEmail = async (email, token, role) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
+
+  const verificationLink = `http://localhost:3000/auth/verify-email?token=${token}&role=${role}`;
+
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Email Verification for Signup',
+    text: `Click the following link to verify your email: ${verificationLink}`
+  };
+
+  await transporter.sendMail(mailOptions);
+};
 
 router.get('/signup/patient', (req, res) => {
   const showOtpForm = req.session.newUser && req.session.newUser.otp;
@@ -61,12 +86,20 @@ router.post('/signup/patient', async (req, res) => {
       return res.redirect('/auth/signup/patient');
     }
 
-    const otp = otpGenerator.generate(6, { digits: true, upperCase: false, specialChars: false, alphabets: false });
-    await sendOTP(email, otp);
+    const token = generateVerificationToken();
+    await sendVerificationEmail(email, token, 'patient');
 
-    req.session.newUser = { name, email, password, phoneNumber, otp, role: 'patient' };
+    const newPatient = new Patient({
+      name,
+      email,
+      password: await bcrypt.hash(password, 10),
+      phoneNumber,
+      verificationToken: token
+    });
 
-    req.flash('success_msg', 'OTP has been sent to your email. Please verify.');
+    await newPatient.save();
+
+    req.flash('success_msg', 'Verification email has been sent to your email. Please verify.');
     return res.redirect('/auth/signup/patient');
   } catch (err) {
     console.error('Error in patient signup:', err);
@@ -91,12 +124,20 @@ router.post('/signup/doctor', async (req, res) => {
       return res.redirect('/auth/signup/doctor');
     }
 
-    const otp = otpGenerator.generate(6, { digits: true, upperCase: false, specialChars: false, alphabets: false });
-    await sendOTP(email, otp);
+    const token = generateVerificationToken();
+    await sendVerificationEmail(email, token, 'doctor');
 
-    req.session.newUser = { name, email, password, phoneNumber, otp, role: 'doctor' };
+    const newDoctor = new Doctor({
+      name,
+      email,
+      password: await bcrypt.hash(password, 10),
+      phoneNumber,
+      verificationToken: token
+    });
 
-    req.flash('success_msg', 'OTP has been sent to your email. Please verify.');
+    await newDoctor.save();
+
+    req.flash('success_msg', 'Verification email has been sent to your email. Please verify.');
     return res.redirect('/auth/signup/doctor');
   } catch (err) {
     console.error('Error in doctor signup:', err);
@@ -105,53 +146,83 @@ router.post('/signup/doctor', async (req, res) => {
   }
 });
 
-router.post('/verify', async (req, res) => {
-  const { otp } = req.body;
-  const newUser = req.session.newUser;
-
-  if (!newUser) {
-    req.flash('error_msg', 'Session expired. Please sign up again.');
-    return res.redirect('/auth/signup');
-  }
-
-  console.log(`Entered OTP for ${newUser.email}: ${otp}`);
-
-  if (newUser.otp !== otp) {
-    req.flash('error_msg', 'Invalid OTP');
-    return res.redirect(req.headers.referer); 
-  }
+router.get('/verify-email', async (req, res) => {
+  const { token, role } = req.query;
 
   try {
-    const { name, email, password, phoneNumber, role } = newUser;
     let user;
-
     if (role === 'patient') {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-
-      user = new Patient({ name, email, password: hashedPassword, phoneNumber, role });
+      user = await Patient.findOne({ verificationToken: token });
     } else if (role === 'doctor') {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-
-      user = new Doctor({ name, email, password: hashedPassword, phoneNumber, role });
-    } else {
-      req.flash('error_msg', 'Invalid role');
-      return res.redirect('/auth/signup');
+      user = await Doctor.findOne({ verificationToken: token });
     }
 
+    if (!user) {
+      req.flash('error_msg', 'Invalid or expired verification link');
+      return res.redirect(`/auth/signup/${role}`);
+    }
+
+    user.isVerified = true;
+    user.verificationToken = undefined;
     await user.save();
 
-    req.session.newUser = null;
-
-    req.flash('success_msg', 'User created successfully, please log in');
+    req.flash('success_msg', 'Your account has been verified. You can now login.');
     return res.redirect('/auth/login');
   } catch (err) {
-    console.error('Error in OTP verification:', err);
+    console.error('Error in email verification:', err);
     req.flash('error_msg', 'Server error');
     return res.redirect('/auth/signup');
   }
 });
+
+
+// router.post('/verify', async (req, res) => {
+//   const { otp } = req.body;
+//   const newUser = req.session.newUser;
+
+//   if (!newUser) {
+//     req.flash('error_msg', 'Session expired. Please sign up again.');
+//     return res.redirect('/auth/signup');
+//   }
+
+//   console.log(`Entered OTP for ${newUser.email}: ${otp}`);
+
+//   if (newUser.otp !== otp) {
+//     req.flash('error_msg', 'Invalid OTP');
+//     return res.redirect(req.headers.referer); 
+//   }
+
+//   try {
+//     const { name, email, password, phoneNumber, role } = newUser;
+//     let user;
+
+//     if (role === 'patient') {
+//       const salt = await bcrypt.genSalt(10);
+//       const hashedPassword = await bcrypt.hash(password, salt);
+
+//       user = new Patient({ name, email, password: hashedPassword, phoneNumber, role });
+//     } else if (role === 'doctor') {
+//       const salt = await bcrypt.genSalt(10);
+//       const hashedPassword = await bcrypt.hash(password, salt);
+
+//       user = new Doctor({ name, email, password: hashedPassword, phoneNumber, role });
+//     } else {
+//       req.flash('error_msg', 'Invalid role');
+//       return res.redirect('/auth/signup');
+//     }
+
+//     await user.save();
+
+//     req.session.newUser = null;
+
+//     req.flash('success_msg', 'User created successfully, please log in');
+//     return res.redirect('/auth/login');
+//   } catch (err) {
+//     console.error('Error in OTP verification:', err);
+//     req.flash('error_msg', 'Server error');
+//     return res.redirect('/auth/signup');
+//   }
+// });
 
 
 router.get('/login', (req, res) => {
@@ -168,6 +239,11 @@ router.post('/login', async (req, res) => {
 
     if (!user) {
       req.flash('error_msg', 'Invalid Credentials');
+      return res.redirect('/auth/login');
+    }
+
+    if (!user.isVerified) {
+      req.flash('error_msg', 'Please verify your email before logging in.');
       return res.redirect('/auth/login');
     }
 

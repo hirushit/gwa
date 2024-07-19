@@ -243,18 +243,44 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                 if (status === 'accepted') {
                     if (booking.consultationType === 'Video call') {
                         emailSubject = 'Appointment Confirmation';
-                        emailContent = `<p>Dear ${booking.patient.name},</p>
-                                        <p>Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
-                                        <p>Join the meeting using the following link: <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
-                                        <p>Best regards,</p>
-                                        <p>Global Wellness Alliance Team</p>`;
+                        emailContent = `<div style="font-family: Helvetica, Arial, sans-serif; min-width: 1000px; overflow: auto; line-height: 2;">
+                                            <div style="margin: 50px auto; width: 70%; padding: 20px 0;">
+                                                <div style="border-bottom: 1px solid #eee;">
+                                                    <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">Global Wellness Alliance</a>
+                                                </div>
+                                                <p style="font-size: 1.1em;">Hi ${booking.patient.name},</p>
+                                                <p>Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
+                                                <p>Join the meeting using the following link:</p>
+                                                <a href="${booking.meetingLink}" style="background: #00466a; margin: 0 auto; width: max-content; padding: 0 10px; color: #fff; border-radius: 4px; text-decoration: none;">${booking.meetingLink}</a>
+                                                <p style="font-size: 0.9em;">Best regards,<br />Global Wellness Alliance Team</p>
+                                                <hr style="border: none; border-top: 1px solid #eee;" />
+                                                <div style="float: right; padding: 8px 0; color: #aaa; font-size: 0.8em; line-height: 1; font-weight: 300;">
+                                                    <p>Global Wellness Alliance</p>
+                                                    <p>1600 Amphitheatre Parkway</p>
+                                                    <p>California</p>
+                                                </div>
+                                            </div>
+                                        </div>`;
                         await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
 
-                        const acceptanceEmailContent = `<p>Dear Dr. ${doctor.name},</p>
-                                                        <p>The appointment with ${booking.patient.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
-                                                        <p>Join the meeting using the following link: <a href="${booking.meetingLink}">${booking.meetingLink}</a></p>
-                                                        <p>Best regards,</p>
-                                                        <p>Global Wellness Alliance Team</p>`;
+                        const acceptanceEmailContent = `<div style="font-family: Helvetica, Arial, sans-serif; min-width: 1000px; overflow: auto; line-height: 2;">
+                                                            <div style="margin: 50px auto; width: 70%; padding: 20px 0;">
+                                                                <div style="border-bottom: 1px solid #eee;">
+                                                                    <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">Global Wellness Alliance</a>
+                                                                </div>
+                                                                <p style="font-size: 1.1em;">Hi Dr. ${doctor.name},</p>
+                                                                <p>The appointment with ${booking.patient.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
+                                                                <p>Join the meeting using the following link:</p>
+                                                                <a href="${booking.meetingLink}" style="background: #00466a; margin: 0 auto; width: max-content; padding: 0 10px; color: #fff; border-radius: 4px; text-decoration: none;">${booking.meetingLink}</a>
+                                                                <p style="font-size: 0.9em;">Best regards,<br />Global Wellness Alliance Team</p>
+                                                                <hr style="border: none; border-top: 1px solid #eee;" />
+                                                                <div style="float: right; padding: 8px 0; color: #aaa; font-size: 0.8em; line-height: 1; font-weight: 300;">
+                                                                    <p>Global Wellness Alliance</p>
+                                                                    <p>1600 Amphitheatre Parkway</p>
+                                                                    <p>California</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>`;
                         await sendAppointmentEmail(doctor.email, doctor.name, 'Appointment Confirmation Notification', acceptanceEmailContent);
 
                         let chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Join the meeting using the following link: ${booking.meetingLink}`;
@@ -265,11 +291,23 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                         );
                     } else if (booking.consultationType === 'In-person') {
                         emailSubject = 'Appointment Confirmation';
-                        emailContent = `<p>Dear ${booking.patient.name},</p>
-                                        <p>Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
-                                        <p>Please visit the hospital at ${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}</p>
-                                        <p>Best regards,</p>
-                                        <p>Global Wellness Alliance Team</p>`;
+                        emailContent = `<div style="font-family: Helvetica, Arial, sans-serif; min-width: 1000px; overflow: auto; line-height: 2;">
+                                            <div style="margin: 50px auto; width: 70%; padding: 20px 0;">
+                                                <div style="border-bottom: 1px solid #eee;">
+                                                    <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">Global Wellness Alliance</a>
+                                                </div>
+                                                <p style="font-size: 1.1em;">Hi ${booking.patient.name},</p>
+                                                <p>Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
+                                                <p>Please visit the hospital at ${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}</p>
+                                                <p style="font-size: 0.9em;">Best regards,<br />Global Wellness Alliance Team</p>
+                                                <hr style="border: none; border-top: 1px solid #eee;" />
+                                                <div style="float: right; padding: 8px 0; color: #aaa; font-size: 0.8em; line-height: 1; font-weight: 300;">
+                                                    <p>Global Wellness Alliance</p>
+                                                    <p>1600 Amphitheatre Parkway</p>
+                                                    <p>California</p>
+                                                </div>
+                                            </div>
+                                        </div>`;
                         await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
 
                         let chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Please visit the hospital at ${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}`;
@@ -281,14 +319,25 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                     }
                 } else if (status === 'rejected') {
                     emailSubject = 'Appointment Rejection';
-                    emailContent = `<p>Dear ${booking.patient.name},</p>
-                                    <p>We regret to inform you that your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been rejected.</p>
-                                    <p>Please contact us for further assistance.</p>
-                                    <p>Best regards,</p>
-                                    <p>Global Wellness Alliance Team</p>`;
+                    emailContent = `<div style="font-family: Helvetica, Arial, sans-serif; min-width: 1000px; overflow: auto; line-height: 2;">
+                                        <div style="margin: 50px auto; width: 70%; padding: 20px 0;">
+                                            <div style="border-bottom: 1px solid #eee;">
+                                                <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">Global Wellness Alliance</a>
+                                            </div>
+                                            <p style="font-size: 1.1em;">Hi ${booking.patient.name},</p>
+                                            <p>We regret to inform you that your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been rejected.</p>
+                                            <p style="font-size: 0.9em;">Best regards,<br />Global Wellness Alliance Team</p>
+                                            <hr style="border: none; border-top: 1px solid #eee;" />
+                                            <div style="float: right; padding: 8px 0; color: #aaa; font-size: 0.8em; line-height: 1; font-weight: 300;">
+                                                <p>Global Wellness Alliance</p>
+                                                <p>1600 Amphitheatre Parkway</p>
+                                                <p>California</p>
+                                            </div>
+                                        </div>
+                                    </div>`;
                     await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
 
-                    let chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been rejected. Please contact us for further assistance.`;
+                    let chatMessage = `We regret to inform you that your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been rejected.`;
                     await Chat.findOneAndUpdate(
                         { doctorId: booking.doctor, patientId: booking.patient },
                         { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
@@ -296,16 +345,15 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                     );
                 }
             }
-        } else {
-            console.error('Time slot not found for the given date and time');
         }
 
-        res.redirect('/doctor/bookings');
+        res.redirect(`/doctor/bookings`);
     } catch (error) {
-        console.error(error.message);
-        res.status(500).send('Server Error');
+        console.error(error);
+        res.status(500).send('Server error');
     }
 });
+
 
 
 router.get('/completed-bookings', isLoggedIn, async (req, res) => {

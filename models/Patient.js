@@ -5,6 +5,8 @@ const emergencyContactSchema = new mongoose.Schema({
     relationship: String,
     phone: String,
     email: String,
+    verificationToken: String,
+    isVerified: { type: Boolean, default: false }
 });
 
 const patientSchema = new mongoose.Schema({

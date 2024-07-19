@@ -37,7 +37,6 @@
       vertical-align: middle;
       font-size: 16px;
     }
-
   </style>
 </head>
 <body>
@@ -51,46 +50,33 @@
     <p style="color: red;"><%= error_msg %></p>
   <% } %>
 
-  <% if (!showOtpForm) { %>
-    <form action="/auth/signup/doctor" method="POST">
-      <div>
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required>
-      </div>
-      <div>
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-      </div>
-      <div>
-        <label for="phoneNumber">Mobile Number:</label>
-        <input type="text" id="phoneNumber" name="phoneNumber" required>
-      </div>
-      <div>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
-      </div>
-      <button type="submit">Signup</button>
-    </form>
-    <br>
-    <a href="/auth/google/doctor" class="google-signup-btn">
-      <span>Signup with Google</span>
-    </a>
-
-  <% } else { %>
-    <form action="/auth/verify" method="POST">
-      <div>
-        <label for="otp">OTP:</label>
-        <input type="text" id="otp" name="otp" required>
-      </div>
-      <button type="submit">Verify OTP</button>
-    </form>
-    <br>
-    <a href="/auth/exit" class="exit-btn">Exit</a>
-  <% } %>
-
+  <form action="/auth/signup/doctor" method="POST">
+    <div>
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required>
+    </div>
+    <div>
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+    </div>
+    <div>
+      <label for="phoneNumber">Mobile Number:</label>
+      <input type="text" id="phoneNumber" name="phoneNumber" required>
+    </div>
+    <div>
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+    <button type="submit">Signup</button>
+  </form>
+  
+  <br>
+  <a href="/auth/google/doctor" class="google-signup-btn">
+    <span>Signup with Google</span>
+  </a>
+  
   <br>
   <a href="/auth/signup/patient">Patient Signup</a>
-
   <br><br>
   <a href="/auth/login">Login</a>
 </body>

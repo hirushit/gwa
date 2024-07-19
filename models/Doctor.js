@@ -6,6 +6,8 @@ const doctorSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['doctor'], default: 'doctor' },
   phoneNumber: String,
+  verificationToken: String,
+  isVerified: { type: Boolean, default: false },
   title: String,
   speciality: { type: [String], required: true },
   country: String,

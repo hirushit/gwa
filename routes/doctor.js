@@ -38,7 +38,24 @@ function isLoggedIn(req, res, next) {
     }
 }
 
-router.get('/doctor-index', isLoggedIn, async (req, res) => {
+function checkSubscription(req, res, next) {
+    const user = req.session.user;
+    if (user.subscriptionType === 'Premium' || user.subscriptionType === 'Standard') {
+        if (user.subscriptionVerification === 'Verified') {
+            return next();
+        }
+    }
+    res.redirect('/doctor/subscription-message');
+}
+
+function isDoctor(req, res, next) {
+    if (req.session.user && req.session.user.role === 'doctor') {
+        return next();
+    }
+    res.redirect('/auth/login');
+}
+
+router.get('/doctor-index', isDoctor, isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
 
@@ -50,7 +67,7 @@ router.get('/doctor-index', isLoggedIn, async (req, res) => {
         // Fetch only blogs that are verified
         const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).limit(5).exec();
 
-        res.render('doctor-index', { doctor, blogs });
+        res.render('doctor-index', { doctor, blogs, user: req.session.user });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -162,7 +179,7 @@ router.post('/profile/verify', isLoggedIn, async (req, res) => {
     }
 });
 
-router.get('/bookings', isLoggedIn, async (req, res) => {
+router.get('/bookings', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const bookings = await Booking.find({ doctor: req.session.user._id }).populate('patient');
         res.render('doctorBookings', { bookings });
@@ -171,6 +188,11 @@ router.get('/bookings', isLoggedIn, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+router.get('/subscription-message', isLoggedIn, (req, res) => {
+    res.render('subscriptionMessage');
+});
+
 
 router.post('/bookings/:id', isLoggedIn, async (req, res) => {
     try {
@@ -355,8 +377,7 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
 });
 
 
-
-router.get('/completed-bookings', isLoggedIn, async (req, res) => {
+router.get('/completed-bookings', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const doctorId = req.session.user._id; 
         const completedBookings = await Booking.find({ doctor: doctorId, status: 'completed' })
@@ -370,7 +391,7 @@ router.get('/completed-bookings', isLoggedIn, async (req, res) => {
     }
 });
 
-router.get('/bookings/:id/prescription', async (req, res) => {
+router.get('/bookings/:id/prescription', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const bookingId = req.params.id;
         const booking = await Booking.findById(bookingId).populate('patient').populate('doctor');
@@ -393,7 +414,7 @@ router.get('/bookings/:id/prescription', async (req, res) => {
     }
 });
 
-router.post('/prescriptions/upload', async (req, res) => {
+router.post('/prescriptions/upload',isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const { patientId, doctorId, patientName, doctorName, doctorSpeciality, doctorEmail, patientAge, medicines, meetingDate, meetingTime } = req.body;
 
@@ -430,7 +451,7 @@ router.post('/prescriptions/upload', async (req, res) => {
     }
 });
 
-router.get('/doctor-view/:id/prescriptions', async (req, res) => {
+router.get('/doctor-view/:id/prescriptions', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const patientId = req.params.id;
         const prescriptions = await Prescription.find({ patientId }).populate('doctorId').populate('patientId');
@@ -448,7 +469,7 @@ router.get('/doctor-view/:id/prescriptions', async (req, res) => {
     }
 });
 
-router.get('/manage-time-slots', isLoggedIn, async (req, res) => {
+router.get('/manage-time-slots', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
         const doctor = await Doctor.findOne({ email: doctorEmail }).populate('timeSlots.hospital').exec();
@@ -465,7 +486,7 @@ router.get('/manage-time-slots', isLoggedIn, async (req, res) => {
 });
 
 
-router.delete('/manage-time-slots/:index', isLoggedIn, async (req, res) => {
+router.delete('/manage-time-slots/:index', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
         const { index } = req.params;
@@ -486,7 +507,7 @@ router.delete('/manage-time-slots/:index', isLoggedIn, async (req, res) => {
     }
 });
 
-router.post('/add-time-slot', isLoggedIn, async (req, res) => {
+router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
         const { date, startTime, endTime, hospital } = req.body;
@@ -573,7 +594,7 @@ async function createGoogleMeetLink(booking) {
 
         return response.data.hangoutLink;
     } catch (error) {
-        console.error('Error creating Google Meet link:', error.response ? error.response.data : error.message);
+        console.error('Error creating Google Meet link:', error);
         throw new Error('Unable to create Google Meet link');
     }
 }
@@ -602,7 +623,7 @@ async function sendAppointmentEmail(to, name, subject, content) {
     }
 }
 
-router.get('/calendar', isLoggedIn, async (req, res) => {
+router.get('/calendar', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const doctorId = req.session.user._id; 
         const doctor = await Doctor.findById(doctorId);
@@ -767,7 +788,7 @@ router.get('/blog', (req, res) => {
     res.render('blog-upload-form'); 
 });
 
-router.post('/blog', upload.single('image'), async (req, res) => {
+router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
     try {
         const authorEmail = req.session.user.email;
         const { title, author, description, summary, categories, hashtags, priority } = req.body;
@@ -853,7 +874,7 @@ router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
   
   
 
-router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, res) => {
+router.post('/blogs/edit/:id', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
     try {
         const blog = await Blog.findById(req.params.id);
 
@@ -889,7 +910,7 @@ router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, r
     }
 });
 
-router.get('/dashboard', isLoggedIn, async (req, res) => {
+router.get('/dashboard', isLoggedIn, checkSubscription, async (req, res) => {
     try {
       const doctor = await Doctor.findOne({ email: req.session.user.email }).lean();
       if (!doctor) {
@@ -908,7 +929,7 @@ router.get('/dashboard', isLoggedIn, async (req, res) => {
   });
 
 
-  router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
+  router.post('/chats/:chatId/send-message', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const { message } = req.body;
         const doctor = await Doctor.findOne({ email: req.session.user.email });
@@ -968,7 +989,7 @@ router.get('/dashboard', isLoggedIn, async (req, res) => {
     }
 });
 
-router.get('/chat/:id', isLoggedIn, async (req, res) => {
+router.get('/chat/:id', isLoggedIn, checkSubscription,async (req, res) => {
     try {
         const chatId = req.params.id;
         const chat = await Chat.findById(chatId).populate('patientId').lean();
@@ -985,7 +1006,7 @@ router.get('/chat/:id', isLoggedIn, async (req, res) => {
     }
 });
 
-router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
+router.get('/blogs/view/:id', isLoggedIn, checkSubscription,async (req, res) => {
     try {
         const blogId = req.params.id;
         const blog = await Blog.findById(blogId).lean();

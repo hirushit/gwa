@@ -573,7 +573,7 @@ async function createGoogleMeetLink(booking) {
 
         return response.data.hangoutLink;
     } catch (error) {
-        console.error('Error creating Google Meet link:', error);
+        console.error('Error creating Google Meet link:', error.response ? error.response.data : error.message);
         throw new Error('Unable to create Google Meet link');
     }
 }

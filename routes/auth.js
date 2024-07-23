@@ -175,56 +175,6 @@ router.get('/verify-email', async (req, res) => {
   }
 });
 
-
-// router.post('/verify', async (req, res) => {
-//   const { otp } = req.body;
-//   const newUser = req.session.newUser;
-
-//   if (!newUser) {
-//     req.flash('error_msg', 'Session expired. Please sign up again.');
-//     return res.redirect('/auth/signup');
-//   }
-
-//   console.log(`Entered OTP for ${newUser.email}: ${otp}`);
-
-//   if (newUser.otp !== otp) {
-//     req.flash('error_msg', 'Invalid OTP');
-//     return res.redirect(req.headers.referer); 
-//   }
-
-//   try {
-//     const { name, email, password, phoneNumber, role } = newUser;
-//     let user;
-
-//     if (role === 'patient') {
-//       const salt = await bcrypt.genSalt(10);
-//       const hashedPassword = await bcrypt.hash(password, salt);
-
-//       user = new Patient({ name, email, password: hashedPassword, phoneNumber, role });
-//     } else if (role === 'doctor') {
-//       const salt = await bcrypt.genSalt(10);
-//       const hashedPassword = await bcrypt.hash(password, salt);
-
-//       user = new Doctor({ name, email, password: hashedPassword, phoneNumber, role });
-//     } else {
-//       req.flash('error_msg', 'Invalid role');
-//       return res.redirect('/auth/signup');
-//     }
-
-//     await user.save();
-
-//     req.session.newUser = null;
-
-//     req.flash('success_msg', 'User created successfully, please log in');
-//     return res.redirect('/auth/login');
-//   } catch (err) {
-//     console.error('Error in OTP verification:', err);
-//     req.flash('error_msg', 'Server error');
-//     return res.redirect('/auth/signup');
-//   }
-// });
-
-
 router.get('/login', (req, res) => {
   res.render('login');
 });
@@ -277,7 +227,7 @@ router.post('/login', async (req, res) => {
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
+const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI;
 
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 

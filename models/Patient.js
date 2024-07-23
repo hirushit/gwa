@@ -4,9 +4,7 @@ const emergencyContactSchema = new mongoose.Schema({
     name: String,
     relationship: String,
     phone: String,
-    email: String,
-    verificationToken: String,
-    isVerified: { type: Boolean, default: false }
+    email: String
 });
 
 const patientSchema = new mongoose.Schema({
@@ -32,6 +30,8 @@ const patientSchema = new mongoose.Schema({
         type:String
     },
     dateOfBirth: Date,
+    verificationToken: String,
+    isVerified: { type: Boolean, default: false },
     bloodGroup: String,
     address: String,
     insuranceProvider: String,

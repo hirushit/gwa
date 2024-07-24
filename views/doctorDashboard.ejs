@@ -15,9 +15,12 @@
                     <h3><%= chat.patientId.name %></h3>
                     <% if (chat.messages.length > 0) { %>
                         <p>Last Message: <%= chat.messages[chat.messages.length - 1].text %></p>
-                        <p>Timestamp: <%= chat.messages[chat.messages.length - 1].timestamp %></p>
+                        <p>Timestamp: <%= new Date(chat.messages[chat.messages.length - 1].timestamp).toLocaleString() %></p>
                     <% } else { %>
                         <p>No messages yet</p>
+                    <% } %>
+                    <% if (chat.unreadCount > 0) { %>
+                        <p><strong><%= chat.unreadCount %> new message<%= chat.unreadCount > 1 ? 's' : '' %></strong></p>
                     <% } %>
                     <a href="/doctor/chat/<%= chat._id %>">Chat with <%= chat.patientId.name %></a>
                 <% } else { %>

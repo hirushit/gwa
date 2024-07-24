@@ -8,7 +8,8 @@ const chatSchema = new Schema({
         {
             senderId: { type: mongoose.Schema.Types.ObjectId, required: true },
             text: { type: String, required: true },
-            timestamp: { type: Date, default: Date.now }
+            timestamp: { type: Date, default: Date.now },
+            read: { type: Boolean, default: false }
         }
     ]
 });
@@ -16,4 +17,3 @@ const chatSchema = new Schema({
 const Chat = mongoose.model('Chat', chatSchema);
 
 module.exports = Chat;
-    

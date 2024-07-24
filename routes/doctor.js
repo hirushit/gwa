@@ -27,6 +27,7 @@ router.use(methodOverride('_method'));
 
 function isLoggedIn(req, res, next) {
     if (req.session && req.session.user && req.session.user.role === 'doctor') {
+        req.user = req.session.user;
         return next();
     } else {
         console.warn('Unauthorized access attempt:', {
@@ -912,84 +913,60 @@ router.post('/blogs/edit/:id', isLoggedIn, checkSubscription, upload.single('ima
 
 router.get('/dashboard', isLoggedIn, checkSubscription, async (req, res) => {
     try {
-      const doctor = await Doctor.findOne({ email: req.session.user.email }).lean();
-      if (!doctor) {
-        return res.status(404).send('Doctor not found');
-      }
-  
-      const chats = await Chat.find({ doctorId: doctor._id })
-        .populate('patientId', 'name') 
-        .sort({ updatedAt: -1 }); 
-  
-      res.render('doctorDashboard', { doctor, chats });
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
-    }
-  });
-
-
-  router.post('/chats/:chatId/send-message', isLoggedIn, checkSubscription, async (req, res) => {
-    try {
-        const { message } = req.body;
-        const doctor = await Doctor.findOne({ email: req.session.user.email });
-        const chatId = req.params.chatId;
-
+        const doctor = await Doctor.findOne({ email: req.session.user.email }).lean();
         if (!doctor) {
             return res.status(404).send('Doctor not found');
         }
 
-        let chat = await Chat.findOneAndUpdate(
-            { _id: chatId, doctorId: doctor._id },
-            { $push: { messages: { senderId: doctor._id, text: message, timestamp: new Date() } } },
-            { upsert: true, new: true }
-        ).populate('patientId');
+        // Fetch chats and include patientId
+        const chats = await Chat.find({ doctorId: doctor._id })
+            .populate('patientId', 'name')
+            .sort({ updatedAt: -1 })
+            .lean(); // Use lean() to get plain JavaScript objects
 
-        if (!chat) {
-            return res.status(404).send('Chat not found');
-        }
+        // Calculate unread message counts for each chat
+        chats.forEach(chat => {
+            // Count unread messages where the sender is not the doctor
+            chat.unreadCount = chat.messages.filter(message => 
+                !message.read && message.senderId.toString() !== doctor._id.toString()
+            ).length;
+        });
 
-        const consultationType = chat.consultationType;
-
-        let messageContent = '';
-        if (consultationType === 'Video call') {
-            const booking = {
-                doctor: {
-                    name: doctor.name,
-                    email: doctor.email,
-                },
-                patient: {
-                    name: chat.patientId.name, 
-                    email: chat.patientId.email, 
-                },
-                date: new Date(), 
-            };
-            
-            const videoCallLink = await createGoogleMeetLink(booking);
-            console.log(videoCallLink);
-            messageContent = `Here is the link to join the video call: ${videoCallLink}`;
-        } else if (consultationType === 'In-person') {
-            const address = doctor.hospital.address; 
-            messageContent = `Your appointment is scheduled at the hospital. Here is the address: ${address}`;
-        } else {
-            messageContent = `Appointment details: ${consultationType}`;
-        }
-
-        chat = await Chat.findByIdAndUpdate(
-            chatId,
-            { $push: { messages: { senderId: doctor._id, text: messageContent, timestamp: new Date() } } },
-            { new: true }
-        );
-
-        res.redirect(`/doctor/chat/${chat._id}`);
-
-    } catch (error) {
-        console.error(error.message);
+        res.render('doctorDashboard', { doctor, chats });
+    } catch (err) {
+        console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
 
-router.get('/chat/:id', isLoggedIn, checkSubscription,async (req, res) => {
+
+
+router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
+    try {
+      const { message } = req.body;
+      const doctor = await Doctor.findOne({ email: req.session.user.email });
+      const chatId = req.params.chatId;
+  
+      if (!doctor) {
+        return res.status(404).send('Doctor not found');
+      }
+  
+      let chat = await Chat.findOneAndUpdate(
+        { _id: chatId, doctorId: doctor._id },
+        { $push: { messages: { senderId: doctor._id, text: message, timestamp: new Date(), read: false } } },
+        { upsert: true, new: true }
+      );
+  
+      res.redirect(`/doctor/chat/${chat._id}`);
+  
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send('Server Error');
+    }
+  });
+  
+
+router.get('/chat/:id', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const chatId = req.params.id;
         const chat = await Chat.findById(chatId).populate('patientId').lean();
@@ -998,13 +975,27 @@ router.get('/chat/:id', isLoggedIn, checkSubscription,async (req, res) => {
             return res.status(404).send('Chat not found');
         }
 
-        res.render('doctorChat', { chat });
+        // Update only received messages (senderId != logged-in user's ID)
+        const updatedChat = await Chat.findById(chatId);
+
+        if (updatedChat) {
+            updatedChat.messages.forEach(message => {
+                if (message.senderId.toString() !== req.user._id.toString() && !message.read) {
+                    message.read = true;
+                }
+            });
+
+            await updatedChat.save();
+        }
+
+        res.render('doctorChat', { chat: updatedChat.toObject() });
 
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
+
 
 router.get('/blogs/view/:id', isLoggedIn, checkSubscription,async (req, res) => {
     try {

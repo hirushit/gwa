@@ -42,13 +42,14 @@
             max-width: 70%;
             word-wrap: break-word;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-            margin-left: auto; 
+            margin-left: 0;
+            margin-right: auto; 
             background-color: #e6f2ff; 
         }
         .sent-message {
             background-color: #f2f2f2; 
-            margin-left: 0; 
-            margin-right: auto; 
+            margin-left: auto; 
+            margin-right: 0; 
         }
         .timestamp {
             font-size: 12px;
@@ -87,7 +88,7 @@
         <div class="chat-box" id="chatBox">
             <% chat.messages.forEach(message => { %>
                 <div class="message-container">
-                    <div class="message <%= message.senderId.toString() === chat.doctorId.toString() ? 'sent-message' : '' %>">
+                    <div class="message <%= message.senderId.toString() === chat.doctorId.toString() ? 'sent-message' : '' %> <%= !message.read ? 'unread-message' : '' %>">
                         <%= message.text %>
                         <span class="timestamp"><%= new Date(message.timestamp).toLocaleString() %></span>
                     </div>

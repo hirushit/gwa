@@ -8,7 +8,7 @@ const Admin = require('../models/Admin');
 const Blog = require('../models/Blog');
 const Chat = require('../models/Chat');
 const Prescription = require('../models/Prescription');
-
+const Notification = require('../models/Notification');
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -504,6 +504,18 @@ router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
       { upsert: true, new: true }
     );
 
+    const doctor = await Doctor.findById(chat.doctorId);
+
+    if (doctor) {
+      await Notification.create({
+        userId: doctor._id,
+        message: `New message from ${patient.name}`,
+        type: 'chat',
+        read: false,
+        createdAt: new Date()
+      });
+    }
+
     res.redirect(`/patient/chat/${chat._id}`);
 
   } catch (error) {
@@ -528,5 +540,37 @@ router.get('/prescriptions', isLoggedIn, async (req, res) => {
       res.status(500).send('Server Error');
   }
 });
+
+router.get('/notifications', isLoggedIn, async (req, res) => {
+  try {
+      const notifications = await Notification.find({ userId: req.user._id }).lean();
+      res.render('patientNotifications', { notifications });
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Server Error');
+  }
+  });
+  
+  router.post('/notifications/:id/mark-read', isLoggedIn, async (req, res) => {
+      try {
+          await Notification.findByIdAndUpdate(req.params.id, { read: true });
+          res.redirect('/patient/notifications');
+      } catch (error) {
+          console.error(error);
+          res.status(500).send('Server Error');
+      }
+  });
+  
+  
+  // Delete notification route
+  router.post('/notifications/:id/delete', isLoggedIn, async (req, res) => {
+      try {
+          await Notification.findByIdAndDelete(req.params.id);
+          res.redirect('/patient/notifications');
+      } catch (error) {
+          console.error(error);
+          res.status(500).send('Server Error');
+      }
+  });
 
 module.exports = router;

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .notification {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .notification:last-child {
+            border-bottom: none;
+        }
+        .notification-text {
+            flex: 1;
+        }
+        .notification-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .notification-actions form {
+            margin: 0;
+        }
+        .btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-read {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Notifications</h1>
+        <% if (notifications.length > 0) { %>
+            <% notifications.forEach(notification => { %>
+                <div class="notification <%= notification.read ? 'read' : 'unread' %>">
+                    <div class="notification-text">
+                        <%= notification.message %>
+                    </div>
+                    <div class="notification-actions">
+                        <% if (!notification.read) { %>
+                            <form action="/doctor/notifications/<%= notification._id %>/mark-read" method="POST">
+                                <button type="submit" class="btn btn-read">Mark as Read</button>
+                            </form>
+                            
+                            
+                        <% } %>
+                        <form action="/doctor/notifications/<%= notification._id %>/delete" method="POST">
+                            <button type="submit" class="btn btn-delete">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <p>No notifications to display.</p>
+        <% } %>
+    </div>
+</body>
+</html>

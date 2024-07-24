@@ -13,6 +13,7 @@ const Booking = require('../models/Booking');
 const Chat = require('../models/Chat');
 const Patient = require('../models/Patient');
 const Prescription = require('../models/Prescription');
+const Notification = require('../models/Notification');
 
 
 require('dotenv').config();
@@ -943,27 +944,40 @@ router.get('/dashboard', isLoggedIn, checkSubscription, async (req, res) => {
 
 router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
     try {
-      const { message } = req.body;
-      const doctor = await Doctor.findOne({ email: req.session.user.email });
-      const chatId = req.params.chatId;
-  
-      if (!doctor) {
-        return res.status(404).send('Doctor not found');
-      }
-  
-      let chat = await Chat.findOneAndUpdate(
-        { _id: chatId, doctorId: doctor._id },
-        { $push: { messages: { senderId: doctor._id, text: message, timestamp: new Date(), read: false } } },
-        { upsert: true, new: true }
-      );
-  
-      res.redirect(`/doctor/chat/${chat._id}`);
-  
+        const { message } = req.body;
+        const doctor = await Doctor.findOne({ email: req.session.user.email });
+        const chatId = req.params.chatId;
+
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        let chat = await Chat.findOneAndUpdate(
+            { _id: chatId, doctorId: doctor._id },
+            { $push: { messages: { senderId: doctor._id, text: message, timestamp: new Date(), read: false } } },
+            { upsert: true, new: true }
+        );
+
+        const patient = await Patient.findById(chat.patientId);
+
+        if (patient) {
+            await Notification.create({
+                userId: patient._id,
+                message: `New message from Dr. ${doctor.name}`,
+                type: 'chat',
+                read: false,
+                createdAt: new Date()
+            });
+        }
+
+        res.redirect(`/doctor/chat/${chat._id}`);
+
     } catch (error) {
-      console.error(error.message);
-      res.status(500).send('Server Error');
+        console.error(error.message);
+        res.status(500).send('Server Error');
     }
-  });
+});
+
   
 
 router.get('/chat/:id', isLoggedIn, checkSubscription, async (req, res) => {
@@ -1100,5 +1114,39 @@ router.get('/blogs', async (req, res) => {
       res.status(500).send('Server Error');
     }
   });
+
+router.get('/notifications', isLoggedIn, async (req, res) => {
+try {
+    const notifications = await Notification.find({ userId: req.user._id }).lean();
+    res.render('doctorNotifications', { notifications });
+} catch (error) {
+    console.error(error);
+    res.status(500).send('Server Error');
+}
+});
+
+router.post('/notifications/:id/mark-read', isLoggedIn, async (req, res) => {
+    try {
+        await Notification.findByIdAndUpdate(req.params.id, { read: true });
+        res.redirect('/doctor/notifications');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+// Delete notification route
+router.post('/notifications/:id/delete', isLoggedIn, async (req, res) => {
+    try {
+        await Notification.findByIdAndDelete(req.params.id);
+        res.redirect('/doctor/notifications');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
+
 
 module.exports = router;

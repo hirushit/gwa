@@ -595,19 +595,21 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
       .font('Times-Bold') 
       .fontSize(18)
       .text('E-Prescription', titleX, headerY, { align: 'center' })
-      .fontSize(12)
-      .font('Times-Roman') 
-      .text('MedxBay', titleX, headerY + 20, { align: 'center' })
       .fontSize(10)
-      .text('Your Trusted Health Partner', titleX, headerY + 35, { align: 'center' })
+      .font('Times-Roman') 
+      .text('MedxBay', titleX, headerY + 19, { align: 'center' })
+      .font('Times-Italic')
+      .fontSize(10)
+      .text('Your Trusted Health Partner', titleX, headerY + 31, { align: 'center' })
       .moveDown(1.5);
 
     doc
       .font('Times-Bold') 
       .fontSize(12)
       .text(` ${doctor.name}`, doctorInfoX, headerY, { align: 'right' })
-      .font('Times-Italic') 
+      .font('Times-Roman') 
       .text(`${doctor.speciality.join(', ')}`, doctorInfoX, headerY + 15, { align: 'right' })
+      .font('Times-Italic') 
       .text(`${prescription.doctorEmail}`, doctorInfoX, headerY + 30, { align: 'right' })
       .moveDown();
 

@@ -583,7 +583,7 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
     const headerY = 40;
 
     const watermarkX = (doc.page.width - 195) / 2; 
-    const watermarkY = (doc.page.height - 175) / 2; 
+    const watermarkY = (doc.page.height - 195) / 2; 
 
     doc
       .opacity(0.15) 
@@ -591,23 +591,24 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
       .opacity(1); 
 
     doc
-      .image('logo.png', logoX, headerY, { width: 105 })
-      .font('Helvetica-Bold') 
-      .fontSize(16)
+      .image('logo.png', logoX, headerY, { width: 115 })
+      .font('Times-Bold') 
+      .fontSize(18)
       .text('E-Prescription', titleX, headerY, { align: 'center' })
       .fontSize(12)
-      .font('Helvetica')
+      .font('Times-Roman') 
       .text('MedxBay', titleX, headerY + 20, { align: 'center' })
       .fontSize(10)
       .text('Your Trusted Health Partner', titleX, headerY + 35, { align: 'center' })
       .moveDown(1.5);
 
     doc
-      .font('Helvetica-Bold') 
-      .fontSize(10)
-      .text(`Doctor Name: ${doctor.name}`, doctorInfoX, headerY, { align: 'right' })
-      .text(`Specialization: ${doctor.speciality.join(', ')}`, doctorInfoX, headerY + 15, { align: 'right' })
-      .text(`Email: ${prescription.doctorEmail}`, doctorInfoX, headerY + 30, { align: 'right' })
+      .font('Times-Bold') 
+      .fontSize(12)
+      .text(` ${doctor.name}`, doctorInfoX, headerY, { align: 'right' })
+      .font('Times-Italic') 
+      .text(`${doctor.speciality.join(', ')}`, doctorInfoX, headerY + 15, { align: 'right' })
+      .text(`${prescription.doctorEmail}`, doctorInfoX, headerY + 30, { align: 'right' })
       .moveDown();
 
     doc
@@ -617,33 +618,31 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
       .moveDown(2);
 
     doc
-      .font('Helvetica')
+      .font('Times-Roman') 
       .fontSize(12)
       .text(`Patient Name: ${prescription.patientName}`, 40)
       .moveDown(0.5)
       .text(`Patient Age: ${prescription.patientAge}`)
       .moveDown(0.5)
-      .text(`Meeting Date: ${new Date(prescription.meetingDate).toLocaleDateString()}`)
-      .moveDown(0.5)
-      .text(`Meeting Time: ${prescription.meetingTime}`)
+      .text(`Consultation Type: ${booking.consultationType}`)
       .moveDown(1.5);
 
     doc
       .fontSize(14)
-      .font('Helvetica-Bold') 
+      .font('Times-Bold')
       .text('Medicines', { underline: true })
       .moveDown()
-      .font('Helvetica') 
+      .font('Times-Roman') 
       .fontSize(12);
 
     const medicineLineSpacing = 0.5;
 
     prescription.medicines.forEach(medicine => {
       doc
-        .font('Helvetica-Bold') 
+        .font('Times-Bold') 
         .text(`• Name: ${medicine.name}`)
         .moveDown(medicineLineSpacing)
-        .font('Helvetica') 
+        .font('Times-Roman') 
         .text(`  - Dosage: ${medicine.dosage}`)
         .moveDown(medicineLineSpacing)
         .text(`  - Before Food: ${medicine.beforeFood ? 'Yes' : 'No'}`)
@@ -656,11 +655,11 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
 
     doc
       .moveDown()
-      .font('Helvetica-Bold')
-      .text('Doctor\'s Signature:', { align: 'right' })
-      .moveDown()
-      .font('Helvetica')
-      .text(doctor.name, { align: 'right', fontSize: 14, italics: true });
+      .font('Times-Bold') 
+      .text('Doctor\'s Signature', { align: 'right' })
+      .moveDown(0.4)
+      .font('Times-Italic') 
+      .text(doctor.name, { align: 'right', fontSize: 14 });
 
     doc
       .moveTo(40, doc.page.height - 100)
@@ -669,10 +668,12 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
 
     doc.y = doc.page.height - 90;
     doc
-      .font('Helvetica-Bold')
+    .moveDown(0.5)
+      .font('Times-Bold') 
       .fontSize(12)
       .text(hospital.name, { align: 'center' })
-      .font('Helvetica')
+      .moveDown(0.4)
+      .font('Times-Italic') 
       .fontSize(10)
       .text(
         `${hospital.location.street}, ${hospital.location.city}, ${hospital.location.state}, ${hospital.location.country} - ${hospital.location.zip}`,
@@ -691,7 +692,6 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
 
 router.get('/notifications', isLoggedIn, async (req, res) => {
   try {

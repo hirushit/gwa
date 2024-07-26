@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Prescription</title>
+    <title>Add Prescription</title>
+
 </head>
 <body>
-    <h1>Upload Prescription for <%= patient.name %></h1>
+    <h1>Add Prescription for <%= patient.name %></h1>
 
     <% if (booking.status === 'completed') { %>
         <form id="uploadPrescriptionForm" action="/doctor/prescriptions/upload" method="POST">
@@ -20,14 +21,16 @@
             <input type="hidden" name="meetingDate" value="<%= booking.date %>">
             <input type="hidden" name="meetingTime" value="<%= booking.time %>">
 
-            <label>Patient Age: <input type="number" name="patientAge" required></label>
+            <label>Patient Age: <input type="number" name="patientAge" value="<%= patientAge %>" readonly></label>
 
             <div id="medicines">
                 <div class="medicine">
                     <label>Medicine Name: <input type="text" name="medicines[0][name]" required></label>
+                    <br>
                     <label>Dosage: <input type="text" name="medicines[0][dosage]" required></label>
                     <label>Before Food: <input type="checkbox" name="medicines[0][beforeFood]"></label>
                     <label>After Food: <input type="checkbox" name="medicines[0][afterFood]"></label>
+                    <br>
                     <label>Timing:</label>
                     <label>Morning: <input type="checkbox" name="medicines[0][timing][morning]"></label>
                     <label>Afternoon: <input type="checkbox" name="medicines[0][timing][afternoon]"></label>
@@ -36,7 +39,7 @@
             </div>
 
             <button type="button" onclick="addMedicine()">Add Another Medicine</button>
-            <button type="submit">Upload Prescription</button>
+            <button type="submit">Submit Prescription</button>
         </form>
     <% } else { %>
         <p>Prescription can only be uploaded once the booking is completed.</p>

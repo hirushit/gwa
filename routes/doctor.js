@@ -405,16 +405,26 @@ router.get('/bookings/:id/prescription', isLoggedIn, checkSubscription, async (r
         const patient = booking.patient;
         const doctor = booking.doctor;
 
+        const today = new Date();
+        const birthDate = new Date(patient.dateOfBirth);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDifference = today.getMonth() - birthDate.getMonth();
+        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
         res.render('uploadPrescription', {
             booking,
             patient,
-            doctor
+            doctor,
+            patientAge: age
         });
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
     }
 });
+
 
 router.post('/prescriptions/upload',isLoggedIn, checkSubscription, async (req, res) => {
     try {

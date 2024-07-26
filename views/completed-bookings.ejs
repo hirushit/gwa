@@ -17,8 +17,8 @@
                 <strong>Time:</strong> <%= booking.time %><br>
                 <strong>Consultation Type:</strong> <%= booking.consultationType %><br>
                 
-                <a href="/doctor/bookings/<%= booking._id %>/prescription">Upload Prescription</a>
-                <a href="/doctor/doctor-view/<%= booking.patient._id %>/prescriptions">View Prescriptions</a>
+                <a href="/doctor/bookings/<%= booking._id %>/prescription">Add Prescription</a>
+                <a href="/doctor/doctor-view/<%= booking.patient._id %>/prescriptions">View Prescription</a>
             </li>
             <hr>
         <% }); %>

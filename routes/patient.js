@@ -5,6 +5,9 @@ const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 const Booking = require('../models/Booking');
 const Admin = require('../models/Admin'); 
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
+const path = require('path');
 const Blog = require('../models/Blog');
 const Chat = require('../models/Chat');
 const Prescription = require('../models/Prescription');
@@ -524,22 +527,171 @@ router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
   }
 });
 
-
 router.get('/prescriptions', isLoggedIn, async (req, res) => {
   try {
-      const patientId = req.session.user._id; 
+    const patientId = req.session.user._id;
+    const patientPrescriptions = await Prescription.find({ patientId: patientId })
+      .sort({ createdAt: 'desc' });
 
-      const patientPrescriptions = await Prescription.find({ patientId: patientId })
-                                                    .sort({ createdAt: 'desc' });
-
-      console.log(patientPrescriptions);
-
-      res.render('patient-prescriptions', { prescriptions: patientPrescriptions });
+    res.render('patient-prescriptions', { prescriptions: patientPrescriptions });
   } catch (error) {
-      console.error(error.message);
-      res.status(500).send('Server Error');
+    console.error(error.message);
+    res.status(500).send('Server Error');
   }
 });
+
+
+router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
+  try {
+    const prescription = await Prescription.findById(req.params.id)
+      .populate('doctorId', 'name speciality')
+      .exec();
+
+    if (!prescription) {
+      return res.status(404).send('Prescription not found');
+    }
+
+    const doctor = prescription.doctorId;
+
+    const booking = await Booking.findOne({
+      patient: prescription.patientId,
+      doctor: prescription.doctorId
+    });
+
+    if (!booking) {
+      return res.status(404).send('Booking not found');
+    }
+
+    const hospital = booking.hospital;
+
+    const doc = new PDFDocument({ margin: 40 });
+    const fileName = `prescription-${prescription._id}.pdf`;
+    const prescriptionsDir = path.join(__dirname, '../public/prescriptions');
+
+    if (!fs.existsSync(prescriptionsDir)) {
+      fs.mkdirSync(prescriptionsDir, { recursive: true });
+    }
+
+    const filePath = path.join(prescriptionsDir, fileName);
+
+    doc.info.Title = 'E-Prescription';
+    doc.info.Author = 'MedxBay';
+
+    const logoX = 40;
+    const titleX = 45;
+    const doctorInfoX = 400;
+    const headerY = 40;
+
+    const watermarkX = (doc.page.width - 195) / 2; 
+    const watermarkY = (doc.page.height - 175) / 2; 
+
+    doc
+      .opacity(0.15) 
+      .image('x.png', watermarkX, watermarkY, { width: 200, height: 200 }) 
+      .opacity(1); 
+
+    doc
+      .image('logo.png', logoX, headerY, { width: 105 })
+      .font('Helvetica-Bold') 
+      .fontSize(16)
+      .text('E-Prescription', titleX, headerY, { align: 'center' })
+      .fontSize(12)
+      .font('Helvetica')
+      .text('MedxBay', titleX, headerY + 20, { align: 'center' })
+      .fontSize(10)
+      .text('Your Trusted Health Partner', titleX, headerY + 35, { align: 'center' })
+      .moveDown(1.5);
+
+    doc
+      .font('Helvetica-Bold') 
+      .fontSize(10)
+      .text(`Doctor Name: ${doctor.name}`, doctorInfoX, headerY, { align: 'right' })
+      .text(`Specialization: ${doctor.speciality.join(', ')}`, doctorInfoX, headerY + 15, { align: 'right' })
+      .text(`Email: ${prescription.doctorEmail}`, doctorInfoX, headerY + 30, { align: 'right' })
+      .moveDown();
+
+    doc
+      .moveTo(40, headerY + 60)
+      .lineTo(570, headerY + 60)
+      .stroke()
+      .moveDown(2);
+
+    doc
+      .font('Helvetica')
+      .fontSize(12)
+      .text(`Patient Name: ${prescription.patientName}`, 40)
+      .moveDown(0.5)
+      .text(`Patient Age: ${prescription.patientAge}`)
+      .moveDown(0.5)
+      .text(`Meeting Date: ${new Date(prescription.meetingDate).toLocaleDateString()}`)
+      .moveDown(0.5)
+      .text(`Meeting Time: ${prescription.meetingTime}`)
+      .moveDown(1.5);
+
+    doc
+      .fontSize(14)
+      .font('Helvetica-Bold') 
+      .text('Medicines', { underline: true })
+      .moveDown()
+      .font('Helvetica') 
+      .fontSize(12);
+
+    const medicineLineSpacing = 0.5;
+
+    prescription.medicines.forEach(medicine => {
+      doc
+        .font('Helvetica-Bold') 
+        .text(`• Name: ${medicine.name}`)
+        .moveDown(medicineLineSpacing)
+        .font('Helvetica') 
+        .text(`  - Dosage: ${medicine.dosage}`)
+        .moveDown(medicineLineSpacing)
+        .text(`  - Before Food: ${medicine.beforeFood ? 'Yes' : 'No'}`)
+        .moveDown(medicineLineSpacing)
+        .text(`  - After Food: ${medicine.afterFood ? 'Yes' : 'No'}`)
+        .moveDown(medicineLineSpacing)
+        .text(`  - Timing: Morning: ${medicine.timing.morning ? 'Yes' : 'No'}, Afternoon: ${medicine.timing.afternoon ? 'Yes' : 'No'}, Night: ${medicine.timing.night ? 'Yes' : 'No'}`)
+        .moveDown(1);
+    });
+
+    doc
+      .moveDown()
+      .font('Helvetica-Bold')
+      .text('Doctor\'s Signature:', { align: 'right' })
+      .moveDown()
+      .font('Helvetica')
+      .text(doctor.name, { align: 'right', fontSize: 14, italics: true });
+
+    doc
+      .moveTo(40, doc.page.height - 100)
+      .lineTo(570, doc.page.height - 100)
+      .stroke();
+
+    doc.y = doc.page.height - 90;
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(12)
+      .text(hospital.name, { align: 'center' })
+      .font('Helvetica')
+      .fontSize(10)
+      .text(
+        `${hospital.location.street}, ${hospital.location.city}, ${hospital.location.state}, ${hospital.location.country} - ${hospital.location.zip}`,
+        { align: 'center' }
+      );
+
+    doc.pipe(fs.createWriteStream(filePath)).on('finish', () => {
+      res.setHeader('Content-disposition', 'attachment; filename=' + fileName);
+      res.setHeader('Content-type', 'application/pdf');
+      fs.createReadStream(filePath).pipe(res);
+    });
+
+    doc.end();
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 
 router.get('/notifications', isLoggedIn, async (req, res) => {
   try {
@@ -551,26 +703,25 @@ router.get('/notifications', isLoggedIn, async (req, res) => {
   }
   });
   
-  router.post('/notifications/:id/mark-read', isLoggedIn, async (req, res) => {
-      try {
-          await Notification.findByIdAndUpdate(req.params.id, { read: true });
-          res.redirect('/patient/notifications');
-      } catch (error) {
-          console.error(error);
-          res.status(500).send('Server Error');
-      }
-  });
+router.post('/notifications/:id/mark-read', isLoggedIn, async (req, res) => {
+    try {
+        await Notification.findByIdAndUpdate(req.params.id, { read: true });
+        res.redirect('/patient/notifications');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
   
   
-  // Delete notification route
-  router.post('/notifications/:id/delete', isLoggedIn, async (req, res) => {
-      try {
-          await Notification.findByIdAndDelete(req.params.id);
-          res.redirect('/patient/notifications');
-      } catch (error) {
-          console.error(error);
-          res.status(500).send('Server Error');
-      }
-  });
+router.post('/notifications/:id/delete', isLoggedIn, async (req, res) => {
+    try {
+        await Notification.findByIdAndDelete(req.params.id);
+        res.redirect('/patient/notifications');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
 
 module.exports = router;

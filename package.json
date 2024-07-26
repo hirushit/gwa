@@ -36,6 +36,7 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^8.0.0",
+    "pdfkit": "^0.15.0",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
     "stripe": "^16.1.0",

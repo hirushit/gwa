@@ -153,16 +153,26 @@ router.get('/doctors', async (req, res) => {
 
 router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
   try {
-    const doctor = await Doctor.findById(req.params.id);
-    if (!doctor) {
-      return res.status(404).send('Doctor not found');
-    }
-    res.render('doctorProfileView', { doctor });
+      const doctorId = req.params.id;
+      const doctor = await Doctor.findById(doctorId)
+          .populate({
+              path: 'reviews.patientId',
+              select: 'name'
+          });
+      if (!doctor) {
+          return res.status(404).send('Doctor not found');
+      }
+
+      const blogs = await Blog.find({ authorId: doctorId, verificationStatus: 'Verified' });
+
+      res.render('doctorProfileView', { doctor, blogs });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).send('Server Error');
+      console.error(error.message);
+      res.status(500).send('Server Error');
   }
 });
+
+
 
 router.post('/book', isLoggedIn, async (req, res) => {
   try {
@@ -586,6 +596,7 @@ const fontPaths = {
   medium: path.join(__dirname, '../fonts/Matter-Medium.ttf')
 };
 
+
 router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
   try {
     const prescription = await Prescription.findById(req.params.id)
@@ -633,63 +644,51 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
     const textColor = '#272848'; // Default text color
 
     // Add background color
-    doc
-      .rect(0, 0, doc.page.width, doc.page.height)
-      .fill(backgroundColor);
+    doc.rect(0, 0, doc.page.width, doc.page.height).fill(backgroundColor);
 
     const logoX = 40;
     const titleX = 45;
     const doctorInfoX = 400;
     const headerY = 40;
-    
-    const watermarkX = (doc.page.width - 195) / 2; 
-    const watermarkY = (doc.page.height - 195) / 2; 
+    const watermarkX = (doc.page.width - 195) / 2;
+    const watermarkY = (doc.page.height - 195) / 2;
 
-    doc
-      .opacity(0.15) 
-      .image('x.png', watermarkX, watermarkY, { width: 200, height: 200 }) 
-      .opacity(1); 
+    // Watermark
+    doc.opacity(0.15).image('x.png', watermarkX, watermarkY, { width: 200, height: 200 }).opacity(1);
 
-    doc
-      .image('logo.png', logoX, headerY, { width: 115 })
-      .font('Matter-Medium') 
+    // Header
+    doc.image('logo.png', logoX, headerY, { width: 115 })
+      .font('Matter-Medium')
       .fontSize(18)
       .fillColor(textColor)
       .text('E-Prescription', titleX, headerY, { align: 'center' })
       .fontSize(10)
-      .font('Matter-Regular') 
+      .font('Matter-Regular')
       .text('MedxBay', titleX, headerY + 19, { align: 'center' })
       .font('Matter-Italic')
       .fontSize(10)
       .text('Your Trusted Health Partner', titleX, headerY + 31, { align: 'center' })
       .moveDown(1.5);
 
-    doc
-      .font('Matter-SemiBold') 
-      .fontSize(12)
-      .fillColor(textColor)
+    // Doctor's Info
+    doc.font('Matter-SemiBold').fontSize(12).fillColor(textColor)
       .text(` ${doctor.name}`, doctorInfoX, headerY, { align: 'right' })
-      .font('Matter-Regular') 
+      .font('Matter-Regular')
       .text(`${doctor.speciality.join(', ')}`, doctorInfoX, headerY + 15, { align: 'right' })
-      .font('Matter-Italic') 
+      .font('Matter-Italic')
       .text(`${prescription.doctorEmail}`, doctorInfoX, headerY + 30, { align: 'right' })
-      .moveDown();
-
-    doc
-      .moveTo(40, headerY + 60)
-      .lineTo(570, headerY + 60)
-      .stroke()
       .moveDown(2);
 
+    // Draw a line after the header
+    doc.moveTo(40, headerY + 60).lineTo(570, headerY + 60).stroke();
+
+    // Content
     const patientName = `Patient Name: ${prescription.patientName}`;
     const patientAge = `Patient Age: ${prescription.patientAge}`;
     const consultationDate = `Consultation Date: ${prescription.meetingDate.toISOString().split('T')[0]}`;
     const consultationTime = `Consultation Time: ${prescription.meetingTime}`;
 
-    doc
-      .font('Matter-Regular') 
-      .fontSize(12)
-      .fillColor(textColor)
+    doc.font('Matter-Regular').fontSize(12).fillColor(textColor)
       .text(patientName, 40)
       .moveDown(0.5)
       .text(patientAge)
@@ -699,24 +698,35 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
       .text(consultationTime)
       .moveDown(1.5);
 
-    doc
-      .fontSize(14)
-      .font('Matter-Medium')
-      .fillColor(textColor)
+    doc.fontSize(14).font('Matter-Medium').fillColor(textColor)
       .text('Medicines', { underline: true })
       .moveDown()
-      .font('Matter-Regular') 
-      .fontSize(12);
+      .font('Matter-Regular').fontSize(12);
 
     const medicineLineSpacing = 0.5;
 
     prescription.medicines.forEach(medicine => {
-      doc
-        .font('Matter-SemiBold') 
-        .fillColor(textColor)
+      if (doc.y + 60 > doc.page.height - 100) {
+        doc.addPage();
+        doc.image('logo.png', logoX, headerY, { width: 115 })
+          .font('Matter-Medium')
+          .fontSize(18)
+          .fillColor(textColor)
+          .text('E-Prescription', titleX, headerY, { align: 'center' })
+          .fontSize(10)
+          .font('Matter-Regular')
+          .text('MedxBay', titleX, headerY + 19, { align: 'center' })
+          .font('Matter-Italic')
+          .fontSize(10)
+          .text('Your Trusted Health Partner', titleX, headerY + 31, { align: 'center' })
+          .moveDown(1.5);
+        doc.moveTo(40, headerY + 60).lineTo(570, headerY + 60).stroke();
+      }
+
+      doc.font('Matter-SemiBold').fillColor(textColor)
         .text(`• Name: ${medicine.name}`)
         .moveDown(medicineLineSpacing)
-        .font('Matter-Regular') 
+        .font('Matter-Regular')
         .text(`  - Dosage: ${medicine.dosage}`)
         .moveDown(medicineLineSpacing)
         .text(`  - Before Food: ${medicine.beforeFood ? 'Yes' : 'No'}`)
@@ -727,30 +737,21 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
         .moveDown(1);
     });
 
-    doc
-      .moveDown()
-      .font('Matter-SemiBold') 
-      .fillColor(textColor)
+    doc.moveDown().font('Matter-SemiBold').fillColor(textColor)
       .text('Doctor\'s Signature', { align: 'right' })
       .moveDown(0.4)
-      .font('Matter-Italic') 
+      .font('Matter-Italic')
       .text(doctor.name, { align: 'right', fontSize: 14 });
 
-    doc
-      .moveTo(40, doc.page.height - 100)
-      .lineTo(570, doc.page.height - 100)
-      .stroke();
+    // Footer
+    const footerY = doc.page.height - 100;
+    doc.moveTo(40, footerY).lineTo(570, footerY).stroke();
 
-    doc.y = doc.page.height - 90;
-    doc
-      .moveDown(0.5)
-      .font('Matter-Medium') 
-      .fontSize(12)
-      .fillColor(textColor)
+    doc.y = footerY + 10;
+    doc.moveDown(0.5).font('Matter-Medium').fontSize(12).fillColor(textColor)
       .text(hospital.name, { align: 'center' })
       .moveDown(0.4)
-      .font('Matter-Italic') 
-      .fontSize(10)
+      .font('Matter-Italic').fontSize(10)
       .text(
         `${hospital.location.street}, ${hospital.location.city}, ${hospital.location.state}, ${hospital.location.country} - ${hospital.location.zip}`,
         { align: 'center' }
@@ -768,7 +769,6 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
 
 
 router.get('/notifications', isLoggedIn, async (req, res) => {

@@ -81,6 +81,10 @@
     <p>No conditions managed listed.</p>
     <% } %>
 
+    <h3>About Me</h3>
+    <p><%= doctor.aboutMe || 'No information available.' %></p>
+
+
     <h3>Languages Spoken</h3>
     <% if (doctor.languages && doctor.languages.length > 0) { %>
     <ul>

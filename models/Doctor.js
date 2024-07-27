@@ -17,6 +17,7 @@ const doctorSchema = new mongoose.Schema({
   verificationToken: String,
   isVerified: { type: Boolean, default: false },
   title: String,
+  aboutMe: { type: String },
   speciality: { type: [String], required: true },
   country: String,
   state: String,

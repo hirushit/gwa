@@ -65,8 +65,6 @@ router.get('/doctor-index', isDoctor, isLoggedIn, async (req, res) => {
         if (!doctor) {
             return res.status(404).send('Doctor not found');
         }
-
-        // Fetch only blogs that are verified
         const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).limit(5).exec();
 
         res.render('doctor-index', { doctor, blogs, user: req.session.user });
@@ -133,8 +131,10 @@ router.get('/profile', isLoggedIn, async (req, res) => {
         }];
       }
   
+      // Prepare update data including "aboutMe"
       const updateData = {
         ...req.body,
+        aboutMe: req.body.aboutMe || doctor.aboutMe,  // Ensure "aboutMe" is included in update
         speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
         languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
         insurances: Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances],
@@ -160,6 +160,7 @@ router.get('/profile', isLoggedIn, async (req, res) => {
       res.status(500).send('Server Error');
     }
   });
+  
   
 router.post('/profile/verify', isLoggedIn, async (req, res) => {
     try {

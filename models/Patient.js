@@ -45,6 +45,8 @@ const patientSchema = new mongoose.Schema({
     favoriteDoctors: [{
       type: mongoose.Schema.Types.ObjectId,
     }],
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
 });
 
 module.exports = mongoose.model('Patient', patientSchema);

@@ -389,13 +389,19 @@ router.post('/forgot-password', async (req, res) => {
       return res.redirect('/auth/forgot-password');
     }
 
-    const otp = otpGenerator.generate(6, { digits: true, upperCase: false, specialChars: false, alphabets: false });
-    await sendOTP(email, otp);
-    console.log(`Generated OTP for ${email}: ${otp}`);
-    req.session.resetUser = { email, otp };
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpires = Date.now() + 3600000; 
 
-    req.flash('success_msg', 'OTP has been sent to your email. Please verify.');
-    return res.redirect('/auth/reset-password');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpires;
+
+    await user.save();
+
+    const resetUrl = `http://localhost:3000/auth/reset-password?token=${resetToken}`;
+    await sendResetPasswordEmail(user.email, resetUrl);
+
+    req.flash('success_msg', 'A password reset link has been sent to your email.');
+    return res.redirect('/auth/forgot-password');
   } catch (err) {
     console.error('Error in forgot password:', err);
     req.flash('error_msg', 'Server error');
@@ -403,28 +409,31 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-router.get('/reset-password', (req, res) => {
-  const { email } = req.session.resetUser || {};
-  if (!email) {
-    req.flash('error_msg', 'Session expired. Please try again.');
-    return res.redirect('/auth/forgot-password');
-  }
-  res.render('reset-password', { email });
-});
+const generateResetToken = () => {
+  return crypto.randomBytes(20).toString('hex');
+};
 
-router.post('/reset-password', async (req, res) => {
-  const { otp, newPassword, confirmPassword } = req.body;
-  const { email } = req.session.resetUser || {};
+const sendResetPasswordEmail = async (email, resetUrl) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
 
-  if (!email || !otp || !newPassword || !confirmPassword) {
-    req.flash('error_msg', 'Please fill all fields');
-    return res.redirect('/auth/reset-password');
-  }
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Password Reset',
+    text: `You requested a password reset. Click the following link to reset your password: ${resetUrl}`
+  };
 
-  if (newPassword !== confirmPassword) {
-    req.flash('error_msg', 'Passwords do not match');
-    return res.redirect('/auth/reset-password');
-  }
+  await transporter.sendMail(mailOptions);
+};
+
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
 
   try {
     let user = await Patient.findOne({ email }) ||
@@ -436,23 +445,85 @@ router.post('/reset-password', async (req, res) => {
       return res.redirect('/auth/forgot-password');
     }
 
-    if (otp !== req.session.resetUser.otp) {
-      req.flash('error_msg', 'Invalid OTP');
-      return res.redirect('/auth/reset-password');
+    const token = generateResetToken();
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = Date.now() + 3600000; 
+
+    await user.save();
+
+    await sendResetEmail(email, token);
+
+    req.flash('success_msg', 'Reset link has been sent to your email.');
+    return res.redirect('/auth/forgot-password');
+  } catch (err) {
+    console.error('Error in forgot password:', err);
+    req.flash('error_msg', 'Server error');
+    return res.redirect('/auth/forgot-password');
+  }
+});
+
+router.get('/reset-password', async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    req.flash('error_msg', 'Invalid or expired password reset token');
+    return res.redirect('/auth/forgot-password');
+  }
+
+  try {
+    let user = await Patient.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } }) ||
+               await Doctor.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } }) ||
+               await Admin.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } });
+
+    if (!user) {
+      req.flash('error_msg', 'Invalid or expired password reset token');
+      return res.redirect('/auth/forgot-password');
+    }
+
+    res.render('reset-password', { token });
+  } catch (err) {
+    console.error('Error in reset password:', err);
+    req.flash('error_msg', 'Server error');
+    return res.redirect('/auth/forgot-password');
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  const { token, newPassword, confirmPassword } = req.body;
+
+  if (!token || !newPassword || !confirmPassword) {
+    req.flash('error_msg', 'Please fill all fields');
+    return res.redirect(`/auth/reset-password?token=${token}`);
+  }
+
+  if (newPassword !== confirmPassword) {
+    req.flash('error_msg', 'Passwords do not match');
+    return res.redirect(`/auth/reset-password?token=${token}`);
+  }
+
+  try {
+    let user = await Patient.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } }) ||
+               await Doctor.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } }) ||
+               await Admin.findOne({ resetPasswordToken: token, resetPasswordExpires: { $gt: Date.now() } });
+
+    if (!user) {
+      req.flash('error_msg', 'Invalid or expired password reset token');
+      return res.redirect('/auth/forgot-password');
     }
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
-    await user.save();
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
 
-    req.session.resetUser = null;
+    await user.save();
 
     req.flash('success_msg', 'Password reset successful. Please login with your new password.');
     return res.redirect('/auth/login');
   } catch (err) {
-    console.error('Error in password reset:', err);
+    console.error('Error in reset password:', err);
     req.flash('error_msg', 'Server error');
-    return res.redirect('/auth/reset-password');
+    return res.redirect(`/auth/reset-password?token=${token}`);
   }
 });
 

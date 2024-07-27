@@ -78,7 +78,9 @@ const doctorSchema = new mongoose.Schema({
     certificationProof: { data: Buffer, contentType: String },
     businessProof: { data: Buffer, contentType: String }
   },
-  subscriptionVerification: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' }
+  subscriptionVerification: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
 });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

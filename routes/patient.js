@@ -121,15 +121,13 @@ router.get('/doctors', async (req, res) => {
         sortCriteria = {};
     }
 
-    // Fetch doctors with populated hospitals from time slots
     const doctors = await Doctor.find({ verified: 'Verified' })
       .populate({
         path: 'hospitals',
-        select: 'name city -_id' // Include only name and city fields
+        select: 'name city -_id' 
       })
       .sort(sortCriteria);
 
-    // Prepare other dropdown options and data needed for rendering
     const countries = await Doctor.distinct('country');
     const states = await Doctor.distinct('state');
     const cities = await Doctor.distinct('city');
@@ -579,6 +577,15 @@ router.get('/prescriptions', isLoggedIn, async (req, res) => {
 });
 
 
+const fontPaths = {
+  regular: path.join(__dirname, '../fonts/Matter-Regular.ttf'),
+  bold: path.join(__dirname, '../fonts/Matter-Bold.ttf'),
+  italic: path.join(__dirname, '../fonts/Matter-RegularItalic.ttf'),
+  boldItalic: path.join(__dirname, '../fonts/Matter-BoldItalic.ttf'),
+  semiBold: path.join(__dirname, '../fonts/Matter-SemiBold.ttf'),
+  medium: path.join(__dirname, '../fonts/Matter-Medium.ttf')
+};
+
 router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
   try {
     const prescription = await Prescription.findById(req.params.id)
@@ -612,14 +619,29 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
 
     const filePath = path.join(prescriptionsDir, fileName);
 
+    doc.registerFont('Matter-Regular', fontPaths.regular);
+    doc.registerFont('Matter-Bold', fontPaths.bold);
+    doc.registerFont('Matter-Italic', fontPaths.italic);
+    doc.registerFont('Matter-BoldItalic', fontPaths.boldItalic);
+    doc.registerFont('Matter-SemiBold', fontPaths.semiBold);
+    doc.registerFont('Matter-Medium', fontPaths.medium);
+
     doc.info.Title = 'E-Prescription';
     doc.info.Author = 'MedxBay';
+
+    const backgroundColor = '#F4F7FC';
+    const textColor = '#272848'; // Default text color
+
+    // Add background color
+    doc
+      .rect(0, 0, doc.page.width, doc.page.height)
+      .fill(backgroundColor);
 
     const logoX = 40;
     const titleX = 45;
     const doctorInfoX = 400;
     const headerY = 40;
-
+    
     const watermarkX = (doc.page.width - 195) / 2; 
     const watermarkY = (doc.page.height - 195) / 2; 
 
@@ -630,24 +652,26 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
 
     doc
       .image('logo.png', logoX, headerY, { width: 115 })
-      .font('Times-Bold') 
+      .font('Matter-Medium') 
       .fontSize(18)
+      .fillColor(textColor)
       .text('E-Prescription', titleX, headerY, { align: 'center' })
       .fontSize(10)
-      .font('Times-Roman') 
+      .font('Matter-Regular') 
       .text('MedxBay', titleX, headerY + 19, { align: 'center' })
-      .font('Times-Italic')
+      .font('Matter-Italic')
       .fontSize(10)
       .text('Your Trusted Health Partner', titleX, headerY + 31, { align: 'center' })
       .moveDown(1.5);
 
     doc
-      .font('Times-Bold') 
+      .font('Matter-SemiBold') 
       .fontSize(12)
+      .fillColor(textColor)
       .text(` ${doctor.name}`, doctorInfoX, headerY, { align: 'right' })
-      .font('Times-Roman') 
+      .font('Matter-Regular') 
       .text(`${doctor.speciality.join(', ')}`, doctorInfoX, headerY + 15, { align: 'right' })
-      .font('Times-Italic') 
+      .font('Matter-Italic') 
       .text(`${prescription.doctorEmail}`, doctorInfoX, headerY + 30, { align: 'right' })
       .moveDown();
 
@@ -657,32 +681,42 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
       .stroke()
       .moveDown(2);
 
+    const patientName = `Patient Name: ${prescription.patientName}`;
+    const patientAge = `Patient Age: ${prescription.patientAge}`;
+    const consultationDate = `Consultation Date: ${prescription.meetingDate.toISOString().split('T')[0]}`;
+    const consultationTime = `Consultation Time: ${prescription.meetingTime}`;
+
     doc
-      .font('Times-Roman') 
+      .font('Matter-Regular') 
       .fontSize(12)
-      .text(`Patient Name: ${prescription.patientName}`, 40)
+      .fillColor(textColor)
+      .text(patientName, 40)
       .moveDown(0.5)
-      .text(`Patient Age: ${prescription.patientAge}`)
+      .text(patientAge)
       .moveDown(0.5)
-      .text(`Consultation Type: ${booking.consultationType}`)
+      .text(consultationDate)
+      .moveDown(0.5)
+      .text(consultationTime)
       .moveDown(1.5);
 
     doc
       .fontSize(14)
-      .font('Times-Bold')
+      .font('Matter-Medium')
+      .fillColor(textColor)
       .text('Medicines', { underline: true })
       .moveDown()
-      .font('Times-Roman') 
+      .font('Matter-Regular') 
       .fontSize(12);
 
     const medicineLineSpacing = 0.5;
 
     prescription.medicines.forEach(medicine => {
       doc
-        .font('Times-Bold') 
+        .font('Matter-SemiBold') 
+        .fillColor(textColor)
         .text(`• Name: ${medicine.name}`)
         .moveDown(medicineLineSpacing)
-        .font('Times-Roman') 
+        .font('Matter-Regular') 
         .text(`  - Dosage: ${medicine.dosage}`)
         .moveDown(medicineLineSpacing)
         .text(`  - Before Food: ${medicine.beforeFood ? 'Yes' : 'No'}`)
@@ -695,10 +729,11 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
 
     doc
       .moveDown()
-      .font('Times-Bold') 
+      .font('Matter-SemiBold') 
+      .fillColor(textColor)
       .text('Doctor\'s Signature', { align: 'right' })
       .moveDown(0.4)
-      .font('Times-Italic') 
+      .font('Matter-Italic') 
       .text(doctor.name, { align: 'right', fontSize: 14 });
 
     doc
@@ -708,12 +743,13 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
 
     doc.y = doc.page.height - 90;
     doc
-    .moveDown(0.5)
-      .font('Times-Bold') 
+      .moveDown(0.5)
+      .font('Matter-Medium') 
       .fontSize(12)
+      .fillColor(textColor)
       .text(hospital.name, { align: 'center' })
       .moveDown(0.4)
-      .font('Times-Italic') 
+      .font('Matter-Italic') 
       .fontSize(10)
       .text(
         `${hospital.location.street}, ${hospital.location.city}, ${hospital.location.state}, ${hospital.location.country} - ${hospital.location.zip}`,
@@ -732,6 +768,8 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
+
 
 router.get('/notifications', isLoggedIn, async (req, res) => {
   try {

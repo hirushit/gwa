@@ -5,11 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Bookings</title>
     <style>
+        .status-waiting {
+            color: orange;
+        }
         .status-accepted {
             color: green;
         }
         .status-rejected {
             color: red;
+        }
+        .status-completed {
+            color: blue;
         }
     </style>
 </head>
@@ -28,6 +34,7 @@
                         <th>Status</th>
                         <th>Hospital</th>
                         <th>Meeting Link/Location</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,12 +48,19 @@
                             <td class="status-<%= booking.status %>"><%= booking.status %></td>
                             <td><%= booking.hospital ? booking.hospital.name : 'N/A' %></td>
                             <td>
-                                <% if (booking.consultationType === 'Video call' && booking.status === 'accepted' && booking.meetingLink) { %>
-                                    <a href="<%= booking.meetingLink %>">Link</a>
+                                <% if (booking.consultationType === 'Video call') { %>
+                                    <% if (booking.status === 'accepted' && booking.meetingLink) { %>
+                                        <a href="<%= booking.meetingLink %>">Link</a>
+                                    <% } else { %>
+                                        N/A
+                                    <% } %>
                                 <% } else if (booking.consultationType === 'In-person') { %>
                                     <%= booking.hospital && booking.hospital.location ? `${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}` : 'N/A' %>
-                                <% } else { %>
-                                    N/A
+                                <% } %>
+                            </td>
+                            <td>
+                                <% if (booking.status === 'completed') { %>
+                                    <a href="/patient/review/<%= booking.doctor._id %>/<%= booking._id %>">Add a Review</a>
                                 <% } %>
                             </td>
                         </tr>

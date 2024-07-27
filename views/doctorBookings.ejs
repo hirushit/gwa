@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Bookings</title>
+    <style>
+        .status-waiting {
+            color: orange;
+        }
+        .status-accepted {
+            color: green;
+        }
+        .status-rejected {
+            color: red;
+        }
+        .status-completed {
+            color: blue;
+        }
+    </style>
 </head>
 <body>
     <h1>Doctor Bookings</h1>
@@ -18,6 +32,7 @@
                     <th>Consultation Type</th>
                     <th>Status</th>
                     <th>Hospital</th>
+                    <th>Meeting Link/Location</th> 
                     <th>Action</th>
                 </tr>
             </thead>
@@ -25,11 +40,22 @@
                 <% bookings.forEach(booking => { %>
                     <tr>
                         <td><%= booking.patient ? booking.patient.name : 'N/A' %></td>
-                        <td><%= booking.date ? booking.date.toDateString() : 'N/A' %></td>
+                        <td><%= booking.date ? new Date(booking.date).toDateString() : 'N/A' %></td>
                         <td><%= booking.time %></td>
                         <td><%= booking.consultationType %></td>
-                        <td><%= booking.status %></td>
-                        <td><%= booking.hospital.name %></td>
+                        <td class="status-<%= booking.status %>"><%= booking.status %></td>
+                        <td><%= booking.hospital ? booking.hospital.name : 'N/A' %></td>
+                        <td>
+                            <% if (booking.consultationType === 'Video call') { %>
+                                <% if (booking.meetingLink) { %>
+                                    <a href="<%= booking.meetingLink %>">Link</a>
+                                <% } else { %>
+                                    N/A
+                                <% } %>
+                            <% } else if (booking.consultationType === 'In-person') { %>
+                                <%= booking.hospital && booking.hospital.location ? `${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}` : 'N/A' %>
+                            <% } %>
+                        </td>
                         <td>
                             <form action="/doctor/bookings/<%= booking._id %>" method="POST" style="display: inline;">
                                 <select name="status" required>

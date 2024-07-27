@@ -221,6 +221,48 @@ router.get('/bookings', isLoggedIn, async (req, res) => {
   }
 });
 
+router.get('/review/:doctorId/:bookingId', isLoggedIn, async (req, res) => {
+  try {
+    const doctor = await Doctor.findById(req.params.doctorId);
+    const booking = await Booking.findById(req.params.bookingId);
+
+    if (!doctor || !booking) {
+      return res.status(404).send('Doctor or booking not found');
+    }
+
+    res.render('reviewForm', { doctor, booking });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.post('/review/:doctorId/:bookingId', isLoggedIn, async (req, res) => {
+  try {
+    const { rating, reviewText } = req.body;
+
+    const doctor = await Doctor.findById(req.params.doctorId);
+    const booking = await Booking.findById(req.params.bookingId);
+
+    if (!doctor || !booking) {
+      return res.status(404).send('Doctor or booking not found');
+    }
+
+    doctor.reviews.push({
+      patientId: req.session.user._id,
+      rating,
+      reviewText
+    });
+
+    await doctor.save();
+
+    res.redirect('/patient/bookings'); 
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 router.post('/add-to-favorites', isLoggedIn, async (req, res) => {
   try {
     const { doctorId } = req.body;
@@ -437,15 +479,12 @@ router.get('/dashboard', isLoggedIn, async (req, res) => {
           return res.status(404).send('Patient not found');
       }
 
-      // Fetch chats and include doctorId
       const chats = await Chat.find({ patientId: patient._id })
           .populate('doctorId', 'name')
           .sort({ updatedAt: -1 })
-          .lean(); // Use lean() to get plain JavaScript objects
+          .lean();
 
-      // Calculate unread message counts for each chat
       chats.forEach(chat => {
-          // Count unread messages where the sender is a doctor
           chat.unreadCount = chat.messages.filter(message => 
               !message.read && message.senderId.toString() !== patient._id.toString()
           ).length;
@@ -468,7 +507,6 @@ router.get('/chat/:id', isLoggedIn, async (req, res) => {
       return res.status(404).send('Chat not found');
     }
 
-    // Update only received messages (senderId != logged-in user's ID)
     const updatedChat = await Chat.findById(chatId);
 
     if (updatedChat) {

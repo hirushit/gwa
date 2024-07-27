@@ -393,6 +393,33 @@ router.get('/completed-bookings', isLoggedIn, checkSubscription, async (req, res
     }
 });
 
+router.get('/reviews/:doctorId', isLoggedIn, async (req, res) => {
+    try {
+        const doctorId = req.params.doctorId;
+        if (!doctorId) {
+            return res.status(400).send('Doctor ID is required');
+        }
+
+        const doctor = await Doctor.findById(doctorId)
+            .populate({
+                path: 'reviews.patientId', 
+                select: 'name' 
+            });
+
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        const reviews = doctor.reviews;
+
+        res.render('doctorReviews', { reviews, doctor });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
 router.get('/bookings/:id/prescription', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const bookingId = req.params.id;
@@ -929,15 +956,12 @@ router.get('/dashboard', isLoggedIn, checkSubscription, async (req, res) => {
             return res.status(404).send('Doctor not found');
         }
 
-        // Fetch chats and include patientId
         const chats = await Chat.find({ doctorId: doctor._id })
             .populate('patientId', 'name')
             .sort({ updatedAt: -1 })
-            .lean(); // Use lean() to get plain JavaScript objects
+            .lean(); 
 
-        // Calculate unread message counts for each chat
         chats.forEach(chat => {
-            // Count unread messages where the sender is not the doctor
             chat.unreadCount = chat.messages.filter(message => 
                 !message.read && message.senderId.toString() !== doctor._id.toString()
             ).length;
@@ -999,7 +1023,6 @@ router.get('/chat/:id', isLoggedIn, checkSubscription, async (req, res) => {
             return res.status(404).send('Chat not found');
         }
 
-        // Update only received messages (senderId != logged-in user's ID)
         const updatedChat = await Chat.findById(chatId);
 
         if (updatedChat) {
@@ -1145,8 +1168,6 @@ router.post('/notifications/:id/mark-read', isLoggedIn, async (req, res) => {
     }
 });
 
-
-// Delete notification route
 router.post('/notifications/:id/delete', isLoggedIn, async (req, res) => {
     try {
         await Notification.findByIdAndDelete(req.params.id);

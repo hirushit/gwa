@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Reviews</title>
+
+</head>
+<body>
+    <h1>Reviews for Dr. <%= doctor.name %></h1>
+    <% if (reviews && reviews.length > 0) { %>
+        <table>
+            <thead>
+                <tr>
+                    <th>Patient Name</th>
+                    <th>Review</th>
+                    <th>Rating</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% reviews.forEach(review => { %>
+                    <tr>
+                        <td><%= review.patientId ? review.patientId.name : 'N/A' %></td>
+                        <td><%= review.reviewText %></td>
+                        <td><%= review.rating %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <p>No reviews available.</p>
+    <% } %>
+    <a href="/doctor/profile/<%= doctor._id %>">Back to Profile</a>
+</body>
+</html>

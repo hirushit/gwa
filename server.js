@@ -91,8 +91,8 @@ function isLoggedIn(req, res, next) {
 
 app.get('/', (req, res) => {
   const user = req.user;
-  const patient = req.patient; // if applicable
-  const doctor = req.doctor; // if applicable
+  const patient = req.patient;
+  const doctor = req.doctor; 
   res.render('index', { user, patient, doctor });
 });
 
@@ -295,7 +295,6 @@ app.get('/auth/where-options', async (req, res) => {
     const statesFromHospitals = await Doctor.distinct('hospitals.state');
     const countriesFromHospitals = await Doctor.distinct('hospitals.country');
 
-    // Combine and make unique
     const cities = [...new Set([...citiesFromTimeSlots, ...citiesFromHospitals])];
     const states = [...new Set([...statesFromTimeSlots, ...statesFromHospitals])];
     const countries = [...new Set([...countriesFromTimeSlots, ...countriesFromHospitals])];

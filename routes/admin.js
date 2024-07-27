@@ -92,10 +92,8 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
 
 router.get('/subscriptions', isAdmin, async (req, res) => {
   try {
-      // Fetch all doctors including their proof documents
       const doctors = await Doctor.find({}, 'name subscriptionType subscriptionVerification documents').lean(); 
 
-      // Log the doctors to ensure the data is being fetched correctly
       console.log(doctors);
 
       res.render('adminSubscriptions', { doctors });

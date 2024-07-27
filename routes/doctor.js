@@ -517,14 +517,46 @@ router.get('/manage-time-slots', isLoggedIn, checkSubscription, async (req, res)
         if (!doctor) {
             return res.status(404).send('Doctor not found');
         }
-        
-        res.render('manageTimeSlots', { doctor });
+
+        const currentDate = new Date();
+        let currentMonth = parseInt(req.query.month) || currentDate.getMonth();
+        let currentYear = parseInt(req.query.year) || currentDate.getFullYear();
+
+        if (currentMonth < 0 || currentMonth > 11) {
+            currentMonth = currentDate.getMonth();
+        }
+        if (currentYear < 1900 || currentYear > 2100) {
+            currentYear = currentDate.getFullYear();
+        }
+
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        const bookings = await Booking.find({
+            doctor: doctor._id,
+            date: {
+                $gte: new Date(currentYear, currentMonth, 1),
+                $lte: new Date(currentYear, currentMonth, daysInMonth, 23, 59, 59)
+            },
+            status: 'accepted'
+        });
+
+        res.render('manageTimeSlots', {
+            doctor,
+            currentMonth,
+            currentYear,
+            daysInMonth,
+            timeSlots: doctor.timeSlots,
+            bookings, 
+            months: [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ]
+        });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
-
 
 router.delete('/manage-time-slots/:index', isLoggedIn, checkSubscription, async (req, res) => {
     try {

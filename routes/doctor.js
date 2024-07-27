@@ -454,7 +454,7 @@ router.get('/bookings/:id/prescription', isLoggedIn, checkSubscription, async (r
 });
 
 
-router.post('/prescriptions/upload',isLoggedIn, checkSubscription, async (req, res) => {
+router.post('/prescriptions/upload', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const { patientId, doctorId, patientName, doctorName, doctorSpeciality, doctorEmail, patientAge, medicines, meetingDate, meetingTime } = req.body;
 
@@ -484,12 +484,23 @@ router.post('/prescriptions/upload',isLoggedIn, checkSubscription, async (req, r
         });
 
         await prescription.save();
+
+        const downloadLink = `${req.protocol}://${req.get('host')}/patient/prescriptions/${prescription._id}/download`;
+
+        const chatMessage = `You have a new prescription from Dr. ${doctorName}. You can download it using the following link: ${downloadLink}`;
+        await Chat.findOneAndUpdate(
+            { doctorId: doctorId, patientId: patientId },
+            { $push: { messages: { senderId: doctorId, text: chatMessage, timestamp: new Date() } } },
+            { upsert: true, new: true }
+        );
+
         res.redirect('/doctor/completed-bookings');
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');
     }
 });
+
 
 router.get('/doctor-view/:id/prescriptions', isLoggedIn, checkSubscription, async (req, res) => {
     try {

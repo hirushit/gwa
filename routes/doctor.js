@@ -105,6 +105,7 @@ router.get('/profile', isLoggedIn, async (req, res) => {
     }
   });
   
+  
   router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, async (req, res) => {
     try {
       const doctorEmail = req.session.user.email;
@@ -131,10 +132,9 @@ router.get('/profile', isLoggedIn, async (req, res) => {
         }];
       }
   
-      // Prepare update data including "aboutMe"
       const updateData = {
         ...req.body,
-        aboutMe: req.body.aboutMe || doctor.aboutMe,  // Ensure "aboutMe" is included in update
+        aboutMe: req.body.aboutMe || doctor.aboutMe,  
         speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
         languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
         insurances: Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances],
@@ -160,7 +160,50 @@ router.get('/profile', isLoggedIn, async (req, res) => {
       res.status(500).send('Server Error');
     }
   });
-  
+  router.get('/insights', isLoggedIn, async (req, res) => {
+    try {
+        const doctorEmail = req.session.user.email;
+        const doctor = await Doctor.findOne({ email: doctorEmail });
+
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        const totalPatients = await Patient.countDocuments(); 
+        const totalConsultations = doctor.consultationsCompleted;
+        const totalReviews = doctor.reviews.length; 
+
+        const bookingRates = await Booking.aggregate([
+            { $match: { doctor: doctor._id } },
+            {
+                $group: {
+                    _id: { $dayOfWeek: '$date' },
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        const totalUnreadMessages = await Chat.aggregate([
+            { $match: { doctorId: doctor._id } },
+            { $unwind: '$messages' },
+            { $match: { 'messages.read': false, 'messages.senderId': { $ne: doctor._id } } },
+            { $count: 'unreadCount' }
+        ]);
+
+        res.render('doctorInsights', {
+            doctor,
+            totalPatients,
+            totalConsultations,
+            totalReviews,
+            bookingRates,
+            totalUnreadMessages: totalUnreadMessages[0]?.unreadCount || 0
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
   
 router.post('/profile/verify', isLoggedIn, async (req, res) => {
     try {
@@ -486,7 +529,7 @@ router.post('/prescriptions/upload', isLoggedIn, checkSubscription, async (req, 
         await prescription.save();
 
         const downloadLink = `${req.protocol}://${req.get('host')}/patient/prescriptions/${prescription._id}/download`;
-
+  
         const chatMessage = `You have a new prescription from Dr. ${doctorName}. You can download it using the following link: ${downloadLink}`;
         await Chat.findOneAndUpdate(
             { doctorId: doctorId, patientId: patientId },

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Insights</title>
+    <link rel="stylesheet" href="/path/to/your/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Insights for Dr. <%= doctor.name %></h1>
+        
+        <div class="insights-section">
+            <h2>Insights</h2>
+            <p><strong>Total Patients:</strong> <%= totalPatients %></p>
+            <p><strong>Total Consultations Completed:</strong> <%= totalConsultations %></p>
+            <p><strong>Total Reviews:</strong> <%= totalReviews %></p>
+            <p><strong>Total Unread Messages:</strong> <%= totalUnreadMessages %></p>
+        </div>
+        
+        <div class="table-section">
+            <h2>Booking Rate by Day of the Week</h2>
+            <% if (Array.isArray(bookingRates) && bookingRates.length > 0) { %>
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Booking Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].forEach((day, index) => { %>
+                            <tr>
+                                <td><%= day %></td>
+                                <td><%= bookingRates.find(br => br._id === index + 1)?.count || 0 %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <p>No booking data available.</p>
+            <% } %>
+        </div>
+        
+        <a href="/doctor/profile">Back to Profile</a>
+    </div>
+</body>
+</html>

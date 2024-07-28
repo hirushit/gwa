@@ -607,7 +607,6 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
     }
 
     const doctor = prescription.doctorId;
-
     const booking = await Booking.findOne({
       patient: prescription.patientId,
       doctor: prescription.doctorId
@@ -618,7 +617,6 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
     }
 
     const hospital = booking.hospital;
-
     const doc = new PDFDocument({ margin: 40 });
     const fileName = `prescription-${prescription._id}.pdf`;
     const prescriptionsDir = path.join(__dirname, '../public/prescriptions');
@@ -640,24 +638,21 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
     doc.info.Author = 'MedxBay';
 
     const backgroundColor = '#F4F7FC';
-    const textColor = '#272848'; // Default text color
+    const textColor = '#272848';
+    const lineColor = '#272848'; // Blue line color
 
-    // Function to add header and footer
     const addHeaderFooter = () => {
-      // Add background color
       doc.rect(0, 0, doc.page.width, doc.page.height).fill(backgroundColor);
 
       const logoX = 40;
       const titleX = 45;
       const doctorInfoX = 400;
       const headerY = 40;
-      const watermarkX = (doc.page.width - 195) / 2;
-      const watermarkY = (doc.page.height - 195) / 2;
+      const watermarkX = (doc.page.width - 225) / 2;
+      const watermarkY = (doc.page.height - 115) / 2;
 
-      // Watermark
-      doc.opacity(0.15).image('x.png', watermarkX, watermarkY, { width: 200, height: 200 }).opacity(1);
+      doc.opacity(0.08).image('logo.png', watermarkX, watermarkY, { width: 220 }).opacity(1);
 
-      // Header
       doc.image('logo.png', logoX, headerY, { width: 115 })
         .font('Matter-Medium')
         .fontSize(18)
@@ -671,7 +666,6 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
         .text('Your Trusted Health Partner', titleX, headerY + 31, { align: 'center' })
         .moveDown(1.5);
 
-      // Doctor's Info
       doc.font('Matter-SemiBold').fontSize(12).fillColor(textColor)
         .text(` ${doctor.name}`, doctorInfoX, headerY, { align: 'right' })
         .font('Matter-Regular')
@@ -680,14 +674,11 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
         .text(`${prescription.doctorEmail}`, doctorInfoX, headerY + 30, { align: 'right' })
         .moveDown(2);
 
-      // Draw a line after the header
-      doc.moveTo(40, headerY + 60).lineTo(570, headerY + 60).stroke();
+        doc.fillColor(lineColor).moveTo(40, headerY + 60).lineTo(570, headerY + 60).stroke(lineColor);
     };
 
-    // Add initial header and footer
     addHeaderFooter();
 
-    // Content
     const patientName = `Patient Name: ${prescription.patientName}`;
     const patientAge = `Patient Age: ${prescription.patientAge}`;
     const consultationDate = `Consultation Date: ${prescription.meetingDate.toISOString().split('T')[0]}`;
@@ -709,13 +700,13 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
       .font('Matter-Regular').fontSize(12);
 
     const medicineLineSpacing = 0.5;
-    let medicineCount = 0; // Track number of medicines on the current page
+    let medicineCount = 0;
 
-    prescription.medicines.forEach((medicine, index) => {
+    prescription.medicines.forEach((medicine) => {
       if (medicineCount >= 4 || (doc.y + 60 > doc.page.height - 100)) {
         doc.addPage();
-        addHeaderFooter(); // Reapply header and footer on new page
-        medicineCount = 0; // Reset medicine count
+        addHeaderFooter();
+        medicineCount = 0;
       }
 
       doc.font('Matter-SemiBold').fillColor(textColor)
@@ -734,15 +725,15 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
       medicineCount++;
     });
 
-    doc.moveDown().font('Matter-SemiBold').fillColor(textColor)
-      .text('Doctor\'s Signature', { align: 'right' })
+    doc.moveDown(2).font('Matter-SemiBold').fillColor(textColor)
+      .text('Doctor\'s Signature')  
       .moveDown(0.4)
       .font('Matter-Italic')
-      .text(doctor.name, { align: 'right', fontSize: 14 });
+      .text(doctor.name, { fontSize: 14 }); 
 
-    // Footer
-    const footerY = doc.page.height - 90; // Adjust footer position
-    doc.moveTo(40, footerY).lineTo(570, footerY).stroke();
+      const footerY = doc.page.height - 90; 
+
+      doc.moveTo(40, footerY).lineTo(570, footerY).stroke();
 
     doc.y = footerY + 10;
     doc.moveDown(0.5).font('Matter-Medium').fontSize(12).fillColor(textColor)
@@ -766,7 +757,6 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
 
 router.get('/notifications', isLoggedIn, async (req, res) => {
   try {

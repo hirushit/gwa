@@ -47,36 +47,6 @@
     <div class="container">
         <h2>Manage Time Slots</h2>
 
-        <div class="navigation">
-            <a href="/doctor/manage-time-slots?month=<%= currentMonth - 1 %>&year=<%= currentYear %>">Previous Month</a>
-            <span><%= months[currentMonth] %> <%= currentYear %></span>
-            <a href="/doctor/manage-time-slots?month=<%= currentMonth + 1 %>&year=<%= currentYear %>">Next Month</a>
-        </div>
-
-        <div class="calendar">
-            <div class="calendar-header"><%= months[currentMonth] %> <%= currentYear %></div>
-            <% for (let i = 1; i <= daysInMonth; i++) { %>
-                <div class="day">
-                    <strong><%= i %></strong><br>
-                    <% const daySlots = timeSlots.filter(slot => {
-                        const slotDate = new Date(slot.date);
-                        return slotDate.getDate() === i && slotDate.getMonth() === currentMonth && slotDate.getFullYear() === currentYear;
-                    });
-                    %>
-                    <% daySlots.forEach(slot => { %>
-                        <p class="confirmed"><%= slot.startTime %> - <%= slot.endTime %> - <%= slot.hospital %></p>
-                    <% }); %>
-                    <% const dayBookings = bookings.filter(booking => {
-                        const bookingDate = new Date(booking.date);
-                        return bookingDate.getDate() === i && bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear;
-                    });
-                    %>
-                    <% dayBookings.forEach(booking => { %>
-                        <p class="booked"><%= booking.time %> - <%= booking.consultationType %></p>
-                    <% }); %>
-                </div>
-            <% } %>
-        </div>
 
         <% if (doctor.timeSlots.length > 0) { %>
             <div class="card">
@@ -148,6 +118,38 @@
                 </form>
             </div>
         </div>
+
+        <div class="container">    
+            <div class="navigation">
+                <a href="/doctor/manage-time-slots?month=<%= currentMonth - 1 %>&year=<%= currentYear %>">Previous Month</a>
+                <span><%= months[currentMonth] %> <%= currentYear %></span>
+                <a href="/doctor/manage-time-slots?month=<%= currentMonth + 1 %>&year=<%= currentYear %>">Next Month</a>
+            </div>
+    
+            <div class="calendar">
+                <div class="calendar-header"><%= months[currentMonth] %> <%= currentYear %></div>
+                <% for (let i = 1; i <= daysInMonth; i++) { %>
+                    <div class="day">
+                        <strong><%= i %></strong><br>
+                        <% const daySlots = timeSlots.filter(slot => {
+                            const slotDate = new Date(slot.date);
+                            return slotDate.getDate() === i && slotDate.getMonth() === currentMonth && slotDate.getFullYear() === currentYear;
+                        });
+                        %>
+                        <% daySlots.forEach(slot => { %>
+                            <p class="confirmed"><%= slot.startTime %> - <%= slot.endTime %> - <%= slot.hospital %></p>
+                        <% }); %>
+                        <% const dayBookings = bookings.filter(booking => {
+                            const bookingDate = new Date(booking.date);
+                            return bookingDate.getDate() === i && bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear;
+                        });
+                        %>
+                        <% dayBookings.forEach(booking => { %>
+                            <p class="booked"><%= booking.time %> - <%= booking.consultationType %></p>
+                        <% }); %>
+                    </div>
+                <% } %>
+            </div>
 
         <a href="/doctor/profile" class="btn btn-secondary">Back to Profile</a>
     </div>

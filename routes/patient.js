@@ -639,7 +639,7 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
 
     const backgroundColor = '#F4F7FC';
     const textColor = '#272848';
-    const lineColor = '#272848'; // Blue line color
+    const lineColor = '#b0baca'; 
 
     const addHeaderFooter = () => {
       doc.rect(0, 0, doc.page.width, doc.page.height).fill(backgroundColor);

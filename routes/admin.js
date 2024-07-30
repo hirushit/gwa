@@ -4,7 +4,7 @@ const multer = require('multer');
 const Doctor = require('../models/Doctor');
 const Admin = require('../models/Admin'); 
 const Blog = require('../models/Blog');
-
+const Notification = require('../models/Notification'); 
 
 const storage = multer.memoryStorage(); 
 const upload = multer({ storage: storage });
@@ -82,6 +82,15 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     doctor.verified = verificationStatus;
     await doctor.save();
 
+    const message = `Your profile has been ${verificationStatus.toLowerCase()}.`;
+    const notification = new Notification({
+      userId: doctor._id, 
+      message,
+      type: 'verification',
+      read: false
+    });
+    await notification.save();
+
     req.flash('success_msg', 'Doctor verification status updated.');
     res.redirect('/admin/dashboard');
   } catch (err) {
@@ -89,6 +98,7 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 router.get('/subscriptions', isAdmin, async (req, res) => {
   try {
@@ -122,6 +132,15 @@ router.post('/verify-subscription/:id', isLoggedIn, async (req, res) => {
     doctor.subscriptionVerification = verificationStatus;
     await doctor.save();
 
+    const message = `Your subscription has been ${verificationStatus.toLowerCase()}.`;
+    const notification = new Notification({
+      userId: doctor._id, 
+      message,
+      type: 'verification',
+      read: false
+    });
+    await notification.save();
+
     req.flash('success_msg', 'Doctor subscription verification status updated.');
     res.redirect('/admin/dashboard'); 
   } catch (err) {
@@ -129,6 +148,7 @@ router.post('/verify-subscription/:id', isLoggedIn, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 router.get('/blogs', isLoggedIn, async (req, res) => {
   try {
@@ -177,7 +197,15 @@ router.post('/blogs/verify/:id', isLoggedIn, async (req, res) => {
       blog.verificationStatus = verificationStatus;
       await blog.save();
 
-      req.flash('success_msg', 'Blog verification status updated.');
+      const notification = new Notification({
+          userId: blog.authorId, 
+          message: `Your blog titled "${blog.title}" has been ${verificationStatus.toLowerCase()}.`,
+          type: 'verification',
+      });
+
+      await notification.save();
+
+      req.flash('success_msg', 'Blog verification status updated and user notified.');
       res.redirect('/admin/blogs');
   } catch (err) {
       console.error(err.message);

@@ -29,7 +29,7 @@ const blogSchema = new Schema({
             date: { type: Date, default: Date.now }
         }
     ],
-    authorId: { type: String }
+    authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true } 
 });
 
 const Blog = mongoose.model('Blog', blogSchema);

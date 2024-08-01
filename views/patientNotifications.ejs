@@ -28,11 +28,17 @@
             padding: 10px;
             border-bottom: 1px solid #ddd;
             display: flex;
-            justify-content: space-between;
             align-items: center;
         }
         .notification:last-child {
             border-bottom: none;
+        }
+        .profile-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 10px;
+            object-fit: cover;
         }
         .notification-text {
             flex: 1;
@@ -66,16 +72,21 @@
         <% if (notifications.length > 0) { %>
             <% notifications.forEach(notification => { %>
                 <div class="notification <%= notification.read ? 'read' : 'unread' %>">
-                    <div class="notification-text">
-                        <%= notification.message %>
-                    </div>
+                    <% if (notification.type === 'chat') { %>
+                        <img src="<%= notification.senderProfilePic || '/path/to/default-profile-pic.png' %>" alt="Profile Picture" class="profile-pic">
+                        <div class="notification-text">
+                            <strong><%= notification.senderName %>:</strong> <%= notification.message %>
+                        </div>
+                    <% } else { %>
+                        <div class="notification-text">
+                            <%= notification.message %>
+                        </div>
+                    <% } %>
                     <div class="notification-actions">
                         <% if (!notification.read) { %>
                             <form action="/patient/notifications/<%= notification._id %>/mark-read" method="POST">
                                 <button type="submit" class="btn btn-read">Mark as Read</button>
                             </form>
-                            
-                            
                         <% } %>
                         <form action="/patient/notifications/<%= notification._id %>/delete" method="POST">
                             <button type="submit" class="btn btn-delete">Delete</button>

@@ -1076,7 +1076,7 @@ router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
         let chat = await Chat.findOneAndUpdate(
             { _id: chatId, doctorId: doctor._id },
             { $push: { messages: { senderId: doctor._id, text: message, timestamp: new Date(), read: false } } },
-            { upsert: true, new: true }
+            { new: true }
         );
 
         const patient = await Patient.findById(chat.patientId);
@@ -1084,8 +1084,9 @@ router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
         if (patient) {
             await Notification.create({
                 userId: patient._id,
-                message: `New message from Dr. ${doctor.name}`,
+                message: `New message from Dr. ${doctor.name}: ${message}`, 
                 type: 'chat',
+                chatId: chat._id, 
                 read: false,
                 createdAt: new Date()
             });
@@ -1099,8 +1100,6 @@ router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
     }
 });
 
-  
-
 router.get('/chat/:id', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const chatId = req.params.id;
@@ -1110,26 +1109,25 @@ router.get('/chat/:id', isLoggedIn, checkSubscription, async (req, res) => {
             return res.status(404).send('Chat not found');
         }
 
-        const updatedChat = await Chat.findById(chatId);
+        chat.messages.forEach(message => {
+            if (!message.text) {
+                console.error(`Message missing text found: ${message._id}`);
+            }
 
-        if (updatedChat) {
-            updatedChat.messages.forEach(message => {
-                if (message.senderId.toString() !== req.user._id.toString() && !message.read) {
-                    message.read = true;
-                }
-            });
+            if (message.senderId.toString() !== req.user._id.toString() && !message.read) {
+                message.read = true;
+            }
+        });
 
-            await updatedChat.save();
-        }
+        await Chat.findByIdAndUpdate(chatId, { $set: { messages: chat.messages } });
 
-        res.render('doctorChat', { chat: updatedChat.toObject() });
+        res.render('doctorChat', { chat });
 
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
-
 
 router.get('/blogs/view/:id', isLoggedIn, checkSubscription,async (req, res) => {
     try {
@@ -1235,15 +1233,69 @@ router.get('/blogs', async (req, res) => {
     }
   });
 
-router.get('/notifications', isLoggedIn, async (req, res) => {
-try {
-    const notifications = await Notification.find({ userId: req.user._id }).lean();
-    res.render('doctorNotifications', { notifications });
-} catch (error) {
-    console.error(error);
-    res.status(500).send('Server Error');
-}
-});
+  router.get('/notifications', isLoggedIn, async (req, res) => {
+    try {
+      const notifications = await Notification.find({ userId: req.user._id }).lean();
+  
+      const chatNotifications = notifications.filter(notification => notification.type === 'chat');
+      const otherNotifications = notifications.filter(notification => notification.type !== 'chat');
+  
+      const chatDetailsPromises = chatNotifications.map(async (notification) => {
+        try {
+          if (!notification.chatId) {
+            console.warn(`No chatId for notification ${notification._id}`);
+            return {
+              ...notification,
+              senderName: 'Unknown',
+              senderProfilePic: null,
+              message: 'No message available'
+            };
+          }
+  
+          const chat = await Chat.findById(notification.chatId)
+                                .populate('doctorId patientId')
+                                .lean();
+  
+          if (!chat) {
+            console.warn(`Chat not found for notification ${notification._id}`);
+            return {
+              ...notification,
+              senderName: 'Unknown',
+              senderProfilePic: null,
+              message: 'No message available'
+            };
+          }
+  
+          const sender = chat.doctorId._id.toString() === req.user._id.toString() ? chat.patientId : chat.doctorId;
+  
+          return {
+            ...notification,
+            senderName: sender.name || 'Unknown',
+            senderProfilePic: sender.profilePicture ? `data:${sender.profilePicture.contentType};base64,${sender.profilePicture.data.toString('base64')}` : null,
+            message: notification.message 
+          };
+        } catch (err) {
+          console.error(`Error fetching chat details for notification ${notification._id}:`, err);
+          return {
+            ...notification,
+            senderName: 'Error',
+            senderProfilePic: null,
+            message: 'Error fetching message'
+          };
+        }
+      });
+  
+      const chatNotificationsWithDetails = await Promise.all(chatDetailsPromises);
+  
+      const allNotifications = [...chatNotificationsWithDetails, ...otherNotifications];
+  
+      res.render('doctorNotifications', { notifications: allNotifications });
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).send('Server Error');
+    }
+  });
+  
 
 router.post('/notifications/:id/mark-read', isLoggedIn, async (req, res) => {
     try {

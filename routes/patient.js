@@ -774,7 +774,8 @@ router.get('/notifications', isLoggedIn, async (req, res) => {
             ...notification,
             senderName: 'Unknown',
             senderProfilePic: null,
-            message: 'No message available'
+            message: 'No message available',
+            timeAgo: timeSince(notification.createdAt) 
           };
         }
 
@@ -788,7 +789,8 @@ router.get('/notifications', isLoggedIn, async (req, res) => {
             ...notification,
             senderName: 'Unknown',
             senderProfilePic: null,
-            message: 'No message available'
+            message: 'No message available',
+            timeAgo: timeSince(notification.createdAt) 
           };
         }
 
@@ -798,7 +800,8 @@ router.get('/notifications', isLoggedIn, async (req, res) => {
           ...notification,
           senderName: sender.name || 'Unknown',
           senderProfilePic: sender.profilePicture ? `data:${sender.profilePicture.contentType};base64,${sender.profilePicture.data.toString('base64')}` : null,
-          message: notification.message 
+          message: notification.message,
+          timeAgo: timeSince(notification.createdAt) 
         };
       } catch (err) {
         console.error(`Error fetching chat details for notification ${notification._id}:`, err);
@@ -806,14 +809,18 @@ router.get('/notifications', isLoggedIn, async (req, res) => {
           ...notification,
           senderName: 'Error',
           senderProfilePic: null,
-          message: 'Error fetching message'
+          message: 'Error fetching message',
+          timeAgo: timeSince(notification.createdAt) 
         };
       }
     });
 
     const chatNotificationsWithDetails = await Promise.all(chatDetailsPromises);
 
-    const allNotifications = [...chatNotificationsWithDetails, ...otherNotifications];
+    const allNotifications = [...chatNotificationsWithDetails, ...otherNotifications].map(notification => ({
+      ...notification,
+      timeAgo: timeSince(notification.createdAt)
+    }));
 
     res.render('patientNotifications', { notifications: allNotifications });
   } catch (error) {
@@ -821,7 +828,33 @@ router.get('/notifications', isLoggedIn, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-  
+
+function timeSince(date) {
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+  let interval = Math.floor(seconds / 31536000);
+
+  if (interval > 1) {
+    return interval + " years ago";
+  }
+  interval = Math.floor(seconds / 2592000);
+  if (interval > 1) {
+    return interval + " months ago";
+  }
+  interval = Math.floor(seconds / 86400);
+  if (interval > 1) {
+    return interval + " days ago";
+  }
+  interval = Math.floor(seconds / 3600);
+  if (interval > 1) {
+    return interval + " hours ago";
+  }
+  interval = Math.floor(seconds / 60);
+  if (interval > 1) {
+    return interval + " minutes ago";
+  }
+  return Math.floor(seconds) + " seconds ago";
+}
+
 router.post('/notifications/:id/mark-read', isLoggedIn, async (req, res) => {
     try {
         await Notification.findByIdAndUpdate(req.params.id, { read: true });

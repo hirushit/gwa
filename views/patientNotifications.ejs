@@ -29,6 +29,7 @@
             border-bottom: 1px solid #ddd;
             display: flex;
             align-items: center;
+            justify-content: space-between;
         }
         .notification:last-child {
             border-bottom: none;
@@ -42,6 +43,10 @@
         }
         .notification-text {
             flex: 1;
+        }
+        .notification-time {
+            font-size: 0.9em;
+            color: #888;
         }
         .notification-actions {
             display: flex;
@@ -76,10 +81,12 @@
                         <img src="<%= notification.senderProfilePic || '/path/to/default-profile-pic.png' %>" alt="Profile Picture" class="profile-pic">
                         <div class="notification-text">
                             <strong><%= notification.senderName %>:</strong> <%= notification.message %>
+                            <div class="notification-time"><%= notification.timeAgo %></div>
                         </div>
                     <% } else { %>
                         <div class="notification-text">
                             <%= notification.message %>
+                            <div class="notification-time"><%= notification.timeAgo %></div>
                         </div>
                     <% } %>
                     <div class="notification-actions">

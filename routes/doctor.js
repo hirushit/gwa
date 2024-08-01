@@ -1248,7 +1248,8 @@ router.get('/blogs', async (req, res) => {
               ...notification,
               senderName: 'Unknown',
               senderProfilePic: null,
-              message: 'No message available'
+              message: 'No message available',
+              timeAgo: 'Just now'
             };
           }
   
@@ -1262,7 +1263,8 @@ router.get('/blogs', async (req, res) => {
               ...notification,
               senderName: 'Unknown',
               senderProfilePic: null,
-              message: 'No message available'
+              message: 'No message available',
+              timeAgo: 'Just now'
             };
           }
   
@@ -1272,7 +1274,8 @@ router.get('/blogs', async (req, res) => {
             ...notification,
             senderName: sender.name || 'Unknown',
             senderProfilePic: sender.profilePicture ? `data:${sender.profilePicture.contentType};base64,${sender.profilePicture.data.toString('base64')}` : null,
-            message: notification.message 
+            message: notification.message,
+            timeAgo: getTimeAgo(notification.createdAt)
           };
         } catch (err) {
           console.error(`Error fetching chat details for notification ${notification._id}:`, err);
@@ -1280,14 +1283,20 @@ router.get('/blogs', async (req, res) => {
             ...notification,
             senderName: 'Error',
             senderProfilePic: null,
-            message: 'Error fetching message'
+            message: 'Error fetching message',
+            timeAgo: 'Just now'
           };
         }
       });
   
       const chatNotificationsWithDetails = await Promise.all(chatDetailsPromises);
   
-      const allNotifications = [...chatNotificationsWithDetails, ...otherNotifications];
+      const otherNotificationsWithDetails = otherNotifications.map(notification => ({
+        ...notification,
+        timeAgo: getTimeAgo(notification.createdAt)
+      }));
+  
+      const allNotifications = [...chatNotificationsWithDetails, ...otherNotificationsWithDetails];
   
       res.render('doctorNotifications', { notifications: allNotifications });
     } catch (error) {
@@ -1295,6 +1304,29 @@ router.get('/blogs', async (req, res) => {
       res.status(500).send('Server Error');
     }
   });
+  
+  function getTimeAgo(date) {
+    const now = new Date();
+    const secondsAgo = Math.floor((now - new Date(date)) / 1000);
+  
+    const intervals = [
+      { label: 'year', seconds: 31536000 },
+      { label: 'month', seconds: 2592000 },
+      { label: 'day', seconds: 86400 },
+      { label: 'hour', seconds: 3600 },
+      { label: 'minute', seconds: 60 }
+    ];
+  
+    for (const interval of intervals) {
+      const count = Math.floor(secondsAgo / interval.seconds);
+      if (count >= 1) {
+        return `${count} ${interval.label}${count > 1 ? 's' : ''} ago`;
+      }
+    }
+  
+    return 'Just now';
+  }
+  
   
 
 router.post('/notifications/:id/mark-read', isLoggedIn, async (req, res) => {

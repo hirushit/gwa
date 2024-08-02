@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Insurances</title>
+</head>
+<body>
+  <h1>All Insurances</h1>
+  <a href="/admin/insurance/new">Add New Insurance Provider</a>
+  <a href="/admin/Dashboard">Go To Profile</a>
+  <ul>
+    <% insurances.forEach(insurance => { %>
+      <li>
+        <h2><%= insurance.name %></h2>
+        <!-- Checking if the logo exists and the content type is correct -->
+        <% if (insurance.logo && insurance.logo.data && insurance.logo.contentType === 'image/png') { %>
+          <img src="data:<%= insurance.logo.contentType %>;base64,<%= insurance.logo.data.toString('base64') %>" alt="<%= insurance.name %> logo">
+        <% } else { %>
+          <p>No valid logo available</p>
+        <% } %>
+        <form action="/admin/insurance/delete/<%= insurance._id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this insurance?');">
+          <button type="submit">Delete</button>
+        </form>
+      </li>
+    <% }) %>
+  </ul>
+</body>
+</html>

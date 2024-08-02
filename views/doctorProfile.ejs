@@ -113,16 +113,19 @@
     
     
 
-    <h3>Insurances Accepted</h3>
-    <% if (doctor.insurances && doctor.insurances.length > 0) { %>
+    <h3>Insurances:</h3>
     <ul>
-        <% doctor.insurances.forEach(insurance => { %>
-        <li><%= insurance %></li>
+        <% insurances.forEach(insurance => { %>
+            <li>
+                <% if (insurance.logo && insurance.logo.data) { %>
+                    <img src="data:<%= insurance.logo.contentType %>;base64,<%= insurance.logo.data.toString('base64') %>" alt="<%= insurance.name %> logo" style="width: 100px; height: auto;">
+                <% } else { %>
+                    <span>No logo available</span>
+                <% } %>
+                <span><%= insurance.name %></span>
+            </li>
         <% }) %>
     </ul>
-    <% } else { %>
-    <p>No insurances listed.</p>
-    <% } %>
 
     <h3>Awards</h3>
     <% if (doctor.awards && doctor.awards.length > 0) { %>

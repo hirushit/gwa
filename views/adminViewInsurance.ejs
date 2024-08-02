@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Insurance</title>
+</head>
+<body>
+  <h1>View Insurance</h1>
+  <h2><%= insurance.name %></h2>
+  <img src="data:<%= insurance.logo.contentType %>;base64,<%= Buffer.from(insurance.logo.data).toString('base64') %>" alt="<%= insurance.name %> logo">
+</body>
+</html>

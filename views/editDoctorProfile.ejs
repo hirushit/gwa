@@ -91,6 +91,38 @@
 
       container.appendChild(hospitalWrapper);
     }
+
+    const allInsurances = <%- JSON.stringify(allInsurances) %>;
+    
+   
+function addInsurance() {
+    const container = document.getElementById('insurances-container');
+    const index = container.children.length;
+
+    const select = document.createElement('select');
+    select.name = `insurances[${index}]`;
+    select.className = 'form-control';
+
+    allInsurances.forEach(ins => {
+        const option = document.createElement('option');
+        option.value = ins._id.toString(); 
+        option.textContent = ins.name;
+        select.appendChild(option);
+    });
+
+    const div = document.createElement('div');
+    div.className = 'input-group';
+    div.appendChild(select);
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-danger';
+    button.textContent = 'Remove';
+    button.onclick = () => div.remove();
+    div.appendChild(button);
+
+    container.appendChild(div);
+}
   </script>
 </head>
 <body>
@@ -241,18 +273,23 @@
         <% }) %>
       </div>
       <button type="button" class="btn btn-primary" onclick="addHospital()">Add Hospital</button>
+      <div>
+        <label>Insurances:</label>
+        <div id="insurances-container">
+            <% doctor.insurances.forEach((insuranceId, index) => { %>
+                <div class="input-group">
+                    <select name="insurances[<%= index %>]" class="form-control">
+                        <% allInsurances.forEach(ins => { %>
+                            <option value="<%= ins._id %>" <%= ins._id.toString() === insuranceId.toString() ? 'selected' : '' %>><%= ins.name %></option>
+                        <% }) %>
+                    </select>
+                    <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
+                </div>
+            <% }) %>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="addInsurance()">Add Insurance</button>
     </div>
-      <label>Insurances:</label>
-      <div id="insurances-container">
-        <% doctor.insurances.forEach((insurance, index) => { %>
-          <div class="input-group">
-            <input type="text" name="insurances[<%= index %>]" value="<%= insurance %>" class="form-control">
-            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
-          </div>
-        <% }) %>
-      </div>
-      <button type="button" onclick="addInput('insurances')">Add Insurance</button>
-    </div>
+    
     
     <div>
       <label>Awards:</label>

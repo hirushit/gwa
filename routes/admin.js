@@ -5,7 +5,7 @@ const Doctor = require('../models/Doctor');
 const Admin = require('../models/Admin'); 
 const Blog = require('../models/Blog');
 const Notification = require('../models/Notification'); 
-
+const Insurance = require('../models/Insurance'); 
 const storage = multer.memoryStorage(); 
 const upload = multer({ storage: storage });
 
@@ -394,6 +394,83 @@ router.get('/blogs-all', async (req, res) => {
 
   } catch (err) {
     console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.get('/insurance/new', isAdmin, (req, res) => {
+  res.render('adminNewInsurance');
+});
+
+// Route to handle the form submission for adding new insurance
+router.post('/insurance', isAdmin, upload.single('logo'), async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name || !req.file) {
+      req.flash('error_msg', 'Insurance name and logo are required.');
+      return res.redirect('/admin/insurance/new');
+    }
+
+    // Create a new insurance entry
+    const newInsurance = new Insurance({
+      name,
+      logo: {
+        data: req.file.buffer,
+        contentType: req.file.mimetype
+      }
+    });
+
+    await newInsurance.save();
+
+    req.flash('success_msg', 'Insurance added successfully.');
+    res.redirect('/admin/insurances');
+  } catch (err) {
+    console.error(err);
+    req.flash('error_msg', 'Server error. Could not add insurance.');
+    res.redirect('/admin/insurance/new');
+  }
+});
+
+// Route to display all insurances
+router.get('/insurances', isAdmin, async (req, res) => {
+  try {
+    const insurances = await Insurance.find().lean();
+    res.render('adminInsurances', { insurances });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Route to view a specific insurance
+router.get('/insurance/:id', isAdmin, async (req, res) => {
+  try {
+    const insuranceId = req.params.id;
+    const insurance = await Insurance.findById(insuranceId).lean();
+
+    if (!insurance) {
+      return res.status(404).send('Insurance not found');
+    }
+
+    res.render('adminViewInsurance', { insurance });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Route to handle insurance deletion
+router.post('/insurance/delete/:id', isAdmin, async (req, res) => {
+  try {
+    const insuranceId = req.params.id;
+
+    await Insurance.findByIdAndDelete(insuranceId);
+
+    req.flash('success_msg', 'Insurance deleted successfully.');
+    res.redirect('/admin/insurances');
+  } catch (err) {
+    console.error(err);
     res.status(500).send('Server Error');
   }
 });

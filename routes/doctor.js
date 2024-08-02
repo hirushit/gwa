@@ -8,13 +8,14 @@ const { google } = require('googleapis');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Blog = require('../models/Blog');
 const Doctor = require('../models/Doctor');
+const Insurance = require('../models/Insurance');
 const Admin = require('../models/Admin'); 
 const Booking = require('../models/Booking');
 const Chat = require('../models/Chat');
 const Patient = require('../models/Patient');
 const Prescription = require('../models/Prescription');
 const Notification = require('../models/Notification');
-
+const mongoose = require('mongoose');
 
 require('dotenv').config();
 
@@ -77,34 +78,43 @@ router.get('/doctor-index', isDoctor, isLoggedIn, async (req, res) => {
 
 router.get('/profile', isLoggedIn, async (req, res) => {
     try {
-      const doctorEmail = req.session.user.email;
-      const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
-      if (!doctor) {
-        return res.status(404).send('Doctor not found');
-      }
-      res.render('doctorProfile', { doctor });
+        const doctorEmail = req.session.user.email;
+        const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
+
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        const insurances = await Insurance.find({ '_id': { $in: doctor.insurances } }).select('name logo');
+
+        res.render('doctorProfile', { doctor, insurances });
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
+        console.error(err.message);
+        res.status(500).send('Server Error');
     }
-  });
+});
+
   
-  router.get('/edit', isLoggedIn, async (req, res) => {
+router.get('/edit', isLoggedIn, async (req, res) => {
     try {
       const doctorEmail = req.session.user.email;
       const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
+      const allInsurances = await Insurance.find({}).select('_id name');
   
       if (!doctor.hospitals) {
         doctor.hospitals = [];
       }
   
-      res.render('editDoctorProfile', { doctor });
+      if (!doctor.insurances) {
+        doctor.insurances = [];
+      }
+  
+      res.render('editDoctorProfile', { doctor, allInsurances });
     } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');
     }
   });
-  
   
   router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, async (req, res) => {
     try {
@@ -131,13 +141,14 @@ router.get('/profile', isLoggedIn, async (req, res) => {
           zip: req.body.hospitals.zip
         }];
       }
-  
+      const insuranceIds = (Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances])
+            .map(id => id.toString());
       const updateData = {
         ...req.body,
         aboutMe: req.body.aboutMe || doctor.aboutMe,  
         speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
         languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
-        insurances: Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances],
+        insurances: insuranceIds,
         awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
         faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
         hospitals: hospitals
@@ -160,6 +171,7 @@ router.get('/profile', isLoggedIn, async (req, res) => {
       res.status(500).send('Server Error');
     }
   });
+  
   router.get('/insights', isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;

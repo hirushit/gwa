@@ -588,6 +588,7 @@ router.get('/prescriptions', isLoggedIn, async (req, res) => {
 });
 
 
+
 const fontPaths = {
   regular: path.join(__dirname, '../fonts/Matter-Regular.ttf'),
   bold: path.join(__dirname, '../fonts/Matter-Bold.ttf'),

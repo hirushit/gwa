@@ -105,7 +105,7 @@ function addInsurance() {
 
     allInsurances.forEach(ins => {
         const option = document.createElement('option');
-        option.value = ins._id.toString(); 
+        option.value = ins._id.toString();
         option.textContent = ins.name;
         select.appendChild(option);
     });

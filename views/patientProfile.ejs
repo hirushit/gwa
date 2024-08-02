@@ -22,6 +22,7 @@
                     <p><strong>Email:</strong> <%= patient.email %></p>
                     <p><strong>Date of Birth:</strong> <%= patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : 'N/A' %></p>
                     <p><strong>Age:</strong> <%= patient.dateOfBirth ? Math.floor((new Date() - new Date(patient.dateOfBirth)) / (365.25 * 24 * 60 * 60 * 1000)) : 'N/A' %></p>
+                    <p><strong>Gender:</strong> <%= patient.gender %></p>
                     <p><strong>Phone Number:</strong> <%= patient.phoneNumber %></p>
                     <p><strong>Address:</strong> <%= patient.address %></p>
                     <p><strong>Blood Group:</strong> <%= patient.bloodGroup %></p>
@@ -62,9 +63,9 @@
             <a href="/patient/dashboard">Chat Box</a>
 
             <a href="/patient/patient-index">Home</a>
-            <a href="/patient/calendar">View Calender</a> 
+            <a href="/patient/calendar">View Calendar</a> 
             <a href="/patient/notifications" class="btn">Notifications</a>
-            <a href="/patient/prescriptions">View Prescripitons</a>
+            <a href="/patient/prescriptions">View Prescriptions</a>
             <form action="/auth/logout" method="POST" style="display: inline;">
                 <button type="submit">Logout</button>
             </form>

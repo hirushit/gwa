@@ -171,7 +171,7 @@ router.get('/edit', isLoggedIn, async (req, res) => {
       res.status(500).send('Server Error');
     }
   });
-  
+
   router.get('/insights', isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
@@ -434,7 +434,6 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
     }
 });
 
-
 router.get('/completed-bookings', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const doctorId = req.session.user._id; 
@@ -442,7 +441,15 @@ router.get('/completed-bookings', isLoggedIn, checkSubscription, async (req, res
                                                .populate('patient') 
                                                .sort({ date: 'desc' }); 
 
-        res.render('completed-bookings', { bookings: completedBookings });
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            const bookingsWithPatientIds = completedBookings.map(booking => ({
+                ...booking.toObject(),
+                patientId: booking.patient._id
+            }));
+            res.json({ bookings: bookingsWithPatientIds });
+        } else {
+            res.render('completed-bookings', { bookings: completedBookings });
+        }
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server Error');

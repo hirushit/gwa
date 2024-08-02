@@ -27,7 +27,7 @@ const patientSchema = new mongoose.Schema({
         default: 'patient',
     },
     phoneNumber: {
-        type:String
+        type: String
     },
     dateOfBirth: Date,
     verificationToken: String,
@@ -47,6 +47,11 @@ const patientSchema = new mongoose.Schema({
     }],
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    gender: {
+        type: String,
+        enum: ['Male', 'Female', 'Other'],
+        required: true,
+    }
 });
 
 module.exports = mongoose.model('Patient', patientSchema);

@@ -4,24 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Dashboard - Completed Bookings</title>
+    <script>
+        async function fetchBookings() {
+            try {
+                console.log('Fetching bookings...');
+                const response = await fetch('/doctor/completed-bookings', {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                console.log('Data received:', data);
+                displayBookings(data.bookings);
+            } catch (error) {
+                console.error('There was a problem with the fetch operation:', error);
+            }
+        }
+
+        function displayBookings(bookings) {
+            console.log('Displaying bookings:', bookings);
+            const bookingsList = document.getElementById('bookings-list');
+            bookingsList.innerHTML = '';
+            bookings.forEach(booking => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <strong>Patient Name:</strong> ${booking.patient.name}<br>
+                    <strong>Patient Email:</strong> ${booking.patient.email}<br>
+                    <strong>Patient ID:</strong> ${booking.patientId}<br> <!-- Display Patient ID -->
+                    <strong>Date:</strong> ${new Date(booking.date).toDateString()}<br>
+                    <strong>Time:</strong> ${booking.time}<br>
+                    <strong>Consultation Type:</strong> ${booking.consultationType}<br>
+                    <a href="/doctor/bookings/${booking._id}/prescription">Add Prescription</a>
+                    <a href="/doctor/doctor-view/${booking.patientId}/prescriptions">View Prescription</a> 
+                `;
+                bookingsList.appendChild(listItem);
+                bookingsList.appendChild(document.createElement('hr'));
+            });
+        }
+
+        window.onload = fetchBookings;
+    </script>
 </head>
 <body>
     <h1>Doctor Dashboard - Completed Bookings</h1>
-
-    <ul>
-        <% bookings.forEach(booking => { %>
-            <li>
-                <strong>Patient Name:</strong> <%= booking.patient.name %><br>
-                <strong>Patient Email:</strong> <%= booking.patient.email %><br>
-                <strong>Date:</strong> <%= booking.date.toDateString() %><br>
-                <strong>Time:</strong> <%= booking.time %><br>
-                <strong>Consultation Type:</strong> <%= booking.consultationType %><br>
-                
-                <a href="/doctor/bookings/<%= booking._id %>/prescription">Add Prescription</a>
-                <a href="/doctor/doctor-view/<%= booking.patient._id %>/prescriptions">View Prescription</a>
-            </li>
-            <hr>
-        <% }); %>
+    <ul id="bookings-list">
     </ul>
 </body>
 </html>

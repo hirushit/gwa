@@ -42,7 +42,15 @@
                 <option value="O-" <%= patient.bloodGroup === 'O-' ? 'selected' : '' %>>O-</option>
             </select>
         </div>
-        
+        <div>
+            <label for="gender">Gender:</label>
+            <select id="gender" name="gender" required>
+                <option value="">Select Gender</option>
+                <option value="Male" <%= patient.gender === 'Male' ? 'selected' : '' %>>Male</option>
+                <option value="Female" <%= patient.gender === 'Female' ? 'selected' : '' %>>Female</option>
+                <option value="Other" <%= patient.gender === 'Other' ? 'selected' : '' %>>Other</option>
+            </select>
+        </div>
         <div>
             <label for="insuranceProvider">Insurance Provider:</label>
             <input type="text" id="insuranceProvider" name="insuranceProvider" value="<%= patient.insuranceProvider %>" required>

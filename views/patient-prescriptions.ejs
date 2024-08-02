@@ -10,6 +10,7 @@
     <ul>
         <% prescriptions.forEach(prescription => { %>
             <li>
+                <strong>Prescription ID:</strong> <%= prescription._id %><br>
                 <strong>Doctor Name:</strong> <%= prescription.doctorName %> (<%= prescription.doctorSpeciality %>)<br>
                 <strong>Doctor Email:</strong> <%= prescription.doctorEmail %><br>
                 <strong>Patient Age:</strong> <%= prescription.patientAge %><br>

@@ -29,7 +29,8 @@ const blogSchema = new Schema({
             date: { type: Date, default: Date.now }
         }
     ],
-    authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true } 
+    authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    readCount: {type: Number} 
 });
 
 const Blog = mongoose.model('Blog', blogSchema);

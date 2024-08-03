@@ -4,49 +4,129 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blog Details</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .content {
+            flex: 3;
+            margin-right: 20px;
+        }
+
+        .sidebar {
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .sidebar img {
+            width: 100px;
+            height: auto;
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar li {
+            margin-bottom: 20px;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: black;
+        }
+
+        .sidebar a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <h1><%= blog.title %></h1>
-    
-    <% if (blog.image && blog.image.data && blog.image.contentType) { %>
-        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="<%= blog.title %> Image" width="200">
-    <% } else { %>
-        <p>No image available</p>
-    <% } %>
-    
-    <h2>Author Information</h2>
-    <p><strong>Author:</strong> <%= blog.author %></p>
-    <p><strong>Author Email:</strong> <%= blog.authorEmail %></p>
-    <a href="/admin/author/<%= blog.authorId %>">View Author Info</a>
-    <h2>Description</h2>
-    <p><%= blog.description %></p>
-    <h2>Summary</h2>
-    <p><%= blog.summary %></p>
+    <div class="content">
+        <h1><%= blog.title %></h1>
+        
+        <% if (blog.image && blog.image.data && blog.image.contentType) { %>
+            <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="<%= blog.title %> Image" width="200">
+        <% } else { %>
+            <p>No image available</p>
+        <% } %>
+        
+        <h2>Author Information</h2>
+        <p><strong>Author:</strong> <%= blog.author %></p>
+        <p><strong>Author Email:</strong> <%= blog.authorEmail %></p>
+        <a href="/admin/author/<%= blog.authorId %>">View Author Info</a>
+        <h2>Description</h2>
+        <p><%= blog.description %></p>
+        <h2>Summary</h2>
+        <p><%= blog.summary %></p>
 
-    <h2>Categories</h2>
-    <ul>
-        <% blog.categories.forEach(category => { %>
-            <li><%= category %></li>
-        <% }); %>
-    </ul>
+        <h2>Categories</h2>
+        <ul>
+            <% blog.categories.forEach(category => { %>
+                <li><%= category %></li>
+            <% }); %>
+        </ul>
 
-    <h2>Hashtags</h2>
-    <ul>
-        <% blog.hashtags.forEach(hashtag => { %>
-            <li><%= hashtag %></li>
-        <% }); %>
-    </ul>
-    
-    <h2>Comments:</h2>
-    <ul>
-        <% blog.comments.forEach(comment => { %>
-            <li><strong><%= comment.username %>:</strong> <%= comment.comment %> (<%= comment.date.toLocaleString() %>)</li>
-        <% }); %>
-    </ul>
-    <form action="/admin/blogs-all/comment/<%= blog._id %>" method="POST">
-        <label for="comment">Add Comment:</label>
-        <textarea name="comment" id="comment" cols="30" rows="5" required></textarea>
-        <button type="submit">Submit Comment</button>
-    </form>
+        <h2>Hashtags</h2>
+        <ul>
+            <% blog.hashtags.forEach(hashtag => { %>
+                <li><%= hashtag %></li>
+            <% }); %>
+        </ul>
+        
+        <h2>Comments:</h2>
+        <ul>
+            <% blog.comments.forEach(comment => { %>
+                <li><strong><%= comment.username %>:</strong> <%= comment.comment %> (<%= comment.date.toLocaleString() %>)</li>
+            <% }); %>
+        </ul>
+        <form action="/admin/blogs-all/comment/<%= blog._id %>" method="POST">
+            <label for="comment">Add Comment:</label>
+            <textarea name="comment" id="comment" cols="30" rows="5" required></textarea>
+            <button type="submit">Submit Comment</button>
+        </form>
+    </div>
+
+    <div class="sidebar">
+        <h2>Related Posts</h2>
+        <ul>
+            <% relatedPosts.forEach(post => { %>
+                <li>
+                    <a href="/blogs-all/view/<%= post._id %>">
+                        <% if (post.image && post.image.data && post.image.contentType) { %>
+                            <img src="data:<%= post.image.contentType %>;base64,<%= post.image.data.toString('base64') %>" alt="<%= post.title %> Image">
+                        <% } %>
+                        <strong><%= post.title %></strong>
+                    </a>
+                    <p><%= post.summary %></p>
+                </li>
+            <% }) %>
+        </ul>
+
+        <h2>Most Reads</h2>
+        <ul>
+            <% mostReadPosts.forEach(post => { %>
+                <li>
+                    <a href="/blogs-all/view/<%= post._id %>">
+                        <% if (post.image && post.image.data && post.image.contentType) { %>
+                            <img src="data:<%= post.image.contentType %>;base64,<%= post.image.data.toString('base64') %>" alt="<%= post.title %> Image">
+                        <% } %>
+                        <strong><%= post.title %></strong>
+                    </a>
+                    <p><%= post.summary %></p>
+                </li>
+            <% }) %>
+        </ul>
+    </div>
 </body>
 </html>

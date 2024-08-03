@@ -959,7 +959,7 @@ router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), asyn
                 data: req.file.buffer,
                 contentType: req.file.mimetype
             },
-            verificationStatus: 'Pending' 
+            verificationStatus: 'Pending'
         });
 
         await newBlog.save();
@@ -1148,21 +1148,47 @@ router.get('/chat/:id', isLoggedIn, checkSubscription, async (req, res) => {
     }
 });
 
-router.get('/blogs/view/:id', isLoggedIn, checkSubscription,async (req, res) => {
+router.get('/blogs/view/:id', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const blogId = req.params.id;
-        const blog = await Blog.findById(blogId).lean();
-  
+
+        let blog = await Blog.findById(blogId).lean();
         if (!blog) {
             return res.status(404).send('Blog not found');
         }
-  
-        res.render('DoctorViewBlog', { blog });
+
+        if (!req.session.viewedBlogs) {
+            req.session.viewedBlogs = [];
+          }
+      
+          if (!req.session.viewedBlogs.includes(blogId)) {
+            await Blog.findByIdAndUpdate(blogId, { $inc: { readCount: 1 } });
+            req.session.viewedBlogs.push(blogId);
+          }
+
+        const relatedPosts = await Blog.find({
+            $or: [
+                { categories: { $in: blog.categories } },
+                { hashtags: { $in: blog.hashtags } }
+            ],
+            _id: { $ne: blog._id }, 
+            verificationStatus: "Verified" 
+        }).limit(5).lean();
+
+        const mostReadPosts = await Blog.find({
+            _id: { $ne: blog._id },
+            verificationStatus: "Verified" 
+        }).sort({ readCount: -1 }).limit(5).lean();
+
+        res.render('DoctorViewBlog', { blog, relatedPosts, mostReadPosts });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
-  });
+});
+
+
+
   
 router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
     try {

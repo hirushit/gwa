@@ -294,17 +294,43 @@ router.post('/blog-all', upload.single('image'), async (req, res) => {
 
 router.get('/blogs-all/view/:id', isLoggedIn, async (req, res) => {
   try {
-      const blogId = req.params.id;
-      const blog = await Blog.findById(blogId).lean();
+    const blogId = req.params.id;
 
-      if (!blog) {
-          return res.status(404).send('Blog not found');
-      }
+    if (!req.session.viewedBlogs) {
+      req.session.viewedBlogs = [];
+    }
 
-      res.render('AdminViewAllBlog', { blog });
+    if (!req.session.viewedBlogs.includes(blogId)) {
+      await Blog.findByIdAndUpdate(blogId, { $inc: { readCount: 1 } });
+      req.session.viewedBlogs.push(blogId);
+    }
+
+    const blog = await Blog.findById(blogId).lean();
+    if (!blog) {
+      return res.status(404).send('Blog not found');
+    }
+
+    const relatedPosts = await Blog.find({
+      _id: { $ne: blog._id }, 
+      verificationStatus: "Verified", 
+      $or: [
+        { categories: { $in: blog.categories } },
+        { hashtags: { $in: blog.hashtags } }
+      ]
+    }).lean().limit(5); 
+
+    const mostReadPosts = await Blog.find({
+      _id: { $ne: blog._id }, 
+      verificationStatus: "Verified" 
+    })
+      .sort({ readCount: -1 }) 
+      .limit(5) 
+      .lean();
+
+    res.render('AdminViewAllBlog', { blog, relatedPosts, mostReadPosts });
   } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
 

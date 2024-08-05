@@ -160,19 +160,33 @@ router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
               path: 'reviews.patientId',
               select: 'name'
           });
+
       if (!doctor) {
           return res.status(404).send('Doctor not found');
       }
-      const insurances = await Insurance.find({ '_id': { $in: doctor.insurances } }).select('name logo');
 
+      const insurances = await Insurance.find({ '_id': { $in: doctor.insurances } }).select('name logo');
       const blogs = await Blog.find({ authorId: doctorId, verificationStatus: 'Verified' });
 
-      res.render('doctorProfileView', { doctor, insurances, blogs });
+      if (req.accepts('html')) {
+          res.render('doctorProfileView', { doctor, insurances, blogs });
+      } else if (req.accepts('json')) {
+          res.json({ doctor, insurances, blogs });
+      } else {
+          res.status(406).send('Not Acceptable');
+      }
   } catch (error) {
       console.error(error.message);
-      res.status(500).send('Server Error');
+      if (req.accepts('html')) {
+          res.status(500).send('Server Error');
+      } else if (req.accepts('json')) {
+          res.status(500).json({ error: 'Server Error' });
+      } else {
+          res.status(406).send('Not Acceptable');
+      }
   }
 });
+
 
 router.post('/book', isLoggedIn, async (req, res) => {
   try {

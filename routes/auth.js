@@ -212,7 +212,7 @@ router.post('/login', async (req, res) => {
     } else if (user.role === 'doctor') {
       return res.redirect('/doctor/doctor-index'); 
     } else if (user.role === 'admin') {
-      return res.redirect('/admin/admin-home'); 
+      return res.redirect('/admin/doctor-profile-requests'); 
     } else {
       req.flash('error_msg', 'Invalid role');
       return res.redirect('/auth/login');

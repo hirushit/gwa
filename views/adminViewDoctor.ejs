@@ -4,131 +4,306 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Doctor Profile</title>
+  <style>
+    @font-face {
+      font-family: 'Matter-Regular';
+      src: url('fonts/Matter-Regular.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    body {
+      font-family: 'Matter-Regular', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      background-color: #f8f9fa;
+    }
+
+    .dashboard {
+      display: flex;
+      width: 100%;
+    }
+
+    .sidebar {
+      width: 250px;
+      background-color: #F7FAFF; 
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+
+    .sidebar-logo {
+      text-align: center; 
+      margin-bottom: 20px;
+    }
+
+    .sidebar-logo img {
+      width: 170px;
+      height: auto;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar-menu-item {
+      margin: 10px 0;
+    }
+
+    .sidebar-menu-item a {
+      text-decoration: none;
+      color: #A0AAC8; 
+      display: block;
+      padding: 10px;
+      border-radius: 5px;
+      transition: color 0.3s ease;
+    }
+
+    .sidebar-menu-item a.active,
+    .sidebar-menu-item a:hover {
+      color: #42427D; 
+      background-color: transparent; 
+    }
+
+    .sidebar h2 {
+      margin: 0 0 20px 0; 
+      color: #42427D;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      margin: 20px auto;
+      padding: 20px;
+      border: 1px solid #e9ecef;
+      border-radius: 5px;
+      background-color: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #42427D;
+    }
+
+    select {
+      padding: 8px;
+      border: 1px solid #42427D;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    button[type="submit"] {
+      background-color: #42427D;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #333;
+    }
+
+    a {
+      color: #42427D;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    form button {
+      background-color: #42427D;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background-color: #333;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 10px;
+    }
+
+    .patient-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .patient-info strong {
+      font-size: 16px;
+      color: #42427D; 
+    }
+
+    .patient-info span {
+      font-size: 14px;
+      color: #A0AAC8; 
+    }
+  </style>
 </head>
 <body>
-  <h1>Doctor Profile</h1>
-
-  <div class="container">
-    <h1><%= doctor.name %></h1>
-
-    <div class="verification-status">
-      <p>Current Verification Status: <%= doctor.verified %></p>
-      <form action="/admin/verify/<%= doctor._id %>" method="POST">
-        <label for="verificationStatus">Update Verification Status:</label>
-        <select id="verificationStatus" name="verificationStatus" required>
-          <option value="" disabled selected>Select</option>
-          <option value="Not Verified">Not Verified</option>
-          <option value="Pending">Pending</option>
-          <option value="Verified">Verified</option>
-        </select>
-        <button type="submit">Update</button>
-      </form>
+  <div class="dashboard">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <img src="/logo.png" alt="Admin Logo">
+      </div>
+      <h2>Admin Functions</h2>
+      <ul class="sidebar-menu">
+        <li class="sidebar-menu-item"><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View Admin Blogs</a></li>
+        <li class="sidebar-menu-item"><a href="/admin/blog" <% if (activePage === 'blog-upload') { %> class="active" <% } %>>Upload Admin Blog</a></li>
+        <!-- <li class="sidebar-menu-item"><a href="/admin/admin-home" <% if (activePage === 'admin-home') { %> class="active" <% } %>>Home</a></li> -->
+        <li class="sidebar-menu-item"><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
+        <li class="sidebar-menu-item"><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
+        <li class="sidebar-menu-item"><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
+        <!-- <li class="sidebar-menu-item"><a href="/admin/blogs-all" <% if (activePage === 'blogs-all') { %> class="active" <% } %>>Search Blogs</a></li> -->
+        <li class="sidebar-menu-item"><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
+        <li class="sidebar-menu-item"><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
+        <li class="sidebar-menu-item"><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
+      </ul>
     </div>
 
-    <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
-      <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Profile Picture" width="150" height="180">
-    <% } else { %>
-      <p>No profile picture available</p>
-    <% } %>
-    <p><strong>Name:</strong> <%= doctor.name %></p>
-    <p><strong>Email:</strong> <%= doctor.email %></p>
-    <p><strong>Title:</strong> <%= doctor.title %></p>
-    <p><strong>Speciality:</strong> <%= doctor.speciality.join(', ') %></p>
-    <p><strong>Location:</strong> <%= doctor.location %></p>
-    <p><strong>Gender:</strong> <%= doctor.gender %></p>
-    <p><strong>Website:</strong> <a href="<%= doctor.website %>" target="_blank"><%= doctor.website %></a></p>
-    <h3>Social Media Handles</h3>
-    <ul>
-      <% if (doctor.socialHandles && doctor.socialHandles.twitter) { %>
-        <li><a href="<%= doctor.socialHandles.twitter %>" target="_blank">Twitter</a></li>
-      <% } %>
-      <% if (doctor.socialHandles && doctor.socialHandles.facebook) { %>
-        <li><a href="<%= doctor.socialHandles.facebook %>" target="_blank">Facebook</a></li>
-      <% } %>
-      <% if (doctor.socialHandles && doctor.socialHandles.linkedin) { %>
-        <li><a href="<%= doctor.socialHandles.linkedin %>" target="_blank">LinkedIn</a></li>
-      <% } %>
-      <% if (doctor.socialHandles && doctor.socialHandles.instagram) { %>
-        <li><a href="<%= doctor.socialHandles.instagram %>" target="_blank">Instagram</a></li>
-      <% } %>
-    </ul>
-    <h3>Subscription Details</h3>
-    <p><strong>Subscription Type:</strong> <%= doctor.subscriptionType %></p>
-    <p><strong>Subscription Verification:</strong> <%= doctor.subscriptionVerification %></p>
-    <h3>Languages Spoken</h3>
-    <% if (doctor.languages.length > 0) { %>
-      <ul>
-        <% doctor.languages.forEach(language => { %>
-          <li><%= language %></li>
-        <% }) %>
-      </ul>
-    <% } else { %>
-      <p>No languages listed.</p>
-    <% } %>
+    <div class="main-content">
+      <div class="container">
+        <h1>Doctor Profile</h1>
 
-    <h3>Conditions Managed</h3>
-    <% if (doctor.conditions && doctor.conditions.length > 0) { %>
-    <ul>
-        <% doctor.conditions.forEach(condition => { %>
-        <li><%= condition %></li>
-        <% }) %>
-    </ul>
-    <% } else { %>
-    <p>No conditions managed listed.</p>
-    <% } %>
+        <h2><%= doctor.name %></h2>
 
+        <div class="verification-status">
+          <p>Current Verification Status: <%= doctor.verified %></p>
+          <form action="/admin/verify/<%= doctor._id %>" method="POST">
+            <label for="verificationStatus">Update Verification Status:</label>
+            <select id="verificationStatus" name="verificationStatus" required>
+              <option value="" disabled selected>Select</option>
+              <option value="Not Verified">Not Verified</option>
+              <option value="Pending">Pending</option>
+              <option value="Verified">Verified</option>
+            </select>
+            <button type="submit">Update</button>
+          </form>
+        </div>
 
-    <div class="hospitals-section">
-      <h2>Hospitals</h2>
-      <% if (doctor && doctor.hospitals && doctor.hospitals.length > 0) { %>
+        <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
+          <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Profile Picture" width="150" height="180">
+        <% } else { %>
+          <p>No profile picture available</p>
+        <% } %>
+        <p><strong>Name:</strong> <%= doctor.name %></p>
+        <p><strong>Email:</strong> <%= doctor.email %></p>
+        <p><strong>Title:</strong> <%= doctor.title %></p>
+        <p><strong>Speciality:</strong> <%= doctor.speciality.join(', ') %></p>
+        <p><strong>Location:</strong> <%= doctor.location %></p>
+        <p><strong>Gender:</strong> <%= doctor.gender %></p>
+        <p><strong>Website:</strong> <a href="<%= doctor.website %>" target="_blank"><%= doctor.website %></a></p>
+        <h3>Social Media Handles</h3>
+        <ul>
+          <% if (doctor.socialHandles && doctor.socialHandles.twitter) { %>
+            <li><a href="<%= doctor.socialHandles.twitter %>" target="_blank">Twitter</a></li>
+          <% } %>
+          <% if (doctor.socialHandles && doctor.socialHandles.facebook) { %>
+            <li><a href="<%= doctor.socialHandles.facebook %>" target="_blank">Facebook</a></li>
+          <% } %>
+          <% if (doctor.socialHandles && doctor.socialHandles.linkedin) { %>
+            <li><a href="<%= doctor.socialHandles.linkedin %>" target="_blank">LinkedIn</a></li>
+          <% } %>
+          <% if (doctor.socialHandles && doctor.socialHandles.instagram) { %>
+            <li><a href="<%= doctor.socialHandles.instagram %>" target="_blank">Instagram</a></li>
+          <% } %>
+        </ul>
+        <h3>Subscription Details</h3>
+        <p><strong>Subscription Type:</strong> <%= doctor.subscriptionType %></p>
+        <p><strong>Subscription Verification:</strong> <%= doctor.subscriptionVerification %></p>
+        <h3>Languages Spoken</h3>
+        <% if (doctor.languages.length > 0) { %>
           <ul>
-              <% doctor.hospitals.forEach(hospital => { %>
-                  <li>
-                      <p><strong>Name:</strong> <%= hospital.name %></p>
-                      <p><strong>Location:</strong> <%= hospital.street %>, <%= hospital.city %>, <%= hospital.state %>, <%= hospital.country %>, <%= hospital.zip %></p>
-                  </li>
-              <% }) %>
+            <% doctor.languages.forEach(language => { %>
+              <li><%= language %></li>
+            <% }) %>
           </ul>
-      <% } else { %>
-          <p>No hospitals available.</p>
-      <% } %>
-  </div>
-  
-    <h3>Insurances Accepted</h3>
-    <% if (doctor.insurances.length > 0) { %>
-      <ul>
-        <% doctor.insurances.forEach(insurance => { %>
-          <li><%= insurance %></li>
-        <% }) %>
-      </ul>
-    <% } else { %>
-      <p>No insurances listed.</p>
-    <% } %>
-    <h3>Awards</h3>
-    <% if (doctor.awards.length > 0) { %>
-      <ul>
-        <% doctor.awards.forEach(award => { %>
-          <li><%= award %></li>
-        <% }) %>
-      </ul>
-    <% } else { %>
-      <p>No awards listed.</p>
-    <% } %>
-    <h3>FAQs</h3>
-    <% if (doctor.faqs.length > 0) { %>
-      <ul>
-        <% doctor.faqs.forEach(faq => { %>
-          <li><%= faq %></li>
-        <% }) %>
-      </ul>
-    <% } else { %>
-      <p>No FAQs listed.</p>
-    <% } %>
+        <% } else { %>
+          <p>No languages listed.</p>
+        <% } %>
 
-    <a href="/admin/dashboard">Back to Dashboard</a>
-    <form action="/auth/logout" method="GET">
-      <button type="submit">Logout</button>
-    </form>
+        <h3>Conditions Managed</h3>
+        <% if (doctor.conditions && doctor.conditions.length > 0) { %>
+          <ul>
+            <% doctor.conditions.forEach(condition => { %>
+              <li><%= condition %></li>
+            <% }) %>
+          </ul>
+        <% } else { %>
+          <p>No conditions managed listed.</p>
+        <% } %>
+
+        <div class="hospitals-section">
+          <h2>Hospitals</h2>
+          <% if (doctor && doctor.hospitals && doctor.hospitals.length > 0) { %>
+              <ul>
+                  <% doctor.hospitals.forEach(hospital => { %>
+                      <li>
+                          <p><strong>Name:</strong> <%= hospital.name %></p>
+                          <p><strong>Location:</strong> <%= hospital.street %>, <%= hospital.city %>, <%= hospital.state %>, <%= hospital.country %>, <%= hospital.zip %></p>
+                      </li>
+                  <% }) %>
+              </ul>
+          <% } else { %>
+              <p>No hospitals available.</p>
+          <% } %>
+        </div>
+
+        <h3>Insurances Accepted</h3>
+        <% if (doctor.insurances.length > 0) { %>
+          <ul>
+            <% doctor.insurances.forEach(insurance => { %>
+              <li><%= insurance %></li>
+            <% }) %>
+          </ul>
+        <% } else { %>
+          <p>No insurances listed.</p>
+        <% } %>
+        <h3>Awards</h3>
+        <% if (doctor.awards.length > 0) { %>
+          <ul>
+            <% doctor.awards.forEach(award => { %>
+              <li><%= award %></li>
+            <% }) %>
+          </ul>
+        <% } else { %>
+          <p>No awards listed.</p>
+        <% } %>
+        <h3>FAQs</h3>
+        <% if (doctor.faqs.length > 0) { %>
+          <ul>
+            <% doctor.faqs.forEach(faq => { %>
+              <li><%= faq %></li>
+            <% }) %>
+          </ul>
+        <% } else { %>
+          <p>No FAQs listed.</p>
+        <% } %>
+
+        <a href="/admin/doctor-profile-requests">Back</a>
+        </form>
+      </div>
+    </div>
   </div>
 </body>
 </html>

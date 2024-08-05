@@ -5,7 +5,139 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Subscriptions</title>
     <style>
-        /* Modal Styles */
+        @font-face {
+            font-family: 'Matter-Regular';
+            src: url('fonts/Matter-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+    
+        body {
+            font-family: 'Matter-Regular', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #f8f9fa;
+        }
+    
+        .dashboard {
+            display: flex;
+            width: 100%;
+        }
+    
+        .sidebar {
+            width: 250px;
+            background-color: #F7FAFF; 
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+    
+        .sidebar-logo img {
+            width: 170px;
+            height: auto;
+        }
+    
+        .sidebar-logo {
+            text-align: center;
+        }
+    
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+    
+        .sidebar-menu li {
+            margin: 10px 0;
+        }
+    
+        .sidebar-menu li a {
+            text-decoration: none;
+            color: #A0AAC8; 
+            display: block;
+            padding: 10px;
+            border-radius: 5px;
+            transition: color 0.3s ease;
+        }
+    
+        .sidebar-menu li a.active,
+        .sidebar-menu li a:hover {
+            color: #42427D; 
+            background-color: transparent;
+        }
+    
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #e9ecef; 
+            background-color: #fff; 
+            border-radius: 5px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        }
+    
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+    
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+    
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+    
+        th {
+            background-color: #f2f2f2;
+        }
+    
+        button {
+            background-color: #fff; 
+            color: #42427D; 
+            border: 0px solid #42427D; 
+            padding: 4px 8px; 
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: inline; 
+            box-shadow: none; 
+        }
+    
+        button:hover {
+            background-color: #f1f1f1; 
+            color: #42427D; 
+            border-color: #42427D; 
+        }
+    
+        select {
+            font-family: 'Matter-Regular', Arial, sans-serif;
+            border: 1px solid #42427D; 
+            padding: 4px 8px; 
+            border-radius: 5px; 
+            background-color: #fff; 
+            color: #42427D; 
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+    
+        select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+    
+        .sidebar h2 {
+            color: #42427D; 
+            margin: 0 0 20px 0; 
+        }
+    
         .modal {
             display: none;
             position: fixed;
@@ -15,9 +147,9 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgb(0,0,0);
             background-color: rgba(0,0,0,0.4);
         }
+    
         .modal-content {
             background-color: #fefefe;
             margin: 15% auto;
@@ -25,111 +157,141 @@
             border: 1px solid #888;
             width: 80%;
         }
+    
         .close {
             color: #aaa;
             float: right;
             font-size: 28px;
             font-weight: bold;
         }
+    
         .close:hover,
         .close:focus {
             color: black;
             text-decoration: none;
             cursor: pointer;
         }
+    
         .proof-img {
             width: 100%;
             max-width: 600px;
         }
+    
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Doctor Subscriptions</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Doctor Name</th>
-                <th>Subscription Type</th>
-                <th>Verification Status</th>
-                <th>Proof Documents</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% doctors.forEach(doctor => { %>
-                <tr>
-                    <td><%= doctor.name %></td>
-                    <td><%= doctor.subscriptionType %></td>
-                    <td>
-                        <% if (doctor.subscriptionVerification === 'Verified') { %>
-                            Verified
-                        <% } else if (doctor.subscriptionVerification === 'Rejected') { %>
-                            Rejected
-                        <% } else { %>
-                            Pending
-                        <% } %>
-                    </td>
-                    <td>
-                        <% if (doctor.documents) { %>
-                            <% if (doctor.documents.businessProof && doctor.documents.businessProof.data) { %>
-                                <p><strong>Business Proof:</strong> <button onclick="showProof('data:<%= doctor.documents.businessProof.contentType %>;base64,<%= doctor.documents.businessProof.data.toString('base64') %>')">View</button></p>
-                            <% } else { %>
-                                <p>Business Proof: Not Provided</p>
-                            <% } %>
-                            <% if (doctor.documents.certificationProof && doctor.documents.certificationProof.data) { %>
-                                <p><strong>Certification Proof:</strong> <button onclick="showProof('data:<%= doctor.documents.certificationProof.contentType %>;base64,<%= doctor.documents.certificationProof.data.toString('base64') %>')">View</button></p>
-                            <% } else { %>
-                                <p>Certification Proof: Not Provided</p>
-                            <% } %>
-                            <% if (doctor.documents.licenseProof && doctor.documents.licenseProof.data) { %>
-                                <p><strong>License Proof:</strong> <button onclick="showProof('data:<%= doctor.documents.licenseProof.contentType %>;base64,<%= doctor.documents.licenseProof.data.toString('base64') %>')">View</button></p>
-                            <% } else { %>
-                                <p>License Proof: Not Provided</p>
-                            <% } %>
-                        <% } else { %>
-                            <p>No documents provided.</p>
-                        <% } %>
-                    </td>
-                    <td>
-                        <form action="/admin/verify-subscription/<%= doctor._id %>" method="post">
-                            <select name="verificationStatus">
-                                <option value="Verified" <%= doctor.subscriptionVerification === 'Verified' ? 'selected' : '' %>>Verify</option>
-                                <option value="Rejected" <%= doctor.subscriptionVerification === 'Rejected' ? 'selected' : '' %>>Reject</option>
-                                <option value="Pending" <%= doctor.subscriptionVerification === 'Pending' ? 'selected' : '' %>>Pending</option>
-                            </select>
-                            <button type="submit">Submit</button>
-                        </form>
-                    </td>
-                </tr>
-            <% }) %>
-        </tbody>
-    </table>
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img src="/logo.png" alt="Admin Logo">
+            </div>
+            <h2>Admin Functions</h2>
+            <ul class="sidebar-menu">
+                <li><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View Admin Blogs</a></li>
+                <li><a href="/admin/blog" <% if (activePage === 'blog') { %> class="active" <% } %>>Upload Admin Blog</a></li>
+                <!-- <li><a href="/admin/admin-home" <% if (activePage === 'admin-home') { %> class="active" <% } %>>Home</a></li> -->
+                <li><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
+                <li><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
+                <li><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
+                <!-- <li><a href="/admin/blogs-all" <% if (activePage === 'blogs-all') { %> class="active" <% } %>>Search Blogs</a></li> -->
+                <li><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
+                <li><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
+                <li><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
+            </ul>
+        </div>
 
-    <!-- Modal -->
-    <div id="proofModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <img id="proofImage" class="proof-img" src="" alt="Proof Image">
+        <div class="main-content">
+            <div class="container">
+                <h1>Doctor Subscriptions</h1>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Doctor Name</th>
+                            <th>Subscription Type</th>
+                            <th>Verification Status</th>
+                            <th>Proof Documents</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% doctors.forEach(doctor => { %>
+                            <tr>
+                                <td><%= doctor.name %></td>
+                                <td><%= doctor.subscriptionType %></td>
+                                <td>
+                                    <% if (doctor.subscriptionVerification === 'Verified') { %>
+                                        Verified
+                                    <% } else if (doctor.subscriptionVerification === 'Rejected') { %>
+                                        Rejected
+                                    <% } else { %>
+                                        Pending
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (doctor.documents) { %>
+                                        <% if (doctor.documents.businessProof && doctor.documents.businessProof.data) { %>
+                                            <p><strong>Business Proof:</strong> <button onclick="showProof('data:<%= doctor.documents.businessProof.contentType %>;base64,<%= doctor.documents.businessProof.data.toString('base64') %>')">View</button></p>
+                                        <% } %>
+                                        <% if (doctor.documents.certificationProof && doctor.documents.certificationProof.data) { %>
+                                            <p><strong>Certification Proof:</strong> <button onclick="showProof('data:<%= doctor.documents.certificationProof.contentType %>;base64,<%= doctor.documents.certificationProof.data.toString('base64') %>')">View</button></p>
+                                        <% } %>
+                                        <% if (doctor.documents.licenseProof && doctor.documents.licenseProof.data) { %>
+                                            <p><strong>License Proof:</strong> <button onclick="showProof('data:<%= doctor.documents.licenseProof.contentType %>;base64,<%= doctor.documents.licenseProof.data.toString('base64') %>')">View</button></p>
+                                        <% } %>
+                                    <% } else { %>
+                                        <p>No documents provided.</p>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <form action="/admin/verify-subscription/<%= doctor._id %>" method="post">
+                                        <select name="verificationStatus">
+                                            <option value="Verified" <%= doctor.subscriptionVerification === 'Verified' ? 'selected' : '' %>>Verify</option>
+                                            <option value="Rejected" <%= doctor.subscriptionVerification === 'Rejected' ? 'selected' : '' %>>Reject</option>
+                                            <option value="Pending" <%= doctor.subscriptionVerification === 'Pending' ? 'selected' : '' %>>Pending</option>
+                                        </select>
+                                        <button type="submit">Submit</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+
+                <div id="proofModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closeModal()">&times;</span>
+                        <img id="proofImage" class="proof-img" src="" alt="Proof Image">
+                    </div>
+                </div>
+
+                <script>
+                    function showProof(url) {
+                        document.getElementById('proofImage').src = url;
+                        document.getElementById('proofModal').style.display = 'block';
+                    }
+
+                    function closeModal() {
+                        document.getElementById('proofModal').style.display = 'none';
+                    }
+
+                    window.onclick = function(event) {
+                        const modal = document.getElementById('proofModal');
+                        if (event.target === modal) {
+                            modal.style.display = 'none';
+                        }
+                    }
+                </script>
+            </div>
         </div>
     </div>
-
-    <script>
-        function showProof(url) {
-            document.getElementById('proofImage').src = url;
-            document.getElementById('proofModal').style.display = 'block';
-        }
-
-        function closeModal() {
-            document.getElementById('proofModal').style.display = 'none';
-        }
-
-        // Close the modal when clicking outside of it
-        window.onclick = function(event) {
-            const modal = document.getElementById('proofModal');
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
-        }
-    </script>
 </body>
 </html>

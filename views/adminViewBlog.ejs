@@ -5,53 +5,216 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin View Blog</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #f8f9fa;
+        }
 
+        .dashboard {
+            display: flex;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #F7FAFF; 
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-logo img {
+            width: 170px; 
+            height: auto;
+        }
+
+        .sidebar h2 {
+            color: #42427D; 
+            margin: 0 0 20px 0;
+            font-size: 16px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar-menu li {
+            margin: 10px 0;
+        }
+
+        .sidebar-menu li a {
+            text-decoration: none;
+            color: #A0AAC8;
+            display: block;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            font-size: 16px;
+        }
+
+        .sidebar-menu li a.active,
+.sidebar-menu li a:hover {
+    color: #42427D; 
+    background-color: transparent;
+}
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            color: #42427D; 
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #42427D;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #42427D;
+            border-radius: 4px;
+            background-color: #fff;
+            color: #42427D; 
+            cursor: pointer;
+        }
+
+        button {
+            background-color: transparent; 
+            color: #42427D; 
+            border: 1px solid #42427D; 
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #42427D; 
+            color: white; 
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+
+        select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2); 
+        }
     </style>
 </head>
 <body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img src="/logo.png" alt="Admin Logo"> 
+            </div>
+            <h2>Admin Functions</h2>
+            <ul class="sidebar-menu">
+                <li><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View Admin Blogs</a></li>
+                <li><a href="/admin/blog" <% if (activePage === 'blog') { %> class="active" <% } %>>Upload Admin Blog</a></li>
+                <li><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
+                <li><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
+                <li><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
+                <li><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
+                <li><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
+            </ul>
+            <a href="/auth/logout">Logout</a>
+        </div>
 
-<h1>Blog Details</h1>
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="container">
+                <h1>Blog Details</h1>
+                <h3>Title: <%= blog.title %></h3>
+                <p><strong>Author:</strong> <%= blog.author %></p>
+                <p><strong>Description:</strong> <%= blog.description %></p>
+                <p><strong>Summary:</strong> <%= blog.summary %></p>
+                <p><strong>Author Email:</strong> <%= blog.authorEmail %></p>
 
-<h3>Title: <%= blog.title %></h3>
-<p><strong>Author:</strong> <%= blog.author %></p>
-<p><strong>Description:</strong> <%= blog.description %></p>
-<p><strong>Summary:</strong> <%= blog.summary %></p>
-<p><strong>Author Email:</strong> <%= blog.authorEmail %></p>
+                <h1>Edit Blog</h1>
+                <form action="/admin/blogs/edit/<%= blog._id %>" method="POST" enctype="multipart/form-data">
+                    <label for="title">Title:</label>
+                    <input type="text" id="title" name="title" value="<%= blog.title %>"><br>
 
+                    <label for="author">Author:</label>
+                    <input type="text" id="author" name="author" value="<%= blog.author %>"><br>
 
+                    <label for="description">Description:</label>
+                    <textarea id="description" name="description"><%= blog.description %></textarea><br>
 
-<h1>Edit Blog</h1>
+                    <label for="summary">Summary:</label>
+                    <textarea id="summary" name="summary"><%= blog.summary %></textarea><br>
 
-<form action="/admin/blogs/edit/<%= blog._id %>" method="POST" enctype="multipart/form-data">
-    <label for="title">Title:</label>
-    <input type="text" id="title" name="title" value="<%= blog.title %>"><br>
+                    <label for="authorEmail">Author Email:</label>
+                    <input type="email" id="authorEmail" name="authorEmail" value="<%= blog.authorEmail %>"><br>
 
-    <label for="author">Author:</label>
-    <input type="text" id="author" name="author" value="<%= blog.author %>"><br>
+                    <label for="priority">Priority:</label>
+                    <select id="priority" name="priority">
+                        <option value="High" <%= blog.priority === 'High' ? 'selected' : '' %>>High</option>
+                        <option value="Low" <%= blog.priority === 'Low' ? 'selected' : '' %>>Low</option>
+                    </select><br>
 
-    <label for="description">Description:</label>
-    <textarea id="description" name="description"><%= blog.description %></textarea><br>
+                    <label for="image">Image:</label>
+                    <input type="file" id="image" name="image"><br>
 
-    <label for="summary">Summary:</label>
-    <textarea id="summary" name="summary"><%= blog.summary %></textarea><br>
+                    <button type="submit">Save Changes</button>
+                </form>
 
-    <label for="authorEmail">Author Email:</label>
-    <input type="email" id="authorEmail" name="authorEmail" value="<%= blog.authorEmail %>"><br>
-
-    <select id="priority" name="priority">
-        <option value="High" <%= blog.priority === 'High' ? 'selected' : '' %>>High</option>
-        <option value="Low" <%= blog.priority === 'Low' ? 'selected' : '' %>>Low</option>
-    </select><br>
-
-    <label for="image">Image:</label>
-    <input type="file" id="image" name="image"><br>
-
-    <button type="submit">Save Changes</button>
-</form>
-
-
-<a href="/admin/blogs" class="back-link">Back to Blogs Dashboard</a>
-
-
+                <a href="/admin/blogs" class="back-link">Back to Blogs Dashboard</a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

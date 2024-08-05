@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const Doctor = require('../models/Doctor');
+const Patient = require('../models/Patient');
 const Admin = require('../models/Admin'); 
 const Blog = require('../models/Blog');
 const Notification = require('../models/Notification'); 
@@ -48,6 +49,21 @@ router.get('/dashboard', isLoggedIn, async (req, res) => {
   }
 });
 
+router.get('/doctor-profile-requests', isLoggedIn, async (req, res) => {
+  try {
+    const profileRequests = await Doctor.find({ profileVerified: { $ne: 'Verified' } }).lean();
+    res.render('doctorProfileRequests', {
+      profileRequests,
+      success_msg: req.flash('success_msg'),
+      activePage: 'doctor-profile-requests'
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
 router.get('/view/:id', isLoggedIn, async (req, res) => {
   try {
     const doctorId = req.params.id;
@@ -57,12 +73,13 @@ router.get('/view/:id', isLoggedIn, async (req, res) => {
       return res.status(404).send('Doctor not found');
     }
 
-    res.render('adminViewDoctor', { doctor });
+    res.render('adminViewDoctor', { doctor, activePage: 'view-doctor' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
+
 
 router.post('/verify/:id', isLoggedIn, async (req, res) => {
   try {
@@ -92,7 +109,32 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     await notification.save();
 
     req.flash('success_msg', 'Doctor verification status updated.');
-    res.redirect('/admin/dashboard');
+    res.redirect('/doctor-profile-requests');
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Route to view all doctors
+router.get('/view-doctors', isLoggedIn, async (req, res) => {
+  try {
+    const doctors = await Doctor.find().lean();
+    res.render('viewDoctors', { doctors, activePage: 'view-doctors' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Route to view all patients
+router.get('/view-patients', isLoggedIn, async (req, res) => {
+  try {
+    const patients = await Patient.find().lean();
+    res.render('viewPatients', { 
+      patients,
+      activePage: 'view-patients'  // Add this line to set the active page
+    });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -100,18 +142,46 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
 });
 
 
-router.get('/subscriptions', isAdmin, async (req, res) => {
+// Route to delete a doctor
+router.post('/delete-doctor/:id', isLoggedIn, async (req, res) => {
   try {
-      const doctors = await Doctor.find({}, 'name subscriptionType subscriptionVerification documents').lean(); 
-
-      console.log(doctors);
-
-      res.render('adminSubscriptions', { doctors });
+    await Doctor.findByIdAndDelete(req.params.id);
+    req.flash('success_msg', 'Doctor deleted successfully');
+    res.redirect('/admin/view-doctors');
   } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
+
+// Route to delete a patient
+router.post('/delete-patient/:id', isLoggedIn, async (req, res) => {
+  try {
+    await Patient.findByIdAndDelete(req.params.id);
+    req.flash('success_msg', 'Patient deleted successfully');
+    res.redirect('/admin/view-patients');
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.get('/subscriptions', isAdmin, async (req, res) => {
+  try {
+    const doctors = await Doctor.find({}, 'name subscriptionType subscriptionVerification documents').lean(); 
+    console.log(doctors);
+
+    // Render the template with activePage and doctors data
+    res.render('adminSubscriptions', { 
+      doctors, 
+      activePage: 'subscriptions' 
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 
 
 router.post('/verify-subscription/:id', isLoggedIn, async (req, res) => {
@@ -152,14 +222,18 @@ router.post('/verify-subscription/:id', isLoggedIn, async (req, res) => {
 
 router.get('/blogs', isLoggedIn, async (req, res) => {
   try {
-      const blogs = await Blog.find().lean();
-      
-      res.render('adminBlogs', { blogs, success_msg: req.flash('success_msg') });
+    const blogs = await Blog.find().lean();
+    res.render('adminBlogs', { 
+      blogs, 
+      success_msg: req.flash('success_msg'),
+      activePage: 'blogs' // Add this line
+    });
   } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
+
 
 
 router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
@@ -171,12 +245,13 @@ router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
           return res.status(404).send('Blog not found');
       }
 
-      res.render('adminViewBlog', { blog });
+      res.render('adminViewBlog', { blog, activePage: 'blogs' }); // Set activePage here
   } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');
   }
 });
+
 
 
 router.post('/blogs/verify/:id', isLoggedIn, async (req, res) => {
@@ -249,9 +324,10 @@ router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, r
   }
 });
 
-router.get('/blog', (req, res) => {
-  res.render('admin-blog-upload-form'); 
+router.get('/blog', isLoggedIn, (req, res) => {
+  res.render('admin-blog-upload-form', { activePage: 'blog-upload' });
 });
+
 
 
 router.post('/blog-all', upload.single('image'), async (req, res) => {
@@ -425,10 +501,14 @@ router.get('/blogs-all', async (req, res) => {
 });
 
 router.get('/insurance/new', isAdmin, (req, res) => {
-  res.render('adminNewInsurance');
+  // Set the activePage variable for the 'insurance' section
+  const activePage = 'insurances';
+
+  // Render the template with the activePage variable
+  res.render('adminNewInsurance', { activePage });
 });
 
-// Route to handle the form submission for adding new insurance
+
 router.post('/insurance', isAdmin, upload.single('logo'), async (req, res) => {
   try {
     const { name } = req.body;
@@ -438,7 +518,6 @@ router.post('/insurance', isAdmin, upload.single('logo'), async (req, res) => {
       return res.redirect('/admin/insurance/new');
     }
 
-    // Create a new insurance entry
     const newInsurance = new Insurance({
       name,
       logo: {
@@ -458,18 +537,16 @@ router.post('/insurance', isAdmin, upload.single('logo'), async (req, res) => {
   }
 });
 
-// Route to display all insurances
 router.get('/insurances', isAdmin, async (req, res) => {
   try {
     const insurances = await Insurance.find().lean();
-    res.render('adminInsurances', { insurances });
+    res.render('adminInsurances', { insurances,  activePage: 'insurance'});
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
 
-// Route to view a specific insurance
 router.get('/insurance/:id', isAdmin, async (req, res) => {
   try {
     const insuranceId = req.params.id;
@@ -479,12 +556,16 @@ router.get('/insurance/:id', isAdmin, async (req, res) => {
       return res.status(404).send('Insurance not found');
     }
 
-    res.render('adminViewInsurance', { insurance });
+    // Set the activePage variable here
+    const activePage = 'insurances';
+
+    res.render('adminViewInsurance', { insurance, activePage });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
+
 
 // Route to handle insurance deletion
 router.post('/insurance/delete/:id', isAdmin, async (req, res) => {

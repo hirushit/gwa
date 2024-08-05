@@ -6,85 +6,242 @@
     <title>Admin Blog Upload</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        .select2-container--default .select2-selection--multiple .select2-selection__choice {
-            background-color: #007bff;
-            border: 1px solid #007bff;
-            color: white;
-        }
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    background-color: #f8f9fa;
+}
+
+.dashboard {
+    display: flex;
+    width: 100%;
+    height: 100vh; /* Ensure the dashboard takes full viewport height */
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #F7FAFF;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    position: fixed;
+    height: 100%; /* Make sidebar height 100% of the viewport */
+    overflow-y: auto; /* Allow vertical scrolling if content overflows */
+}
+
+.sidebar-logo {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar h2 {
+    color: #42427D;
+    margin: 0 0 20px 0;
+}
+
+.sidebar-logo img {
+    width: 170px;
+    height: auto;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar-menu li {
+    margin: 10px 0;
+}
+
+.sidebar-menu li a {
+    text-decoration: none;
+    color: #A0AAC8;
+    display: block;
+    padding: 10px;
+    border-radius: 5px;
+    transition: color 0.3s ease;
+}
+
+.sidebar-menu li a.active,
+.sidebar-menu li a:hover {
+    color: #42427D;
+    background-color: transparent;
+}
+
+.main-content {
+    flex: 1;
+    margin-left: 250px; /* Adjust margin to avoid overlay */
+    padding: 20px;
+    overflow-y: auto; /* Enable vertical scrolling if content overflows */
+    max-width: calc(100% - 270px); /* Ensure the content does not exceed viewport width */
+}
+
+.container {
+    width: 92%; /* Adjust width to make the card smaller */
+    margin: 20px auto; /* Center the container */
+    padding: 20px;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    color: #42427D; /* Updated font color */
+}
+
+form {
+    margin-top: 20px;
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+}
+
+input[type="text"],
+input[type="email"],
+textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #42427D;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #42427D;
+    cursor: pointer;
+}
+
+button {
+    background-color: transparent;
+    color: #42427D;
+    border: 1px solid #42427D;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: #42427D;
+    color: white;
+}
+
+select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
     </style>
 </head>
 <body>
-    <h1>Admin Blog Upload Form</h1>
-    <form id="blogForm" action="/admin/blog-all" method="POST" enctype="multipart/form-data">
-        <label for="title">Title:</label><br>
-        <input type="text" id="title" name="title" required><br><br>
-        
-        <label for="author">Author Name:</label><br>
-        <input type="text" id="author" name="author" required><br><br>
-        
-        <label for="description">Description:</label><br>
-        <textarea id="description" name="description" rows="4" required></textarea><br><br>
-        
-        <label for="summary">Summary:</label><br>
-        <textarea id="summary" name="summary" rows="4" required></textarea><br><br>
-        
-        <label for="image">Upload Image:</label><br>
-        <input type="file" id="image" name="image" accept="image/*" required><br><br>
-        
-        <label for="categories">Categories:</label><br>
-        <select id="categories" name="categories" multiple="multiple" style="width: 100%;">
-            <option value="General surgery">General Surgery</option>
-            <option value="Oriental medicine">Oriental Medicine</option>
-            <option value="Latest Medical Research">Latest Medical Research</option>
-            <option value="Common Medical Condition">Common Medical Condition</option>
-            <option value="Mental Health">Mental Health</option>
-            <option value="Conventional medicine">Conventional Medicine</option>
-            <option value="Medical education">Medical Education</option>
-            <option value="Psychology">Psychology</option>
-        </select><br><br>
-        
-        <label for="hashtags">Hashtags:</label><br>
-        <select id="hashtags" name="hashtags" multiple="multiple" style="width: 100%;">
-            <option value="#blogger">#blogger</option>
-            <option value="#medfluencer">#medfluencer</option>
-            <option value="#wms">#wms</option>
-            <option value="#mbchb">#mbchb</option>
-            <option value="#mbbs">#mbbs</option>
-            <option value="#neurograd">#neurograd</option>
-            <option value="#usmle">#usmle</option>
-            <option value="#studyinspiration">#studyinspiration</option>
-            <option value="#acceleratedmedicine">#acceleratedmedicine</option>
-            <option value="#exams">#exams</option>
-            <option value="#nursesofinstagram">#nursesofinstagram</option>
-            <option value="#premed">#premed</option>
-            <option value="#neet">#neet</option>
-            <option value="#graduateentrymedicine">#graduateentrymedicine</option>
-            <option value="#hospital">#hospital</option>
-            <option value="#anatomy">#anatomy</option>
-            <option value="#md">#md</option>
-            <option value="#futurevet">#futurevet</option>
-            <option value="#blog">#blog</option>
-            <option value="#surgery">#surgery</option>
-            <option value="#medvet">#medvet</option>
-            <option value="#medicina">#medicina</option>
-            <option value="#vet">#vet</option>
-            <option value="#medico">#medico</option>
-            <option value="#doctorlife">#doctorlife</option>
-            <option value="#nursestyle">#nursestyle</option>
-            <option value="#tiermedizin">#tiermedizin</option>
-            <option value="#medicalscrubs">#medicalscrubs</option>
-            <option value="#cutescrubs">#cutescrubs</option>
-            <option value="#doctorsofinstagram">#doctorsofinstagram</option>
-        </select><br><br>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img src="/logo.png" alt="Admin Logo">
+            </div>
+            <h2>Admin Functions</h2>
+            <ul class="sidebar-menu">
+                <li><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View Admin Blogs</a></li>
+                <li><a href="/admin/blog-upload" <% if (activePage === 'blog-upload') { %> class="active" <% } %>>Upload Admin Blog</a></li>
+                <li><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
+                <li><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
+                <li><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
+                <li><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
+                <li><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
+                <li><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
+            </ul>
+        </div>
 
-        <label for="priority">Priority:</label><br>
-        <select id="priority" name="priority">
-            <option value="high">High</option>
-            <option value="low">Low</option>
-        </select><br><br>
-        
-        <button type="submit">Upload Blog</button>
-    </form>
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="container">
+                <h1>Admin Blog Upload Form</h1>
+                <form id="blogForm" action="/admin/blog-all" method="POST" enctype="multipart/form-data">
+                    <label for="title">Title:</label><br>
+                    <input type="text" id="title" name="title" required><br><br>
+
+                    <label for="author">Author Name:</label><br>
+                    <input type="text" id="author" name="author" required><br><br>
+
+                    <label for="description">Description:</label><br>
+                    <textarea id="description" name="description" rows="4" required></textarea><br><br>
+
+                    <label for="summary">Summary:</label><br>
+                    <textarea id="summary" name="summary" rows="4" required></textarea><br><br>
+
+                    <label for="image">Upload Image:</label><br>
+                    <input type="file" id="image" name="image" accept="image/*" required><br><br>
+
+                    <label for="categories">Categories:</label><br>
+                    <select id="categories" name="categories" multiple="multiple">
+                        <option value="General surgery">General Surgery</option>
+                        <option value="Oriental medicine">Oriental Medicine</option>
+                        <option value="Latest Medical Research">Latest Medical Research</option>
+                        <option value="Common Medical Condition">Common Medical Condition</option>
+                        <option value="Mental Health">Mental Health</option>
+                        <option value="Conventional medicine">Conventional Medicine</option>
+                        <option value="Medical education">Medical Education</option>
+                        <option value="Psychology">Psychology</option>
+                    </select><br><br>
+
+                    <label for="hashtags">Hashtags:</label><br>
+                    <select id="hashtags" name="hashtags" multiple="multiple">
+                        <option value="#blogger">#blogger</option>
+                        <option value="#medfluencer">#medfluencer</option>
+                        <option value="#wms">#wms</option>
+                        <option value="#mbchb">#mbchb</option>
+                        <option value="#mbbs">#mbbs</option>
+                        <option value="#neurograd">#neurograd</option>
+                        <option value="#usmle">#usmle</option>
+                        <option value="#studyinspiration">#studyinspiration</option>
+                        <option value="#acceleratedmedicine">#acceleratedmedicine</option>
+                        <option value="#exams">#exams</option>
+                        <option value="#nursesofinstagram">#nursesofinstagram</option>
+                        <option value="#premed">#premed</option>
+                        <option value="#neet">#neet</option>
+                        <option value="#graduateentrymedicine">#graduateentrymedicine</option>
+                        <option value="#hospital">#hospital</option>
+                        <option value="#anatomy">#anatomy</option>
+                        <option value="#md">#md</option>
+                        <option value="#futurevet">#futurevet</option>
+                        <option value="#blog">#blog</option>
+                        <option value="#surgery">#surgery</option>
+                        <option value="#medvet">#medvet</option>
+                        <option value="#medicina">#medicina</option>
+                        <option value="#vet">#vet</option>
+                        <option value="#medico">#medico</option>
+                        <option value="#doctorlife">#doctorlife</option>
+                        <option value="#nursestyle">#nursestyle</option>
+                        <option value="#tiermedizin">#tiermedizin</option>
+                        <option value="#medicalscrubs">#medicalscrubs</option>
+                        <option value="#cutescrubs">#cutescrubs</option>
+                        <option value="#doctorsofinstagram">#doctorsofinstagram</option>
+                    </select><br><br>
+
+                    <label for="priority">Priority:</label><br>
+                    <select id="priority" name="priority">
+                        <option value="High">High</option>
+                        <option value="Low">Low</option>
+                    </select><br><br>
+
+                    <button type="submit">Upload Blog</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>

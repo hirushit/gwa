@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Patients</title>
+  <style>
+    @font-face {
+      font-family: 'Matter-Regular';
+      src: url('fonts/Matter-Regular.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    body {
+      font-family: 'Matter-Regular', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      background-color: #f8f9fa;
+    }
+
+    .dashboard {
+      display: flex;
+      width: 100%;
+    }
+
+    .sidebar {
+      width: 250px;
+      background-color: #F7FAFF; 
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+
+    .sidebar-logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .sidebar-logo img {
+      width: 170px;
+      height: auto;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar-menu-item {
+      margin: 10px 0;
+    }
+
+    .sidebar-menu-item a {
+      text-decoration: none;
+      color: #A0AAC8; 
+      display: block;
+      padding: 10px;
+      border-radius: 5px;
+      transition: color 0.3s ease;
+    }
+
+    .sidebar-menu-item a.active,
+    .sidebar-menu-item a:hover {
+      color: #42427D; 
+      background-color: transparent; 
+    }
+
+    .sidebar h2 {
+      margin: 0 0 20px 0; 
+      color: #42427D;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      margin: 20px auto;
+      padding: 20px;
+      border: 1px solid #e9ecef;
+      border-radius: 5px;
+      background-color: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      text-align: center;
+      color: #42427D; 
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .patient-item {
+      margin-bottom: 10px;
+      padding: 1px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 5px;
+      padding: 10px;
+      border: 1px solid #e9ecef;
+    }
+
+    .patient-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .patient-info strong {
+      font-size: 16px;
+      color: #42427D; 
+    }
+
+    .patient-info span {
+      font-size: 14px;
+      color: #42427D; 
+    }
+
+    button {
+      background-color: transparent;
+      color: #FF7F50;
+      border: 2px solid #FF7F50;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #FF7F50;
+      color: white;
+    }
+
+    a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <img src="/logo.png" alt="Admin Logo">
+      </div>
+      <h2>Admin Functions</h2>
+      <ul class="sidebar-menu">
+        <li class="sidebar-menu-item"><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View Admin Blogs</a></li>
+        <li class="sidebar-menu-item"><a href="/admin/blog" <% if (activePage === 'blog-upload') { %> class="active" <% } %>>Upload Admin Blog</a></li>
+        <!-- <li class="sidebar-menu-item"><a href="/admin/admin-home" <% if (activePage === 'admin-home') { %> class="active" <% } %>>Home</a></li> -->
+        <li class="sidebar-menu-item"><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
+        <li class="sidebar-menu-item"><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
+        <li class="sidebar-menu-item"><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
+        <!-- <li class="sidebar-menu-item"><a href="/admin/blogs-all" <% if (activePage === 'blogs-all') { %> class="active" <% } %>>Search Blogs</a></li> -->
+        <li class="sidebar-menu-item"><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
+        <li class="sidebar-menu-item"><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
+        <li class="sidebar-menu-item"><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
+      </ul>
+    </div>
+
+    <div class="main-content">
+      <div class="container">
+        <h1>Patients</h1>
+
+        <% if (patients.length > 0) { %>
+          <ul>
+            <% patients.forEach(patient => { %>
+              <li class="patient-item">
+                <div class="patient-info">
+                  <strong><%= patient.name %></strong>
+                  <span><%= patient.email %></span>
+                </div>
+                <form action="/admin/delete-patient/<%= patient._id %>" method="POST" style="display: inline;">
+                  <button type="submit">Delete</button>
+                </form>
+              </li>
+            <% }) %>
+          </ul>
+        <% } else { %>
+          <p>No patients found.</p>
+        <% } %>
+
+      </div>
+    </div>
+  </div>
+</body>
+</html>

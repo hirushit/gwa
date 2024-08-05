@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Insurance</title>
+<style>
+    @font-face {
+        font-family: 'Matter-Regular';
+        src: url('fonts/Matter-Regular.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }
+
+    body {
+        font-family: 'Matter-Regular', Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        background-color: #f8f9fa;
+        color: #42427D; 
+    }
+
+    .dashboard {
+        display: flex;
+        width: 100%;
+    }
+
+    .sidebar {
+        width: 250px;
+        background-color: #F7FAFF; 
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+
+    .sidebar-logo {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .sidebar-logo img {
+        width: 170px;
+        height: auto;
+    }
+
+    .sidebar-menu {
+        list-style: none;
+        padding: 0;
+    }
+
+    .sidebar-menu-item {
+        margin: 10px 0;
+    }
+
+    .sidebar-menu-item a {
+        text-decoration: none;
+        color: #A0AAC8; 
+        display: block;
+        padding: 10px;
+        border-radius: 5px;
+        transition: color 0.3s ease;
+    }
+
+    .sidebar-menu-item a.active,
+    .sidebar-menu-item a:hover {
+        color: #42427D; 
+        background-color: transparent; 
+    }
+
+    .sidebar h2 {
+        margin: 0 0 20px 0; 
+        color: #42427D;
+    }
+
+    .main-content {
+        flex: 1;
+        padding: 20px;
+    }
+
+    form {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 20px;
+        border: 1px solid #e9ecef;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    form label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: bold;
+        color: #42427D; 
+    }
+
+    form input[type="text"],
+    form input[type="file"] {
+        width: calc(100% - 20px);
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #42427D;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+
+    form button {
+        background-color: #42427D;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    form button:hover {
+        background-color: #333;
+    }
+
+    .error-msg {
+        color: red;
+        font-size: 14px;
+    }
+</style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="/logo.png" alt="Admin Logo">
+        </div>
+        <h2>Admin Functions</h2>
+        <ul class="sidebar-menu">
+            <li class="sidebar-menu-item"><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View Admin Blogs</a></li>
+            <li class="sidebar-menu-item"><a href="/admin/blog" <% if (activePage === 'blog-upload') { %> class="active" <% } %>>Upload Admin Blog</a></li>
+            <li class="sidebar-menu-item"><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
+            <li class="sidebar-menu-item"><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
+            <li class="sidebar-menu-item"><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
+            <li class="sidebar-menu-item"><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
+            <li class="sidebar-menu-item"><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
+            <li class="sidebar-menu-item"><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h1>Add Insurance</h1>
+        <form action="/admin/insurance" method="POST" enctype="multipart/form-data">
+            <label for="name">Insurance Name:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="logo">Insurance Logo:</label>
+            <input type="file" id="logo" name="logo" accept="image/*" required>
+            <button type="submit">Add Insurance</button>
+        </form>
+        <% if (typeof error_msg !== 'undefined') { %>
+            <p class="error-msg"><%= error_msg %></p>
+        <% } %>
+    </div>
+</div>
+</body>
+</html>

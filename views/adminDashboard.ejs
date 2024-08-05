@@ -5,54 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard</title>
   <style>
-
   </style>
 </head>
 <body>
-  <h1>Admin Dashboard</h1>
-
-  <% if (success_msg) { %>
-    <div class="alert alert-success"><%= success_msg %></div>
-  <% } %>
-
-  <h2>Doctor Verification Requests</h2>
-
-  <% if (doctors.length > 0) { %>
-    <% doctors.forEach(doctor => { %>
-      <div class="doctor-request">
-        <h3><%= doctor.name %></h3>
-        <p><strong>Email:</strong> <%= doctor.email %></p>
-        <p><strong>Status:</strong> 
-          <% if (doctor.verified === 'Verified') { %>
-            Verified
-          <% } else if (doctor.verified === 'Pending') { %>
-            Pending
-          <% } else { %>
-            Not Verified
-          <% } %>
-        </p>
-        <form action="/admin/view/<%= doctor._id %>" method="GET">
-          <button type="submit">View Profile and Verify</button>
-        </form>
-      </div>
-      <hr>
-    <% }) %>
-  <% } else { %>
-    <p>No doctor verification requests found.</p>
-  <% } %>
-
+  
   <h2>Admin Functions</h2>
   <ul>
     <li><a href="/admin/blogs">View Admin Blogs</a></li>
     <li><a href="/admin/blog">Upload Admin Blog</a></li>
     <li><a href="/admin/admin-home">Home</a></li>
+    <li><a href="/admin/doctor-profile-requests">Doctor Profile Verification Requests</a></li>
     <li><a href="/admin/subscriptions">Doctor Subscription Verification Requests</a></li>
     <li><a href="/admin/insurances">Manage Insurance Providers</a></li>
     <li><a href="/admin/blogs-all">Search Blogs</a></li>
+    <li><a href="/admin/view-doctors">View Doctors</a></li> 
+    <li><a href="/admin/view-patients">View Patients</a></li>
   </ul>
 
   <a href="/auth/logout">Logout</a>
-
 
 </body>
 </html>

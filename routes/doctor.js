@@ -240,16 +240,24 @@ router.post('/profile/verify', isLoggedIn, async (req, res) => {
 router.get('/bookings', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const bookings = await Booking.find({ doctor: req.session.user._id }).populate('patient');
-        res.render('doctorBookings', { bookings });
+
+        if (req.accepts('html')) {
+            res.render('doctorBookings', { bookings });
+        } else if (req.accepts('json')) {
+            res.json({ bookings });
+        } else {
+            res.status(406).send('Not Acceptable');
+        }
     } catch (error) {
         console.error(error.message);
-        res.status(500).send('Server Error');
+        if (req.accepts('html')) {
+            res.status(500).send('Server Error');
+        } else if (req.accepts('json')) {
+            res.status(500).json({ error: 'Server Error' });
+        }
     }
 });
 
-router.get('/subscription-message', isLoggedIn, (req, res) => {
-    res.render('subscriptionMessage');
-});
 
 
 router.post('/bookings/:id', isLoggedIn, async (req, res) => {

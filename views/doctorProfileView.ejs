@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Profile: <%= doctor.name %></title>
+    <style>
+        /* Add any required CSS here */
+    </style>
 </head>
 <body>
     <h1>Doctor Profile: <%= doctor.name %></h1>
@@ -18,7 +21,21 @@
             <p><strong>Specialty:</strong> <%= doctor.speciality.join(', ') %></p>
             <p><strong>Rating:</strong> <%= doctor.rating %> / 5</p>
             <p><strong>Languages Spoken:</strong> <%= doctor.languages.join(', ') %></p>
-            <p><strong>Insurances Accepted:</strong> <%= doctor.insurances.join(', ') %></p>
+            
+            <h3>Insurances:</h3>
+            <ul>
+                <% insurances.forEach(insurance => { %>
+                    <li>
+                        <% if (insurance.logo && insurance.logo.data) { %>
+                            <img src="data:<%= insurance.logo.contentType %>;base64,<%= insurance.logo.data.toString('base64') %>" alt="<%= insurance.name %> logo" style="width: 100px; height: auto;">
+                        <% } else { %>
+                            <span>No logo available</span>
+                        <% } %>
+                        <span><%= insurance.name %></span>
+                    </li>
+                <% }) %>
+            </ul>
+
             <p><strong>Awards:</strong> <%= doctor.awards.join(', ') %></p>
             <p><strong>Conditions Managed:</strong> <%= doctor.conditions.join(', ') %></p>
             <p><strong>Location:</strong> <%= doctor.city %>, <%= doctor.state %>, <%= doctor.country %></p>
@@ -55,8 +72,8 @@
                         <p><strong>Date:</strong> N/A</p>
                     <% } %>
 
-                    <% if (slot.startTime && slot.endTime) { %>
-                        <p><strong>Time:</strong> <%= slot.startTime %> - <%= slot.endTime %></p>
+                    <% if (slot.startTime) { %>
+                        <p><strong>Time:</strong> <%= slot.startTime %></p>
                     <% } else { %>
                         <p><strong>Time:</strong> N/A</p>
                     <% } %>
@@ -77,7 +94,7 @@
                         <form action="/patient/book" method="POST">
                             <input type="hidden" name="doctorId" value="<%= doctor._id %>">
                             <input type="hidden" name="date" value="<%= slot.date.toISOString() %>">
-                            <input type="hidden" name="time" value="<%= slot.startTime %> - <%= slot.endTime %>">
+                            <input type="hidden" name="startTime" value="<%= slot.startTime %>">
                             
                             <label for="consultationType"><strong>Consultation Type:</strong></label>
                             <select id="consultationType" name="consultationType">
@@ -109,8 +126,6 @@
                 </li>
             <% }) %>
         </ul>
-    <% } else { %>
-        <p>No reviews available.</p>
     <% } %>
     
     <h2>Blogs</h2>
@@ -129,8 +144,6 @@
                 </li>
             <% }) %>
         </ul>
-    <% } else { %>
-        <p>No blogs available.</p>
     <% } %>
 
     <form action="/patient/add-to-favorites" method="POST">

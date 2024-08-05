@@ -9,6 +9,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const Blog = require('../models/Blog');
+const Insurance = require('../models/Insurance');
 const Chat = require('../models/Chat');
 const Prescription = require('../models/Prescription');
 const Notification = require('../models/Notification');
@@ -162,21 +163,20 @@ router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
       if (!doctor) {
           return res.status(404).send('Doctor not found');
       }
+      const insurances = await Insurance.find({ '_id': { $in: doctor.insurances } }).select('name logo');
 
       const blogs = await Blog.find({ authorId: doctorId, verificationStatus: 'Verified' });
 
-      res.render('doctorProfileView', { doctor, blogs });
+      res.render('doctorProfileView', { doctor, insurances, blogs });
   } catch (error) {
       console.error(error.message);
       res.status(500).send('Server Error');
   }
 });
 
-
-
 router.post('/book', isLoggedIn, async (req, res) => {
   try {
-      const { doctorId, date, time, consultationType } = req.body;
+      const { doctorId, date, startTime, consultationType } = req.body;
       const patientId = req.session.user._id;
 
       const doctor = await Doctor.findById(doctorId);
@@ -185,7 +185,7 @@ router.post('/book', isLoggedIn, async (req, res) => {
       }
 
       const slot = doctor.timeSlots.find(slot =>
-          slot && slot.date && slot.date.toISOString() === new Date(date).toISOString() && slot.startTime === time.split(' - ')[0]
+          slot && slot.date && slot.date.toISOString() === new Date(date).toISOString() && slot.startTime === startTime
       );
 
       if (!slot) {
@@ -196,7 +196,7 @@ router.post('/book', isLoggedIn, async (req, res) => {
           patient: patientId,
           doctor: doctorId,
           date: new Date(date),
-          time: time,
+          time: `${slot.startTime} - ${slot.endTime}`,
           consultationType: consultationType,
           status: 'waiting',
           hospital: {

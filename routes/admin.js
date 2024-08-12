@@ -119,7 +119,7 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-// Route to render the viewDoctors page
+
 router.get('/view-doctors', isLoggedIn, async (req, res) => {
   try {
     const doctors = await Doctor.find().lean();
@@ -131,6 +131,84 @@ router.get('/view-doctors', isLoggedIn, async (req, res) => {
 });
 
 
+router.get('/edit-doctor/:doctorId', isAdmin, async (req, res) => {
+  try {
+      const doctorId = req.params.doctorId;
+      const doctor = await Doctor.findById(doctorId).lean();
+      const allInsurances = await Insurance.find({}).select('_id name');
+
+      if (!doctor.hospitals) {
+          doctor.hospitals = [];
+      }
+
+      if (!doctor.insurances) {
+          doctor.insurances = [];
+      }
+
+      res.render('AdminEditDoctorProfile', { doctor, allInsurances });
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.post('/update-doctor/:doctorId', upload.single('profilePicture'), isAdmin, async (req, res) => {
+  try {
+      const doctorId = req.params.doctorId;
+      let doctor = await Doctor.findById(doctorId);
+
+      let hospitals = [];
+      if (Array.isArray(req.body.hospitals)) {
+          hospitals = req.body.hospitals.map(hospital => ({
+              name: hospital.name,
+              street: hospital.street,
+              city: hospital.city,
+              state: hospital.state,
+              country: hospital.country,
+              zip: hospital.zip
+          }));
+      } else if (req.body.hospitals && req.body.hospitals.name) {
+          hospitals = [{
+              name: req.body.hospitals.name,
+              street: req.body.hospitals.street,
+              city: req.body.hospitals.city,
+              state: req.body.hospitals.state,
+              country: req.body.hospitals.country,
+              zip: req.body.hospitals.zip
+          }];
+      }
+
+      const insuranceIds = (Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances])
+          .map(id => id.toString());
+
+      const updateData = {
+          ...req.body,
+          aboutMe: req.body.aboutMe || doctor.aboutMe,
+          speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
+          languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
+          insurances: insuranceIds,
+          awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
+          faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
+          hospitals: hospitals
+      };
+
+      if (req.file) {
+          updateData.profilePicture = {
+              data: req.file.buffer,
+              contentType: req.file.mimetype
+          };
+      }
+
+      doctor = await Doctor.findByIdAndUpdate(doctorId, updateData, { new: true });
+
+      await doctor.save();
+
+      res.redirect('/admin/view-doctors');
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
 
 router.get('/view-patients', isLoggedIn, async (req, res) => {
   try {
@@ -142,6 +220,57 @@ router.get('/view-patients', isLoggedIn, async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
+  }
+});
+
+router.get('/edit-patient/:patientId', async (req, res) => {
+  try {
+    const patientId = req.params.patientId;
+    // Fetch patient details by ID from the database
+    const patient = await Patient.findById(patientId);
+    if (!patient) {
+      return res.status(404).send('Patient not found');
+    }
+    res.render('AdminEditPatient', { patient, activePage: 'edit-patient' });
+  } catch (error) {
+    res.status(500).send('Server error');
+  }
+});
+
+
+
+router.post('/update-patient/:patientId', upload.single('profilePicture'), async (req, res) => {
+  try {
+    const { patientId } = req.params;
+
+    const updatedData = {
+      name: req.body.name,
+      email: req.body.email,
+      phoneNumber: req.body.phoneNumber,
+      dateOfBirth: req.body.dateOfBirth,
+      address: req.body.address,
+      insuranceProvider: req.body.insuranceProvider,
+      policyNumber: req.body.policyNumber,
+      emergencyContacts: JSON.parse(req.body.emergencyContacts || '[]'),
+    };
+
+    if (req.file) {
+      updatedData.profilePicture = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype
+      };
+    }
+
+    const updatedPatient = await Patient.findByIdAndUpdate(patientId, updatedData, { new: true });
+
+    if (!updatedPatient) {
+      return res.status(404).send('Patient not found');
+    }
+
+    res.redirect('/admin/view-patients');
+  } catch (error) {
+    console.error('Error updating patient:', error);
+    res.status(500).send('Server error');
   }
 });
 

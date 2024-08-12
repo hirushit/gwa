@@ -90,7 +90,7 @@
                     <% } %>
 
                     <% if (slot.status === 'free') { %>
-                        <form action="/patient/book" method="POST">
+                        <form id="bookingForm" action="/patient/book" method="POST">
                             <input type="hidden" name="doctorId" value="<%= doctor._id %>">
                             <input type="hidden" name="date" value="<%= slot.date.toISOString() %>">
                             <input type="hidden" name="startTime" value="<%= slot.startTime %>">
@@ -151,5 +151,30 @@
     </form>
 
     <a href="/patient/doctors">Back to Doctors List</a>
+
+    <script>
+        document.getElementById('bookingForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            // Collect form data
+            const formData = new FormData(this);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            // Log data to the console
+            console.log('Form Data:', data);
+
+            // Optional: Submit the form using Fetch or another method
+            // fetch(this.action, {
+            //     method: 'POST',
+            //     body: formData
+            // })
+            // .then(response => response.json())
+            // .then(result => console.log('Server Response:', result))
+            // .catch(error => console.error('Error:', error));
+        });
+    </script>
 </body>
 </html>

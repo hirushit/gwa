@@ -188,48 +188,50 @@ router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
 });
 
 
-router.post('/book', isLoggedIn, async (req, res) => {
-  try {
-      const { doctorId, date, startTime, consultationType } = req.body;
-      const patientId = req.session.user._id;
+  router.post('/book', isLoggedIn, async (req, res) => {
+    try {
+        const { doctorId, date, startTime, consultationType } = req.body;
+        const patientId = req.session.user._id;
 
-      const doctor = await Doctor.findById(doctorId);
-      if (!doctor) {
-          return res.status(404).send('Doctor not found');
-      }
+        console.log('POST /book request body:', req.body);
 
-      const slot = doctor.timeSlots.find(slot =>
-          slot && slot.date && slot.date.toISOString() === new Date(date).toISOString() && slot.startTime === startTime
-      );
+        const doctor = await Doctor.findById(doctorId);
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
 
-      if (!slot) {
-          return res.status(400).send('Time slot not found');
-      }
+        const slot = doctor.timeSlots.find(slot =>
+            slot && slot.date && slot.date.toISOString() === new Date(date).toISOString() && slot.startTime === startTime
+        );
 
-      const booking = new Booking({
-          patient: patientId,
-          doctor: doctorId,
-          date: new Date(date),
-          time: `${slot.startTime} - ${slot.endTime}`,
-          consultationType: consultationType,
-          status: 'waiting',
-          hospital: {
-              name: slot.hospital,
-              location: slot.hospitalLocation
-          }
-      });
+        if (!slot) {
+            return res.status(400).send('Time slot not found');
+        }
 
-      await booking.save();
+        const booking = new Booking({
+            patient: patientId,
+            doctor: doctorId,
+            date: new Date(date),
+            time: `${slot.startTime} - ${slot.endTime}`,
+            consultationType: consultationType,
+            status: 'waiting',
+            hospital: {
+                name: slot.hospital,
+                location: slot.hospitalLocation
+            }
+        });
 
-      slot.status = 'booked';
-      await doctor.save();
+        await booking.save();
 
-      res.redirect('/patient/bookings');
-  } catch (error) {
-      console.error(error.message);
-      res.status(500).send('Server Error');
-  }
-});
+        slot.status = 'booked';
+        await doctor.save();
+
+        res.redirect('/patient/bookings');
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+  });
 
 
 
@@ -519,37 +521,38 @@ router.get('/dashboard', isLoggedIn, async (req, res) => {
   }
 });
 
-
 router.get('/chat/:id', isLoggedIn, async (req, res) => {
   try {
-      const chatId = req.params.id;
+    const chatId = req.params.id;
 
-      const chat = await Chat.findById(chatId)
-          .populate('doctorId')  
-          .lean();         
+    const chat = await Chat.findById(chatId)
+      .populate({
+        path: 'doctorId',
+        select: 'profilePicture' 
+      })
+      .lean();
 
-      if (!chat) {
-          return res.status(404).send('Chat not found');
+    if (!chat) {
+      return res.status(404).send('Chat not found');
+    }
+
+    chat.messages.forEach(message => {
+      if (message.senderId.toString() !== req.user._id.toString() && !message.read) {
+        message.read = true;
       }
+    });
 
-      chat.messages.forEach(message => {
-          if (message.senderId.toString() !== req.user._id.toString() && !message.read) {
-              message.read = true;
-          }
-      });
+    await Chat.updateOne({ _id: chatId }, { $set: { messages: chat.messages } });
 
-      await Chat.findByIdAndUpdate(chatId, { $set: { messages: chat.messages } });
-
-      res.render('patientChat', { chat });
-
+    res.json({ 
+      chat, 
+      doctorProfilePicture: chat.doctorId.profilePicture 
+    });
   } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
+    console.error(err.message);
+    return res.status(500).json({ error: 'Server Error' });
   }
 });
-
-
-
 
 router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
   try {

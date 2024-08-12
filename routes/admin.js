@@ -64,6 +64,7 @@ router.get('/doctor-profile-requests', isLoggedIn, async (req, res) => {
 });
 
 
+
 router.get('/view/:id', isLoggedIn, async (req, res) => {
   try {
     const doctorId = req.params.id;
@@ -73,7 +74,9 @@ router.get('/view/:id', isLoggedIn, async (req, res) => {
       return res.status(404).send('Doctor not found');
     }
 
-    res.render('adminViewDoctor', { doctor, activePage: 'view-doctor' });
+    const insurances = await Insurance.find({ _id: { $in: doctor.insurances } }).lean();
+
+    res.render('adminViewDoctor', { doctor, insurances, activePage: 'view-doctor' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -116,7 +119,7 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-// Route to view all doctors
+// Route to render the viewDoctors page
 router.get('/view-doctors', isLoggedIn, async (req, res) => {
   try {
     const doctors = await Doctor.find().lean();
@@ -127,13 +130,14 @@ router.get('/view-doctors', isLoggedIn, async (req, res) => {
   }
 });
 
-// Route to view all patients
+
+
 router.get('/view-patients', isLoggedIn, async (req, res) => {
   try {
     const patients = await Patient.find().lean();
     res.render('viewPatients', { 
       patients,
-      activePage: 'view-patients'  // Add this line to set the active page
+      activePage: 'view-patients'  
     });
   } catch (err) {
     console.error(err.message);
@@ -142,7 +146,6 @@ router.get('/view-patients', isLoggedIn, async (req, res) => {
 });
 
 
-// Route to delete a doctor
 router.post('/delete-doctor/:id', isLoggedIn, async (req, res) => {
   try {
     await Doctor.findByIdAndDelete(req.params.id);
@@ -154,7 +157,6 @@ router.post('/delete-doctor/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-// Route to delete a patient
 router.post('/delete-patient/:id', isLoggedIn, async (req, res) => {
   try {
     await Patient.findByIdAndDelete(req.params.id);
@@ -171,7 +173,6 @@ router.get('/subscriptions', isAdmin, async (req, res) => {
     const doctors = await Doctor.find({}, 'name subscriptionType subscriptionVerification documents').lean(); 
     console.log(doctors);
 
-    // Render the template with activePage and doctors data
     res.render('adminSubscriptions', { 
       doctors, 
       activePage: 'subscriptions' 
@@ -245,7 +246,7 @@ router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
           return res.status(404).send('Blog not found');
       }
 
-      res.render('adminViewBlog', { blog, activePage: 'blogs' }); // Set activePage here
+      res.render('adminViewBlog', { blog, activePage: 'blogs' }); 
   } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');

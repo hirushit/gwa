@@ -334,16 +334,16 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                         emailContent = `<div style="font-family: Helvetica, Arial, sans-serif; min-width: 1000px; overflow: auto; line-height: 2;">
                                             <div style="margin: 50px auto; width: 70%; padding: 20px 0;">
                                                 <div style="border-bottom: 1px solid #eee;">
-                                                    <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">Global Wellness Alliance</a>
+                                                    <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">MedxBay</a>
                                                 </div>
                                                 <p style="font-size: 1.1em;">Hi ${booking.patient.name},</p>
                                                 <p>Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
                                                 <p>Join the meeting using the following link:</p>
                                                 <a href="${booking.meetingLink}" style="background: #00466a; margin: 0 auto; width: max-content; padding: 0 10px; color: #fff; border-radius: 4px; text-decoration: none;">${booking.meetingLink}</a>
-                                                <p style="font-size: 0.9em;">Best regards,<br />Global Wellness Alliance Team</p>
+                                                <p style="font-size: 0.9em;">Best regards,<br />MedxBay Team</p>
                                                 <hr style="border: none; border-top: 1px solid #eee;" />
                                                 <div style="float: right; padding: 8px 0; color: #aaa; font-size: 0.8em; line-height: 1; font-weight: 300;">
-                                                    <p>Global Wellness Alliance</p>
+                                                    <p>MedxBay</p>
                                                     <p>1600 Amphitheatre Parkway</p>
                                                     <p>California</p>
                                                 </div>
@@ -354,16 +354,16 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                         const acceptanceEmailContent = `<div style="font-family: Helvetica, Arial, sans-serif; min-width: 1000px; overflow: auto; line-height: 2;">
                                                             <div style="margin: 50px auto; width: 70%; padding: 20px 0;">
                                                                 <div style="border-bottom: 1px solid #eee;">
-                                                                    <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">Global Wellness Alliance</a>
+                                                                    <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">MedxBay</a>
                                                                 </div>
                                                                 <p style="font-size: 1.1em;">Hi Dr. ${doctor.name},</p>
                                                                 <p>The appointment with ${booking.patient.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
                                                                 <p>Join the meeting using the following link:</p>
                                                                 <a href="${booking.meetingLink}" style="background: #00466a; margin: 0 auto; width: max-content; padding: 0 10px; color: #fff; border-radius: 4px; text-decoration: none;">${booking.meetingLink}</a>
-                                                                <p style="font-size: 0.9em;">Best regards,<br />Global Wellness Alliance Team</p>
+                                                                <p style="font-size: 0.9em;">Best regards,<br />MedxBay Team</p>
                                                                 <hr style="border: none; border-top: 1px solid #eee;" />
                                                                 <div style="float: right; padding: 8px 0; color: #aaa; font-size: 0.8em; line-height: 1; font-weight: 300;">
-                                                                    <p>Global Wellness Alliance</p>
+                                                                    <p>MedxBay</p>
                                                                     <p>1600 Amphitheatre Parkway</p>
                                                                     <p>California</p>
                                                                 </div>
@@ -382,15 +382,15 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                         emailContent = `<div style="font-family: Helvetica, Arial, sans-serif; min-width: 1000px; overflow: auto; line-height: 2;">
                                             <div style="margin: 50px auto; width: 70%; padding: 20px 0;">
                                                 <div style="border-bottom: 1px solid #eee;">
-                                                    <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">Global Wellness Alliance</a>
+                                                    <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">MedxBay</a>
                                                 </div>
                                                 <p style="font-size: 1.1em;">Hi ${booking.patient.name},</p>
                                                 <p>Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed.</p>
                                                 <p>Please visit the hospital at ${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}</p>
-                                                <p style="font-size: 0.9em;">Best regards,<br />Global Wellness Alliance Team</p>
+                                                <p style="font-size: 0.9em;">Best regards,<br />MedxBay Team</p>
                                                 <hr style="border: none; border-top: 1px solid #eee;" />
                                                 <div style="float: right; padding: 8px 0; color: #aaa; font-size: 0.8em; line-height: 1; font-weight: 300;">
-                                                    <p>Global Wellness Alliance</p>
+                                                    <p>MedxBay</p>
                                                     <p>1600 Amphitheatre Parkway</p>
                                                     <p>California</p>
                                                 </div>
@@ -410,14 +410,14 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
                     emailContent = `<div style="font-family: Helvetica, Arial, sans-serif; min-width: 1000px; overflow: auto; line-height: 2;">
                                         <div style="margin: 50px auto; width: 70%; padding: 20px 0;">
                                             <div style="border-bottom: 1px solid #eee;">
-                                                <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">Global Wellness Alliance</a>
+                                                <a href="" style="font-size: 1.4em; color: #00466a; text-decoration: none; font-weight: 600;">MedxBay</a>
                                             </div>
                                             <p style="font-size: 1.1em;">Hi ${booking.patient.name},</p>
                                             <p>We regret to inform you that your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been rejected.</p>
-                                            <p style="font-size: 0.9em;">Best regards,<br />Global Wellness Alliance Team</p>
+                                            <p style="font-size: 0.9em;">Best regards,<br />MedxBay Team</p>
                                             <hr style="border: none; border-top: 1px solid #eee;" />
                                             <div style="float: right; padding: 8px 0; color: #aaa; font-size: 0.8em; line-height: 1; font-weight: 300;">
-                                                <p>Global Wellness Alliance</p>
+                                                <p>MedxBay</p>
                                                 <p>1600 Amphitheatre Parkway</p>
                                                 <p>California</p>
                                             </div>
@@ -446,8 +446,8 @@ router.get('/completed-bookings', isLoggedIn, checkSubscription, async (req, res
     try {
         const doctorId = req.session.user._id; 
         const completedBookings = await Booking.find({ doctor: doctorId, status: 'completed' })
-                                               .populate('patient') 
-                                               .sort({ date: 'desc' }); 
+                                               .populate('patient')
+                                               .sort({ date: 'desc' });
 
         if (req.headers.accept && req.headers.accept.includes('application/json')) {
             const bookingsWithPatientIds = completedBookings.map(booking => ({
@@ -463,6 +463,7 @@ router.get('/completed-bookings', isLoggedIn, checkSubscription, async (req, res
         res.status(500).send('Server Error');
     }
 });
+
 
 router.get('/reviews/:doctorId', isLoggedIn, async (req, res) => {
     try {
@@ -621,18 +622,23 @@ router.get('/manage-time-slots', isLoggedIn, checkSubscription, async (req, res)
             status: 'accepted'
         });
 
-        res.render('manageTimeSlots', {
+        const data = {
             doctor,
             currentMonth,
             currentYear,
             daysInMonth,
             timeSlots: doctor.timeSlots,
-            bookings, 
+            bookings,
             months: [
                 'January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'
             ]
-        });
+        };
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            res.json(data);
+        } else {
+            res.render('manageTimeSlots', data);
+        }
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -641,6 +647,9 @@ router.get('/manage-time-slots', isLoggedIn, checkSubscription, async (req, res)
 
 router.delete('/manage-time-slots/:index', isLoggedIn, checkSubscription, async (req, res) => {
     try {
+
+        console.log('Request Params:', req.params);
+
         const doctorEmail = req.session.user.email;
         const { index } = req.params;
 
@@ -648,7 +657,7 @@ router.delete('/manage-time-slots/:index', isLoggedIn, checkSubscription, async 
 
         if (!doctor) {
             return res.status(404).send('Doctor not found');
-        }
+        }   
 
         doctor.timeSlots.splice(index, 1); 
         await doctor.save();
@@ -660,10 +669,13 @@ router.delete('/manage-time-slots/:index', isLoggedIn, checkSubscription, async 
     }
 });
 
+
 router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) => {
     try {
+        console.log('Request Body:', req.body);
+
         const doctorEmail = req.session.user.email;
-        const { date, startTime, endTime, hospital } = req.body;
+        const { date, startTime, endTime, hospital, slotType, endDate } = req.body;
 
         const doctor = await Doctor.findOne({ email: doctorEmail });
         if (!doctor) {
@@ -676,22 +688,31 @@ router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) =>
             return res.status(404).send('Hospital not found');
         }
 
-        const newTimeSlot = {
-            date: new Date(date),
-            startTime,
-            endTime,
-            status: 'free',
-            hospital: hospital,
-            hospitalLocation: {
-                street: selectedHospital.street,
-                city: selectedHospital.city,
-                state: selectedHospital.state,
-                country: selectedHospital.country,
-                zip: selectedHospital.zip
-            }
-        };
+        const start = new Date(date);
+        const end = new Date(endDate || date); 
 
-        doctor.timeSlots.push(newTimeSlot);
+        let currentDate = new Date(start);
+
+        while (currentDate <= end) {
+            const newTimeSlot = {
+                date: new Date(currentDate),
+                startTime,
+                endTime,
+                status: 'free',
+                hospital: hospital,
+                hospitalLocation: {
+                    street: selectedHospital.street,
+                    city: selectedHospital.city,
+                    state: selectedHospital.state,
+                    country: selectedHospital.country,
+                    zip: selectedHospital.zip
+                }
+            };
+
+            doctor.timeSlots.push(newTimeSlot);
+            currentDate.setDate(currentDate.getDate() + 1); 
+        }
+
         await doctor.save();
 
         res.redirect('/doctor/manage-time-slots');
@@ -700,6 +721,8 @@ router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) =>
         res.status(500).send('Server Error');
     }
 });
+
+
 
 
 async function createGoogleMeetLink(booking) {
@@ -1126,14 +1149,25 @@ router.post('/chats/:chatId/send-message', isLoggedIn, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-
 router.get('/chat/:id', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const chatId = req.params.id;
-        const chat = await Chat.findById(chatId).populate('patientId').lean();
+
+        console.log('Request Details:', {
+            method: req.method,
+            url: req.url,
+            params: req.params,
+            query: req.query,
+            user: req.user
+        });
+
+        const chat = await Chat.findById(chatId)
+            .populate('patientId', 'name email profilePicture') 
+            .lean();
 
         if (!chat) {
-            return res.status(404).send('Chat not found');
+            console.log('Chat not found');
+            return res.status(404).json({ error: 'Chat not found' });
         }
 
         chat.messages.forEach(message => {
@@ -1148,13 +1182,21 @@ router.get('/chat/:id', isLoggedIn, checkSubscription, async (req, res) => {
 
         await Chat.findByIdAndUpdate(chatId, { $set: { messages: chat.messages } });
 
-        res.render('doctorChat', { chat });
+        console.log('Updated Chat Data:', chat);
+
+        res.json({ 
+            chat, 
+            patientProfilePicture: chat.patientId.profilePicture 
+        });
 
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
+        console.error('Error Message:', err.message);
+        res.status(500).json({ error: 'Server Error' });
     }
 });
+
+
+
 
 router.get('/blogs/view/:id', isLoggedIn, checkSubscription, async (req, res) => {
     try {

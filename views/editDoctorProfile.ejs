@@ -291,8 +291,7 @@ function openMapModal(index) {
       closeMapModal();
     }
   </script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyApr-nSbv28HGFJxddFfjhtNM-xtF2YfMA&libraries=places&callback=initMap" async defer></script>
-</head>
+  <script src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAPS_API_KEY %>&libraries=places&callback=initMap" async defer></script></head>
 
 <body>
   <h1>Edit Doctor Profile</h1>

@@ -96,19 +96,23 @@
     <p>No languages listed.</p>
     <% } %>
     <div class="hospitals-section">
-        <h2>Hospitals</h2>
-        <% if (doctor && doctor.hospitals && doctor.hospitals.length > 0) { %>
-            <ul>
-                <% doctor.hospitals.forEach(hospital => { %>
-                    <li>
-                        <p><strong>Name:</strong> <%= hospital.name %></p>
-                        <p><strong>Location:</strong> <%= hospital.street %>, <%= hospital.city %>, <%= hospital.state %>, <%= hospital.country %>, <%= hospital.zip %></p>
-                    </li>
-                <% }) %>
-            </ul>
-        <% } else { %>
-            <p>No hospitals available.</p>
-        <% } %>
+        <h3>Hospitals</h3>
+<% if (doctor && doctor.hospitals && doctor.hospitals.length > 0) { %>
+    <ul>
+        <% doctor.hospitals.forEach(hospital => { %>
+            <li>
+                <p><strong>Name:</strong> <%= hospital.name %></p>
+                <p><strong>Location:</strong> <%= hospital.street %>, <%= hospital.city %>, <%= hospital.state %>, <%= hospital.country %>, <%= hospital.zip %></p>
+                <% if (hospital.lat && hospital.lng) { %>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=<%= hospital.lat %>,<%= hospital.lng %>" target="_blank">Get Directions</a>
+                <% } %>
+            </li>
+        <% }) %>
+    </ul>
+<% } else { %>
+    <p>No hospitals available.</p>
+<% } %>
+
     </div>
     
     

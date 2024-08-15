@@ -116,61 +116,83 @@ router.get('/edit', isLoggedIn, async (req, res) => {
     }
   });
   
-  router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, async (req, res) => {
-    try {
-      const doctorEmail = req.session.user.email;
-      let doctor = await Doctor.findOne({ email: doctorEmail });
-  
-      let hospitals = [];
-      if (Array.isArray(req.body.hospitals)) {
-        hospitals = req.body.hospitals.map(hospital => ({
-          name: hospital.name,
-          street: hospital.street,
-          city: hospital.city,
-          state: hospital.state,
-          country: hospital.country,
-          zip: hospital.zip
-        }));
-      } else if (req.body.hospitals && req.body.hospitals.name) {
-        hospitals = [{
-          name: req.body.hospitals.name,
-          street: req.body.hospitals.street,
-          city: req.body.hospitals.city,
-          state: req.body.hospitals.state,
-          country: req.body.hospitals.country,
-          zip: req.body.hospitals.zip
-        }];
-      }
-      const insuranceIds = (Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances])
-            .map(id => id.toString());
-      const updateData = {
-        ...req.body,
-        aboutMe: req.body.aboutMe || doctor.aboutMe,  
-        speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
-        languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
-        insurances: insuranceIds,
-        awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
-        faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
-        hospitals: hospitals
-      };
-  
-      if (req.file) {
-        updateData.profilePicture = {
-          data: req.file.buffer,
-          contentType: req.file.mimetype
+router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, async (req, res) => {
+try {
+    const doctorEmail = req.session.user.email;
+    let doctor = await Doctor.findOne({ email: doctorEmail });
+
+    let hospitals = [];
+    if (Array.isArray(req.body.hospitals)) {
+    hospitals = req.body.hospitals.map((hospital) => {
+        let hospitalData = {
+        name: hospital.name,
+        street: hospital.street,
+        city: hospital.city,
+        state: hospital.state,
+        country: hospital.country,
+        zip: hospital.zip
         };
-      }
-  
-      doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });
-  
-      await doctor.save();
-  
-      res.redirect('/doctor/profile');
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
+
+        if (hospital.latitude && !isNaN(parseFloat(hospital.latitude))) {
+        hospitalData.lat = parseFloat(hospital.latitude);
+        }
+        if (hospital.longitude && !isNaN(parseFloat(hospital.longitude))) {
+        hospitalData.lng = parseFloat(hospital.longitude);
+        }
+
+        return hospitalData;
+    });
+    } else if (req.body.hospitals && req.body.hospitals.name) {
+    let hospitalData = {
+        name: req.body.hospitals.name,
+        street: req.body.hospitals.street,
+        city: req.body.hospitals.city,
+        state: req.body.hospitals.state,
+        country: req.body.hospitals.country,
+        zip: req.body.hospitals.zip
+    };
+
+    if (req.body.hospitals.latitude && !isNaN(parseFloat(req.body.hospitals.latitude))) {
+        hospitalData.lat = parseFloat(req.body.hospitals.latitude);
     }
-  });
+    if (req.body.hospitals.longitude && !isNaN(parseFloat(req.body.hospitals.longitude))) {
+        hospitalData.lng = parseFloat(req.body.hospitals.longitude);
+    }
+
+    hospitals = [hospitalData];
+    }
+
+    const insuranceIds = (Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances])
+    .map(id => id.toString());
+
+    const updateData = {
+    ...req.body,
+    aboutMe: req.body.aboutMe || doctor.aboutMe,
+    speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
+    languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
+    insurances: insuranceIds,
+    awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
+    faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
+    hospitals: hospitals
+    };
+
+    if (req.file) {
+    updateData.profilePicture = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype
+    };
+    }
+
+    doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });
+
+    await doctor.save();
+
+    res.redirect('/doctor/profile');
+} catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+}
+});
 
   router.get('/insights', isLoggedIn, async (req, res) => {
     try {

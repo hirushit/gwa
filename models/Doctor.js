@@ -29,12 +29,14 @@ const doctorSchema = new mongoose.Schema({
   bloodGroup: String,
   languages: [String],
   hospitals: [{
-    name: { type: String, required: true },
-    street: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    country: { type: String, required: true },
-    zip: { type: String, required: true }
+      name: { type: String, required: true },
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      country: { type: String, required: true },
+      zip: { type: String, required: true },
+    lat: { type: Number }, 
+    lng: { type: Number }  
   }],
   insurances: [{ type: String}],
   consultation: { type: String, enum: ['In-person', 'Video call', 'Both'], default: 'In-person' },

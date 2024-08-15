@@ -7,12 +7,15 @@ const flash = require('connect-flash');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const Doctor = require('./models/Doctor');
+const cors = require('cors'); 
 const Blog = require('./models/Blog');
 const Patient = require('./models/Patient');
+const Leads = require('./models/Leads'); 
 
 dotenv.config();
 
 const app = express();
+app.use(cors());
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -309,6 +312,17 @@ app.get('/auth/where-options', async (req, res) => {
   }
 });
 
+
+app.post('/submit-lead', async (req, res) => {
+  const { name, email } = req.body;
+  try {
+    const lead = new Leads({ name, email });
+    await lead.save();
+    res.status(200).json({ message: 'Details saved successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error saving lead', error });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

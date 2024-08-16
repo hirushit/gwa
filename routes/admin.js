@@ -5,6 +5,7 @@ const Doctor = require('../models/Doctor');
 const Patient = require('../models/Patient');
 const Admin = require('../models/Admin'); 
 const Blog = require('../models/Blog');
+const Booking = require('../models/Booking');
 const Notification = require('../models/Notification'); 
 const Insurance = require('../models/Insurance'); 
 const storage = multer.memoryStorage(); 
@@ -421,7 +422,7 @@ router.post('/blogs/verify/:id', isLoggedIn, async (req, res) => {
 
 router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, res) => {
   try {
-    const { title, author, description, summary, authorEmail, priority } = req.body;
+    const { title, description, summary, categories, subcategories, priority, hashtags } = req.body;
     const blogId = req.params.id;
 
     const blog = await Blog.findById(blogId);
@@ -431,11 +432,12 @@ router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, r
     }
 
     blog.title = title;
-    blog.author = author;
     blog.description = description;
     blog.summary = summary;
-    blog.authorEmail = authorEmail;
-    blog.priority = priority; 
+    blog.categories = Array.isArray(categories) ? categories : categories.split(',');
+    blog.subcategories = Array.isArray(subcategories) ? subcategories : subcategories.split(',');
+    blog.hashtags = Array.isArray(hashtags) ? hashtags : hashtags.split(',');
+    blog.priority = priority;
 
     if (req.file) {
       blog.image = {
@@ -454,22 +456,44 @@ router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, r
   }
 });
 
-router.get('/blog', isLoggedIn, (req, res) => {
-  res.render('admin-blog-upload-form', { activePage: 'blog-upload' });
+router.get('/blog', isLoggedIn, async (req, res) => {
+  try {
+      const doctors = await Doctor.find(); // Fetch all doctors
+      const admin = await Admin.findOne({ email: req.session.user.email }); // Fetch the logged-in admin
+
+      if (!admin) {
+          return res.status(403).send('Unauthorized');
+      }
+
+      res.render('admin-blog-upload-form', { activePage: 'blog-upload', doctors, admin });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
 });
-
-
 
 router.post('/blog-all', upload.single('image'), async (req, res) => {
   try {
-      const authorEmail = req.session.user.email;
-      const { title, author, description, summary, categories, hashtags, priority } = req.body;
+      const { title, description, summary, categories, subcategories, hashtags, priority, authorId } = req.body;
 
-      const admin = await Admin.findOne({ email: authorEmail });
+      let author = null;
+      let authorEmail = null;
 
-      let authorId = null;
-      if (admin) {
-          authorId = admin._id; 
+      // Determine if the selected author is a doctor or admin
+      const doctor = await Doctor.findById(authorId);
+      if (doctor) {
+          author = doctor.name;
+          authorEmail = doctor.email;
+      } else {
+          const admin = await Admin.findById(authorId);
+          if (admin) {
+              author = admin.name;
+              authorEmail = admin.email;
+          }
+      }
+
+      if (!author || !authorEmail) {
+          return res.status(400).send('Invalid author selection');
       }
 
       const newBlog = new Blog({
@@ -479,8 +503,9 @@ router.post('/blog-all', upload.single('image'), async (req, res) => {
           summary,
           authorEmail,
           authorId, 
-          categories: categories, 
-          hashtags: hashtags, 
+          categories,
+          subcategories: subcategories, 
+          hashtags, 
           priority,
           image: {
               data: req.file.buffer,
@@ -709,6 +734,44 @@ router.post('/insurance/delete/:id', isAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
+  }
+});
+
+router.get('/view-appointments', isLoggedIn, async (req, res) => {
+  try {
+      const bookings = await Booking.find()
+          .populate('doctor')
+          .populate('patient')
+          .exec();
+      res.render('view-appointments', { bookings, activePage: 'view-appointments' });
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Server error');
+  }
+});
+
+// Update appointment status
+router.post('/view-appointments/:id', isLoggedIn, async (req, res) => {
+  try {
+      const { status } = req.body;
+      const bookingId = req.params.id;
+
+      const booking = await Booking.findById(bookingId)
+          .populate('doctor')
+          .populate('patient');
+
+      if (!booking) {
+          return res.status(404).send('Booking not found');
+      }
+
+      // Handle status update logic, including sending notifications if needed
+      booking.status = status;
+      await booking.save();
+
+      res.redirect('/admin/view-appointments');
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Server error');
   }
 });
 

@@ -694,55 +694,57 @@ router.delete('/manage-time-slots/:index', isLoggedIn, checkSubscription, async 
 
 router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) => {
     try {
-        console.log('Request Body:', req.body);
-
-        const doctorEmail = req.session.user.email;
-        const { date, startTime, endTime, hospital, slotType, endDate } = req.body;
-
-        const doctor = await Doctor.findOne({ email: doctorEmail });
-        if (!doctor) {
-            return res.status(404).send('Doctor not found');
+      const doctorEmail = req.session.user.email;
+      const { date, startTime, endTime, hospital, slotType, endDate } = req.body;
+  
+      const doctor = await Doctor.findOne({ email: doctorEmail });
+      if (!doctor) {
+        return res.status(404).send('Doctor not found');
+      }
+  
+      const selectedHospital = doctor.hospitals.find(h => h.name === hospital);
+      if (!selectedHospital) {
+        return res.status(404).send('Hospital not found');
+      }
+  
+      const start = new Date(date);
+      const end = new Date(endDate || date);
+  
+      let currentDate = new Date(start);
+  
+      while (currentDate <= end) {
+        const newTimeSlot = {
+          date: new Date(currentDate),
+          startTime,
+          endTime,
+          status: 'free',
+          hospital: hospital,
+          hospitalLocation: {
+            street: selectedHospital.street,
+            city: selectedHospital.city,
+            state: selectedHospital.state,
+            country: selectedHospital.country,
+            zip: selectedHospital.zip
+          }
+        };
+  
+        if (selectedHospital.lat && selectedHospital.lng) {
+          newTimeSlot.lat = selectedHospital.lat;
+          newTimeSlot.lng = selectedHospital.lng;
         }
-
-        const selectedHospital = doctor.hospitals.find(h => h.name === hospital);
-
-        if (!selectedHospital) {
-            return res.status(404).send('Hospital not found');
-        }
-
-        const start = new Date(date);
-        const end = new Date(endDate || date); 
-
-        let currentDate = new Date(start);
-
-        while (currentDate <= end) {
-            const newTimeSlot = {
-                date: new Date(currentDate),
-                startTime,
-                endTime,
-                status: 'free',
-                hospital: hospital,
-                hospitalLocation: {
-                    street: selectedHospital.street,
-                    city: selectedHospital.city,
-                    state: selectedHospital.state,
-                    country: selectedHospital.country,
-                    zip: selectedHospital.zip
-                }
-            };
-
-            doctor.timeSlots.push(newTimeSlot);
-            currentDate.setDate(currentDate.getDate() + 1); 
-        }
-
-        await doctor.save();
-
-        res.redirect('/doctor/manage-time-slots');
+  
+        doctor.timeSlots.push(newTimeSlot);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+  
+      await doctor.save();
+      res.redirect('/doctor/manage-time-slots');
     } catch (error) {
-        console.error(error.message);
-        res.status(500).send('Server Error');
+      console.error(error.message);
+      res.status(500).send('Server Error');
     }
-});
+  });
+  
 
 
 
@@ -989,7 +991,7 @@ router.get('/blog', (req, res) => {
 router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
     try {
         const authorEmail = req.session.user.email;
-        const { title, author, description, summary, categories, hashtags, priority } = req.body;
+        const { title, author, description, summary, categories, subcategories, hashtags, priority } = req.body;
 
         const doctor = await Doctor.findOne({ email: authorEmail });
 
@@ -1005,7 +1007,8 @@ router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), asyn
             summary,
             authorEmail,
             authorId, 
-            categories: categories, 
+            categories: categories,
+            subcategories: subcategories, 
             hashtags: hashtags, 
             priority,
             image: {
@@ -1070,9 +1073,7 @@ router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
   });
   
   
-  
-
-router.post('/blogs/edit/:id', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
+  router.post('/blogs/edit/:id', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
     try {
         const blog = await Blog.findById(req.params.id);
 
@@ -1084,14 +1085,15 @@ router.post('/blogs/edit/:id', isLoggedIn, checkSubscription, upload.single('ima
             return res.status(403).send('Unauthorized');
         }
 
-        const { title, description, summary, categories, hashtags } = req.body;
+        const { title, description, summary, categories, subcategories, hashtags } = req.body;
 
         blog.title = title;
         blog.description = description;
         blog.summary = summary;
-        blog.categories = categories.split(',');
-        blog.hashtags = hashtags.split(',');
-     
+        blog.categories = Array.isArray(categories) ? categories : categories.split(',');
+        blog.subcategories = Array.isArray(subcategories) ? subcategories : subcategories.split(',');
+        blog.hashtags = Array.isArray(hashtags) ? hashtags : hashtags.split(',');
+
         blog.verificationStatus = 'pending';
 
         if (req.file) {

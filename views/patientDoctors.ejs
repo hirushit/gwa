@@ -185,7 +185,17 @@
                 const response = await fetch('/auth/cities');
                 const cities = await response.json();
                 const citySelect = document.getElementById('city');
-
+        
+                // Clear existing options
+                citySelect.innerHTML = '';
+        
+                // Add a default option if desired
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select a city';
+                citySelect.appendChild(defaultOption);
+        
+                // Populate dropdown with cities
                 cities.forEach(city => {
                     const option = document.createElement('option');
                     option.value = city;
@@ -196,7 +206,7 @@
                 console.error('Error fetching cities:', error);
             }
         }
-
+        
         async function populateSpecialityDropdown() {
             try {
                 const response = await fetch('/auth/specialities');
@@ -274,79 +284,26 @@
             document.getElementById('where').value = where || '';
         }
         async function searchDoctors() {
-    const what = document.getElementById('what').value;
-    const where = document.getElementById('where').value;
-    const country = document.getElementById('country').value;
-    const state = document.getElementById('state').value;
-    const city = document.getElementById('city').value;
-    const speciality = document.getElementById('speciality').value;
-    const languagesSelect = document.getElementById('languages');
-    const languages = Array.from(languagesSelect?.selectedOptions || []).map(option => option.value).join(',');
-    const gender = document.getElementById('gender').value;
-    const hospitalsSelect = document.getElementById('hospital');
-    const hospital = Array.from(hospitalsSelect.selectedOptions).map(option => option.value);
-    const availability = document.getElementById('availability').value;
-    const dateAvailability = document.getElementById('dateAvailability').value;
-    const consultation = document.getElementById('consultation').value;
+            const what = document.getElementById('what').value;
+            const where = document.getElementById('where').value;
+            const country = document.getElementById('country').value;
+            const state = document.getElementById('state').value;
+            const city = document.getElementById('city').value;
+            const speciality = document.getElementById('speciality').value;
+            const languagesSelect = document.getElementById('languages');
+            const languages = Array.from(languagesSelect?.selectedOptions || []).map(option => option.value).join(',');
+            const gender = document.getElementById('gender').value;
+            const hospitalsSelect = document.getElementById('hospital');
+            const hospital = Array.from(hospitalsSelect.selectedOptions).map(option => option.value);
+            const availability = document.getElementById('availability').value;
+            const dateAvailability = document.getElementById('dateAvailability').value;
+            const consultation = document.getElementById('consultation').value;
 
-    const conditionsSelect = document.getElementById('conditions');
-    const conditions = Array.from(conditionsSelect?.selectedOptions || []).map(option => option.value).join(',');
+            const conditionsSelect = document.getElementById('conditions');
+            const conditions = Array.from(conditionsSelect?.selectedOptions || []).map(option => option.value).join(',');
 
-    const url = `/auth/search-doctors?what=${what}&where=${where}&country=${country}&state=${state}&city=${city}&speciality=${speciality}&languages=${languages}&gender=${gender}&hospitals=${hospital}&availability=${availability}&dateAvailability=${dateAvailability}&consultation=${consultation}&conditions=${conditions}`;
+            const url = `/auth/search-doctors?what=${what}&where=${where}&country=${country}&state=${state}&city=${city}&speciality=${speciality}&languages=${languages}&gender=${gender}&hospitals=${hospital}&availability=${availability}&dateAvailability=${dateAvailability}&consultation=${consultation}&conditions=${conditions}`;
 
-    try {
-        const response = await fetch(url);
-        const doctors = await response.json();
-
-        const resultsContainer = document.getElementById('results-container');
-        resultsContainer.innerHTML = '';
-
-        if (doctors.length === 0) {
-            resultsContainer.textContent = 'No doctors found.';
-            return;
-        }
-
-        doctors.forEach(doctor => {
-            const doctorCard = document.createElement('div');
-            doctorCard.className = 'doctor-card';
-            let hospitalsInfo = '';
-
-            doctor.hospitals.forEach(hospital => {
-                hospitalsInfo += `${hospital.name}, ${hospital.city}<br>`;
-            });
-
-            doctorCard.innerHTML = `
-                <h2>${doctor.name}</h2>
-                <p>Speciality: ${doctor.speciality.join(', ')}</p>
-                <p>Rating: ${doctor.rating}</p>
-                <p>Available Now: ${doctor.availability ? 'Yes' : 'No'}</p>
-                <p>City: ${doctor.city}</p>
-                <button onclick="showDoctorDetails('${doctor._id}')">View Details</button>
-            `;
-            resultsContainer.appendChild(doctorCard);
-        });
-
-
-
-    } catch (error) {
-        console.error('Error fetching doctors:', error);
-        const resultsContainer = document.getElementById('results-container');
-        resultsContainer.textContent = 'Failed to fetch doctors. Please try again later.';
-    }
-}
-
-
-        async function showDoctorDetails(doctorId) {
-            window.location.href = `/patient/doctors/${doctorId}/slots`;
-        }
-
-        function sortDoctors() {
-            const sortOption = document.getElementById('sortOptions').value;
-            const url = `/auth/search-doctors?sort=${sortOption}`;
-            fetchAndDisplayDoctors(url);
-        }
-
-        async function fetchAndDisplayDoctors(url) {
             try {
                 const response = await fetch(url);
                 const doctors = await response.json();
@@ -362,21 +319,114 @@
                 doctors.forEach(doctor => {
                     const doctorCard = document.createElement('div');
                     doctorCard.className = 'doctor-card';
+                    let hospitalsInfo = '';
+
+                    doctor.hospitals.forEach(hospital => {
+                        hospitalsInfo += `${hospital.name}, ${hospital.city}<br>`;
+                    });
+
                     doctorCard.innerHTML = `
                         <h2>${doctor.name}</h2>
-                        <p>Title: ${doctor.title}</p>
-                        <p>Speciality: ${doctor.speciality}</p>
+                        <p>Speciality: ${doctor.speciality.join(', ')}</p>
                         <p>Rating: ${doctor.rating}</p>
                         <p>Available Now: ${doctor.availability ? 'Yes' : 'No'}</p>
-                        <p>Location: ${doctor.city}, ${doctor.state}, ${doctor.country}</p>
+                        <p>City: ${doctor.conditions}</p>
+                        <button onclick="showDoctorDetails('${doctor._id}')">View Details</button>
+                    `;
+                    resultsContainer.appendChild(doctorCard);
+                });
+
+
+
+            } catch (error) {
+                console.error('Error fetching doctors:', error);
+                const resultsContainer = document.getElementById('results-container');
+                resultsContainer.textContent = 'Failed to fetch doctors. Please try again later.';
+            }
+        }
+
+
+        async function showDoctorDetails(doctorId) {
+            window.location.href = `/patient/doctors/${doctorId}/slots`;
+        }
+
+        function sortDoctors() {
+            const sortOption = document.getElementById('sortOptions').value;
+            const what = document.getElementById('what').value;
+            const where = document.getElementById('where').value;
+        
+            let url = `/auth/search-doctors?sort=${sortOption}&what=${what}&where=${where}`;
+        
+            const country = document.getElementById('country').value;
+            const state = document.getElementById('state').value;
+            const city = document.getElementById('city').value;
+            const speciality = document.getElementById('speciality').value;
+            const languagesSelect = document.getElementById('languages');
+            const languages = Array.from(languagesSelect?.selectedOptions || []).map(option => option.value).join(',');
+            const gender = document.getElementById('gender').value;
+            const hospitalsSelect = document.getElementById('hospital');
+            const hospital = Array.from(hospitalsSelect.selectedOptions).map(option => option.value);
+            const availability = document.getElementById('availability').value;
+            const dateAvailability = document.getElementById('dateAvailability').value;
+            const consultation = document.getElementById('consultation').value;
+        
+            const conditionsSelect = document.getElementById('conditions');
+            const conditions = Array.from(conditionsSelect?.selectedOptions || []).map(option => option.value).join(',');
+        
+            url += `&country=${country}&state=${state}&city=${city}&speciality=${speciality}&languages=${languages}&gender=${gender}&hospitals=${hospital}&availability=${availability}&dateAvailability=${dateAvailability}&consultation=${consultation}&conditions=${conditions}`;
+        
+            fetchAndDisplayDoctors(url);
+        }
+        
+
+        async function fetchAndDisplayDoctors(url) {
+            try {
+                const response = await fetch(url);
+                const doctors = await response.json();
+        
+                const resultsContainer = document.getElementById('results-container');
+                resultsContainer.innerHTML = '';
+        
+                if (doctors.length === 0) {
+                    resultsContainer.textContent = 'No doctors found.';
+                    return;
+                }
+        
+                doctors.forEach(doctor => {
+                    const doctorCard = document.createElement('div');
+                    doctorCard.className = 'doctor-card';
+                    let hospitalsInfo = '';
+                    let conditionsInfo = '';
+        
+                    if (doctor.hospitals) {
+                        doctor.hospitals.forEach(hospital => {
+                            hospitalsInfo += `${hospital.name}<br>`;
+                        });
+                    }
+        
+                    if (doctor.conditions) {
+                        conditionsInfo = doctor.conditions.join(', ');
+                    }
+        
+                    doctorCard.innerHTML = `
+                        <h2>${doctor.name}</h2>
+                        <p>Speciality: ${doctor.speciality.join(', ')}</p>
+                        <p>Rating: ${doctor.rating}</p>
+                        <p>Available Now: ${doctor.availability ? 'Yes' : 'No'}</p>
+                        <p>Hospitals: ${hospitalsInfo}</p>
+                        <p>Conditions Treated: ${conditionsInfo}</p>
                         <button onclick="showDoctorDetails('${doctor._id}')">View Details</button>
                     `;
                     resultsContainer.appendChild(doctorCard);
                 });
             } catch (error) {
-                console.error('Error fetching sorted doctors:', error);
+                console.error('Error fetching doctors:', error);
+                const resultsContainer = document.getElementById('results-container');
+                resultsContainer.textContent = 'Failed to fetch doctors. Please try again later.';
             }
         }
+        
+        
 
         function resetFilters() {
             document.getElementById('what').value = '';

@@ -85,6 +85,9 @@
 
                     <% if (slot.hospitalLocation) { %>
                         <p><strong>Location:</strong> <%= slot.hospitalLocation.street %>, <%= slot.hospitalLocation.city %>, <%= slot.hospitalLocation.state %>, <%= slot.hospitalLocation.country %>, <%= slot.hospitalLocation.zip %></p>
+                        <% if (slot.lat && slot.lng) { %>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=<%= slot.lat %>,<%= slot.lng %>" target="_blank">Get Directions</a>
+                        <% } %>
                     <% } else { %>
                         <p><strong>Location:</strong> N/A</p>
                     <% } %>
@@ -112,7 +115,6 @@
     <% } else { %>
         <p>No available time slots.</p>
     <% } %>
-
     <h2>Reviews</h2>
     <% if (doctor.reviews && doctor.reviews.length > 0) { %>
         <ul>

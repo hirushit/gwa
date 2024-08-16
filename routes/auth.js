@@ -48,7 +48,7 @@ const generateVerificationToken = () => {
   return crypto.randomBytes(20).toString('hex');
 };
 
-const sendVerificationEmail = async (email, token, role) => {
+const sendVerificationEmail = async (name, email, token, role) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -59,12 +59,36 @@ const sendVerificationEmail = async (email, token, role) => {
 
   const verificationLink = `http://localhost:3000/auth/verify-email?token=${token}&role=${role}`;
 
-
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: 'Email Verification for Signup',
-    text: `Click the following link to verify your email: ${verificationLink}`
+    subject: '🎉 Almost There! Verify Your Email to Complete Your Sign-Up 🎉',
+    html: `
+      <p>Hi ${name},</p>
+
+      <p>Thank you for signing up with us! We’re thrilled to have you on board and can’t wait for you to explore everything we have in store.</p>
+
+      <p>Before you dive in, we just need one small thing from you: to confirm your email address. This helps us ensure that we’ve got the right contact details for you and keeps your account secure.</p>
+
+      <p>Here’s What You Need to Do:</p>
+
+      <p>Click the Verification Button: Simply click the button below to verify your email address.</p>
+
+      <div style="text-align: center;">
+        <a href="${verificationLink}" style="padding: 10px 20px; color: white; background-color: #007bff; text-decoration: none;">Verify Your Email Address</a>
+      </div>
+      <p>Or, Copy and Paste This Link: If the button doesn’t work, copy and paste the following URL into your browser:</p>
+      <p><a href="${verificationLink}">${verificationLink}</a></p>
+
+      <p>Once you’ve verified your email, you’ll be all set to access your new account and start exploring. If you have any questions or need assistance, feel free to reach out to our support team—we’re here to help!</p>
+
+      <p>Welcome aboard, and get ready for an amazing experience with MedXBay!</p>
+
+      <p>Best regards,</p>
+      <p>The MedXBay Team</p>
+
+      <p>P.S. If you didn’t sign up for an account, please disregard this email. No worries—nothing will change if you ignore it.</p>
+    `
   };
 
   await transporter.sendMail(mailOptions);
@@ -87,7 +111,7 @@ router.post('/signup/patient', async (req, res) => {
     }
 
     const token = generateVerificationToken();
-    await sendVerificationEmail(email, token, 'patient');
+    await sendVerificationEmail(name, email, token, 'patient');
 
     const newPatient = new Patient({
       name,
@@ -108,6 +132,7 @@ router.post('/signup/patient', async (req, res) => {
   }
 });
 
+
 router.get('/signup/doctor', (req, res) => {
   const showOtpForm = req.session.newUser && req.session.newUser.otp;
   res.render('signup_doctor', { showOtpForm });
@@ -125,7 +150,7 @@ router.post('/signup/doctor', async (req, res) => {
     }
 
     const token = generateVerificationToken();
-    await sendVerificationEmail(email, token, 'doctor');
+    await sendVerificationEmail(name, email, token, 'doctor');
 
     const newDoctor = new Doctor({
       name,
@@ -145,6 +170,7 @@ router.post('/signup/doctor', async (req, res) => {
     return res.redirect('/auth/signup/doctor');
   }
 });
+
 
 router.get('/verify-email', async (req, res) => {
   const { token, role } = req.query;

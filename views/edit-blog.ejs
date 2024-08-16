@@ -4,79 +4,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Blog</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        .form-group button {
-            padding: 10px 15px;
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
             background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .form-group button:hover {
-            background-color: #0056b3;
+            border: 1px solid #007bff;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Edit Blog</h1>
-        <form action="/doctor/blogs/edit/<%= blog._id %>" method="POST" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="title">Title</label>
-                <input type="text" id="title" name="title" value="<%= blog.title %>" required>
-            </div>
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" rows="5" required><%= blog.description %></textarea>
-            </div>
-            <div class="form-group">
-                <label for="summary">Summary</label>
-                <textarea id="summary" name="summary" rows="3" required><%= blog.summary %></textarea>
-            </div>
-            <div class="form-group">
-                <label for="categories">Categories (comma separated)</label>
-                <input type="text" id="categories" name="categories" value="<%= blog.categories.join(', ') %>">
-            </div>
-            <div class="form-group">
-                <label for="hashtags">Hashtags (comma separated)</label>
-                <input type="text" id="hashtags" name="hashtags" value="<%= blog.hashtags.join(', ') %>">
-            </div>
-            
-            <div class="form-group">
-                <label for="image">Upload Image</label>
-                <input type="file" id="image" name="image">
-            </div>
-            <div class="form-group">
-                <button type="submit">Update Blog</button>
-            </div>
-        </form>
-    </div>
+    <h1>Edit Blog</h1>
+    <form id="blogForm" action="/doctor/blogs/edit/<%= blog._id %>" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" value="<%= blog.title %>" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="5" required><%= blog.description %></textarea>
+        </div>
+        <div class="form-group">
+            <label for="summary">Summary</label>
+            <textarea id="summary" name="summary" rows="3" required><%= blog.summary %></textarea>
+        </div>
+        <div class="form-group">
+            <label for="categories">Categories</label>
+            <select id="categories" name="categories[]" multiple="multiple" style="width: 100%;" required>
+                <% const categories = ['Travel', 'Lifestyle', 'Medical', 'Politics', 'Sports', 'Music', 'Fashion', 'Fitness']; %>
+                <% categories.forEach(category => { %>
+                    <option value="<%= category %>" <% if (blog.categories.includes(category)) { %>selected<% } %>><%= category %></option>
+                <% }); %>
+            </select>
+        </div>
+        
+        <div class="form-group" id="subcategories-container">
+            <label for="subcategories">Subcategories</label>
+            <select id="subcategories" name="subcategories[]" multiple="multiple" style="width: 100%;">
+                <!-- Subcategories will be dynamically populated -->
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="hashtags">Hashtags (comma separated)</label>
+            <select id="hashtags" name="hashtags[]" multiple="multiple" style="width: 100%;">
+                <% const hashtags = ['#blogger', '#medfluencer', '#wms', '#mbchb', '#doctorsofinstagram']; %>
+                <% hashtags.forEach(hashtag => { %>
+                    <option value="<%= hashtag %>" <% if (blog.hashtags.includes(hashtag)) { %>selected<% } %>><%= hashtag %></option>
+                <% }); %>
+            </select><br><br>
+        </div>
+        
+        <div class="form-group">
+            <label for="image">Upload Image</label>
+            <input type="file" id="image" name="image">
+        </div>
+        <div class="form-group">
+            <button type="submit">Update Blog</button>
+        </div>
+    </form>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize select2
+            $('#categories').select2({
+                placeholder: "Select categories",
+                allowClear: true
+            });
+            $('#subcategories').select2({
+                placeholder: "Select subcategories",
+                allowClear: true
+            });
+            $('#hashtags').select2({
+                placeholder: "Select hashtags",
+                allowClear: true
+            });
+
+            // Predefined subcategories based on categories
+            const subcategoriesMap = {
+                "Travel": ["Adventure", "Beach", "Cultural", "Road Trip"],
+                "Lifestyle": ["Wellness", "Parenting", "Home Decor", "Minimalism"],
+                "Medical": ["General Surgery", "Mental Health", "Nutrition", "Pediatrics"],
+                "Politics": ["Elections", "Policy", "International Relations", "Economy"],
+                "Sports": ["Football", "Basketball", "Tennis", "Cricket","Athletics"],
+                "Music": ["Rock", "Pop", "Classical", "Jazz"],
+                "Fashion": ["Trends", "Designers", "Street Style", "Accessories"],
+                "Fitness": ["Workouts", "Nutrition", "Yoga", "Bodybuilding"]
+            };
+
+            // Populate subcategories based on selected categories
+            $('#categories').on('change', function() {
+                const selectedCategories = $(this).val();
+                const $subcategories = $('#subcategories');
+                
+                // Clear previous subcategories
+                $subcategories.empty();
+                
+                // Populate subcategories based on selected categories
+                if (selectedCategories.length > 0) {
+                    selectedCategories.forEach(category => {
+                        if (subcategoriesMap[category]) {
+                            subcategoriesMap[category].forEach(subcategory => {
+                                $subcategories.append(`<option value="${subcategory}">${subcategory}</option>`);
+                            });
+                        }
+                    });
+                    $('#subcategories-container').show();
+                } else {
+                    $('#subcategories-container').hide();
+                }
+
+                // Pre-select options based on existing selected subcategories
+                const selectedSubcategories = <%- JSON.stringify(blog.subcategories || []) %>;
+                $subcategories.val(selectedSubcategories).trigger('change');
+            });
+
+            // Trigger change event on page load to populate subcategories if needed
+            $('#categories').trigger('change');
+        });
+    </script>
 </body>
 </html>

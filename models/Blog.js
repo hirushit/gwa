@@ -13,6 +13,9 @@ const blogSchema = new Schema({
     },
     categories: {
         type: [String]
+    }, 
+    subcategories: {
+        type: [String]
     },
     hashtags: {
         type: [String]

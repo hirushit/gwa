@@ -66,7 +66,9 @@ const doctorSchema = new mongoose.Schema({
       state: { type: String, required: true },
       country: { type: String, required: true },
       zip: { type: String, required: true }
-    }
+    },
+    lat: { type: Number },
+    lng: { type: Number }
   }],
   rating: { type: Number, default: 5 },
   consultationsCompleted: { type: Number, default: 0 },

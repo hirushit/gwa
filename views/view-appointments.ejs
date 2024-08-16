@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edit Patient</title>
+  <title>View Appointments</title>
   <style>
+    /* Importing the custom font */
     @font-face {
       font-family: 'Matter-Regular';
       src: url('fonts/Matter-Regular.ttf') format('truetype');
@@ -12,6 +13,7 @@
       font-style: normal;
     }
 
+    /* Basic Styles */
     body {
       font-family: 'Matter-Regular', Arial, sans-serif;
       margin: 0;
@@ -27,7 +29,7 @@
 
     .sidebar {
       width: 250px;
-      background-color: #F7FAFF;
+      background-color: #F7FAFF; /* Updated sidebar color */
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -35,7 +37,7 @@
     }
 
     .sidebar-logo {
-      text-align: center;
+      text-align: center; /* Center align logo */
       margin-bottom: 20px;
     }
 
@@ -55,7 +57,7 @@
 
     .sidebar-menu-item a {
       text-decoration: none;
-      color: #A0AAC8;
+      color: #A0AAC8; /* Text color */
       display: block;
       padding: 10px;
       border-radius: 5px;
@@ -64,13 +66,13 @@
 
     .sidebar-menu-item a.active,
     .sidebar-menu-item a:hover {
-      color: #42427D;
-      background-color: transparent;
+      color: #42427D; /* Text color on hover or active */
+      background-color: transparent; /* No background color change */
     }
 
     .sidebar h2 {
-      margin: 0 0 20px 0;
-      color: #42427D;
+      margin: 0 0 20px 0; /* Remove extra margin around heading */
+      color: #42427D; /* Updated color for consistency */
     }
 
     .main-content {
@@ -91,27 +93,48 @@
     h1 {
       margin-bottom: 20px;
       text-align: center;
-      color: #42427D;
+      color: #42427D; /* Updated color for consistency */
     }
 
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-group label {
-      display: block;
-      font-weight: bold;
-      color: #42427D;
-    }
-
-    .form-group input {
+    .appointments-table {
       width: 100%;
-      padding: 8px;
-      border: 1px solid #e9ecef;
-      border-radius: 4px;
+      border-collapse: collapse;
+      margin-top: 20px;
     }
 
-    button {
+    .appointments-table th, .appointments-table td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e9ecef;
+      font-size: 14px;
+      color: #42427D;
+      white-space: nowrap; /* Prevent text wrapping */
+    }
+
+    .appointments-table th {
+      background-color: #f7f7f7;
+      font-weight: 600;
+    }
+
+    .appointments-table tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    .appointments-table select {
+      padding: 5px;
+      font-size: 14px;
+      border: 1px solid #e9ecef;
+      border-radius: 5px;
+      color: #42427D;
+      background-color: #fff;
+    }
+
+    .appointments-table select:focus {
+      outline: none;
+      border-color: #FF7F50;
+    }
+
+    .appointments-table button {
       background-color: transparent;
       color: #FF7F50;
       border: 2px solid #FF7F50;
@@ -122,10 +145,18 @@
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    button:hover {
+    .appointments-table button:hover {
       background-color: #FF7F50;
       color: white;
     }
+
+    .no-appointments {
+      font-size: 18px;
+      color: #666;
+      text-align: center;
+      margin-top: 20px;
+    }
+
   </style>
 </head>
 <body>
@@ -138,11 +169,9 @@
       <ul class="sidebar-menu">
         <li class="sidebar-menu-item"><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View Admin Blogs</a></li>
         <li class="sidebar-menu-item"><a href="/admin/blog" <% if (activePage === 'blog-upload') { %> class="active" <% } %>>Upload Admin Blog</a></li>
-        <!-- <li class="sidebar-menu-item"><a href="/admin/admin-home" <% if (activePage === 'admin-home') { %> class="active" <% } %>>Home</a></li> -->
         <li class="sidebar-menu-item"><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
         <li class="sidebar-menu-item"><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
         <li class="sidebar-menu-item"><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
-        <!-- <li class="sidebar-menu-item"><a href="/admin/blogs-all" <% if (activePage === 'blogs-all') { %> class="active" <% } %>>Search Blogs</a></li> -->
         <li class="sidebar-menu-item"><a href="/admin/view-appointments" <% if (activePage === 'view-appointments') { %> class="active" <% } %>>View Appointments</a></li>
         <li class="sidebar-menu-item"><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
         <li class="sidebar-menu-item"><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
@@ -152,52 +181,46 @@
 
     <div class="main-content">
       <div class="container">
-        <h1>Edit Patient</h1>
-        <form action="/admin/update-patient/<%= patient._id %>" method="POST">
-          <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" id="name" name="name" value="<%= patient.name %>" required>
-          </div>
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" value="<%= patient.email %>" required>
-          </div>
-          <div class="form-group">
-            <label for="phoneNumber">Phone Number</label>
-            <input type="text" id="phoneNumber" name="phoneNumber" value="<%= patient.phoneNumber %>" required>
-          </div>
-          <div class="form-group">
-            <label for="dateOfBirth">Date of Birth</label>
-            <input type="date" id="dateOfBirth" name="dateOfBirth" value="<%= patient.dateOfBirth.toISOString().split('T')[0] %>" required>
-          </div>
-          <div class="form-group">
-            <label for="address">Address</label>
-            <input type="text" id="address" name="address" value="<%= patient.address %>" required>
-          </div>
-          <div class="form-group">
-            <label for="insuranceProvider">Insurance Provider</label>
-            <input type="text" id="insuranceProvider" name="insuranceProvider" value="<%= patient.insuranceProvider %>">
-          </div>
-          <div class="form-group">
-            <label for="policyNumber">Policy Number</label>
-            <input type="text" id="policyNumber" name="policyNumber" value="<%= patient.policyNumber %>">
-          </div>
-          <div class="form-group">
-            <label for="emergencyContacts">Emergency Contacts (JSON)</label>
-            <textarea id="emergencyContacts" name="emergencyContacts" rows="4" required><%= JSON.stringify(patient.emergencyContacts, null, 2) %></textarea>
-          </div>
+        <h1>Appointments</h1>
 
-          <div class="form-group">
-            <label for="profilePicture">Profile Picture</label>
-            <input type="file" id="profilePicture" name="profilePicture">
-            <% if (patient.profilePicture) { %>
-              <div>
-                <img src="data:<%= patient.profilePicture.contentType %>;base64,<%= patient.profilePicture.data.toString('base64') %>" alt="Profile Picture" style="max-width: 200px; margin-top: 10px;">
-              </div>
-            <% } %>
-          </div>
-          <button type="submit">Update Patient</button>
-        </form>
+        <% if (bookings.length > 0) { %>
+          <table class="appointments-table">
+            <thead>
+              <tr>
+                <th>Doctor</th>
+                <th>Patient</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% bookings.forEach(booking => { %>
+                <tr>
+                  <td><%= booking.doctor ? booking.doctor.name : 'Unknown Doctor' %></td>
+                  <td><%= booking.patient ? booking.patient.name : 'Unknown Patient' %></td>
+                  <td><%= booking.date ? booking.date.toDateString() : 'Unknown Date' %></td>
+                  <td><%= booking.time %></td>
+                  <td><%= booking.status %></td>
+                  <td>
+                    <form action="/admin/view-appointments/<%= booking._id %>" method="POST" style="display: inline;">
+                      <select name="status">
+                        <option value="waiting" <%= booking.status === 'waiting' ? 'selected' : '' %>>Waiting</option>
+                        <option value="accepted" <%= booking.status === 'accepted' ? 'selected' : '' %>>Accepted</option>
+                        <option value="rejected" <%= booking.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+                        <option value="completed" <%= booking.status === 'completed' ? 'selected' : '' %>>Completed</option>
+                      </select>
+                      <button type="submit">Update</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } else { %>
+          <p class="no-appointments">No appointments found.</p>
+        <% } %>
       </div>
     </div>
   </div>

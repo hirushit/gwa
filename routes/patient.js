@@ -129,13 +129,16 @@ router.get('/doctors', async (req, res) => {
       })
       .sort(sortCriteria);
 
+    // Get distinct values and remove duplicates
     const countries = await Doctor.distinct('country');
     const states = await Doctor.distinct('state');
-    const cities = await Doctor.distinct('city');
+    const hospitals = doctors.flatMap(doctor => doctor.hospitals);
+    const cities = Array.from(new Set(hospitals.map(hospital => hospital.city)))
+    .filter(city => city !== undefined);
     const specialities = await Doctor.distinct('speciality');
     const languages = await Doctor.distinct('languages');
     const genders = await Doctor.distinct('gender');
-
+    console.log(cities);
     res.render('patientDoctors', {
       doctors,
       countries,
@@ -150,7 +153,6 @@ router.get('/doctors', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
 
 router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
   try {

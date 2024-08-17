@@ -125,11 +125,10 @@ router.get('/doctors', async (req, res) => {
     const doctors = await Doctor.find({ verified: 'Verified' })
       .populate({
         path: 'hospitals',
-        select: 'name city lat lng -_id'  // Ensure lat and lng are included
+        select: 'name city lat lng -_id'  
       })
       .sort(sortCriteria);
 
-    // Get distinct values and remove duplicates
     const countries = await Doctor.distinct('country');
     const states = await Doctor.distinct('state');
     const hospitals = doctors.flatMap(doctor => doctor.hospitals);

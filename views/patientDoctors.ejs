@@ -28,7 +28,7 @@
 
         .map-container {
             flex: 1;
-            min-width: 300px; /* Adjust the minimum width as needed */
+            min-width: 300px; 
             margin-right: 20px;
         }
 
@@ -135,7 +135,6 @@
         </div>
 
         <div id="results-container">
-            <!-- Doctor cards will be dynamically generated here -->
         </div>
     </div>
 
@@ -152,10 +151,9 @@
         });
 
         function initMap() {
-    // Initialize the map with a default center and zoom level
     const map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 10, // This will be adjusted by fitBounds
-        center: { lat: 20.5937, lng: 78.9629 } // Default center
+        zoom: 10, 
+        center: { lat: 20.5937, lng: 78.9629 } 
     });
 
     const doctors = <%- JSON.stringify(doctors) %>;
@@ -166,34 +164,28 @@
             if (hospital.lat && hospital.lng) {
                 const position = { lat: hospital.lat, lng: hospital.lng };
                 
-                // Create a marker for each hospital location
                 const marker = new google.maps.Marker({
                     position: position,
                     map: map,
                     title: doctor.name + ' - ' + hospital.name
                 });
 
-                // Create an info window for each marker
                 const infoWindow = new google.maps.InfoWindow({
                     content: `<strong>${doctor.name}</strong><br>${hospital.name}<br>${hospital.city}, ${hospital.state}`
                 });
 
-                // Add click event to open info window
                 marker.addListener('click', () => {
                     infoWindow.open(map, marker);
                 });
 
-                // Extend the bounds to include the current marker position
                 bounds.extend(position);
             }
         });
     });
 
-    // Fit the map to include all the markers
     map.fitBounds(bounds);
 
-    // Set a maximum zoom level to avoid too much zoom-in
-    const maxZoomLevel = 10; // Adjust this value as needed
+    const maxZoomLevel = 10; 
     map.addListener('bounds_changed', () => {
         if (map.getZoom() > maxZoomLevel) {
             map.setZoom(maxZoomLevel);
@@ -253,16 +245,13 @@
                 const cities = await response.json();
                 const citySelect = document.getElementById('city');
         
-                // Clear existing options
                 citySelect.innerHTML = '';
         
-                // Add a default option if desired
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
                 defaultOption.textContent = 'Select a city';
                 citySelect.appendChild(defaultOption);
         
-                // Populate dropdown with cities
                 cities.forEach(city => {
                     const option = document.createElement('option');
                     option.value = city;

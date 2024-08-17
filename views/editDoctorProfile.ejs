@@ -183,12 +183,13 @@
       container.appendChild(div);
     }
 
-    let initialized = false; 
-    let map;
-    let marker;
-    let searchBox;
+    let currentHospitalIndex = null; // Initialize properly
+let map;
+let marker;
+let searchBox;
+let initialized = false;
 
-    function initMap() {
+function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 5,
         center: { lat: 20.5937, lng: 78.9629 }
@@ -243,22 +244,23 @@
         placeMarker(event.latLng);
     });
 
-    initialized = true; 
+    initialized = true;
 }
 
 function placeMarker(location) {
-  if (marker) {
-    marker.setMap(null);
-  }
-  marker = new google.maps.Marker({
-    position: location,
-    map: map
-  });
-  document.getElementById('latitude').value = location.lat();
-  document.getElementById('longitude').value = location.lng();
+    if (marker) {
+        marker.setMap(null);
+    }
+    marker = new google.maps.Marker({
+        position: location,
+        map: map
+    });
+    document.getElementById('latitude').value = location.lat();
+    document.getElementById('longitude').value = location.lng();
 }
+
 function openMapModal(index) {
-    currentHospitalIndex = index;
+    currentHospitalIndex = index; // Update index
 
     document.getElementById('pac-input').value = '';
 
@@ -271,25 +273,38 @@ function openMapModal(index) {
     if (marker) {
         marker.setMap(null);
     }
-    map.setCenter({ lat: 20.5937, lng: 78.9629 }); 
+    map.setCenter({ lat: 20.5937, lng: 78.9629 });
     map.setZoom(5);
+
+    console.log('Opening map modal for hospital index:', currentHospitalIndex);
 }
 
-    function closeMapModal() {
-      document.getElementById('mapModal').style.display = 'none';
+function saveLocation() {
+  const lat = document.getElementById('latitude').value;
+  const lng = document.getElementById('longitude').value;
+
+  console.log('Saving location. Latitude:', lat, 'Longitude:', lng);
+  
+  if (lat && lng && currentHospitalIndex !== undefined) {
+    const latitudeInput = document.querySelector(`input[name="hospitals[${currentHospitalIndex}][latitude]"]`);
+    const longitudeInput = document.querySelector(`input[name="hospitals[${currentHospitalIndex}][longitude]"]`);
+    
+    if (latitudeInput && longitudeInput) {
+      latitudeInput.value = lat;
+      longitudeInput.value = lng;
     }
 
-    function saveLocation() {
-      const lat = document.getElementById('latitude').value;
-      const lng = document.getElementById('longitude').value;
+    console.log('Saved location for hospital index:', currentHospitalIndex, 'Latitude:', lat, 'Longitude:', lng);
+  }
 
-      if (lat && lng) {
-        document.querySelector(`input[name="hospitals[${currentHospitalIndex}][latitude]"]`).value = lat;
-        document.querySelector(`input[name="hospitals[${currentHospitalIndex}][longitude]"]`).value = lng;
-      }
+  closeMapModal();
+}
 
-      closeMapModal();
-    }
+
+function closeMapModal() {
+  document.getElementById('mapModal').style.display = 'none';
+}
+
   </script>
   <script src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAPS_API_KEY %>&libraries=places&callback=initMap" async defer></script></head>
 

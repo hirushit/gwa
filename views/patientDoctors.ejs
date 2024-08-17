@@ -22,19 +22,29 @@
 
         .container {
             display: flex;
+            flex-wrap: wrap;
             margin-top: 20px;
         }
 
-        .search-container {
-            margin-bottom: 20px;
+        .map-container {
+            flex: 1;
+            min-width: 300px; /* Adjust the minimum width as needed */
+            margin-right: 20px;
+        }
+
+        #map {
+            height: 300px; 
+            width: 30%; 
         }
 
         #results-container {
+            flex: 2;
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
         }
     </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAPS_API_KEY %>&callback=initMap" async defer></script>
 </head>
 <body>
     <h1>Find a Doctor</h1>
@@ -129,12 +139,69 @@
         </div>
     </div>
 
+    <div class="map-container">
+        <div id="map"></div>
+    </div>
+</div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             populateDropdowns();
             populateSearchFieldsFromUrl();
             searchDoctors();
+            initMap(); 
         });
+
+        function initMap() {
+    // Initialize the map with a default center and zoom level
+    const map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 10, // This will be adjusted by fitBounds
+        center: { lat: 20.5937, lng: 78.9629 } // Default center
+    });
+
+    const doctors = <%- JSON.stringify(doctors) %>;
+    const bounds = new google.maps.LatLngBounds();
+
+    doctors.forEach(doctor => {
+        doctor.hospitals.forEach(hospital => {
+            if (hospital.lat && hospital.lng) {
+                const position = { lat: hospital.lat, lng: hospital.lng };
+                
+                // Create a marker for each hospital location
+                const marker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    title: doctor.name + ' - ' + hospital.name
+                });
+
+                // Create an info window for each marker
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `<strong>${doctor.name}</strong><br>${hospital.name}<br>${hospital.city}, ${hospital.state}`
+                });
+
+                // Add click event to open info window
+                marker.addListener('click', () => {
+                    infoWindow.open(map, marker);
+                });
+
+                // Extend the bounds to include the current marker position
+                bounds.extend(position);
+            }
+        });
+    });
+
+    // Fit the map to include all the markers
+    map.fitBounds(bounds);
+
+    // Set a maximum zoom level to avoid too much zoom-in
+    const maxZoomLevel = 10; // Adjust this value as needed
+    map.addListener('bounds_changed', () => {
+        if (map.getZoom() > maxZoomLevel) {
+            map.setZoom(maxZoomLevel);
+        }
+    });
+}
+
+
 
         async function populateDropdowns() {
             await populateCountryDropdown();

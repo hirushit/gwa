@@ -125,7 +125,7 @@ router.get('/doctors', async (req, res) => {
     const doctors = await Doctor.find({ verified: 'Verified' })
       .populate({
         path: 'hospitals',
-        select: 'name city -_id' 
+        select: 'name city lat lng -_id'  // Ensure lat and lng are included
       })
       .sort(sortCriteria);
 
@@ -134,11 +134,11 @@ router.get('/doctors', async (req, res) => {
     const states = await Doctor.distinct('state');
     const hospitals = doctors.flatMap(doctor => doctor.hospitals);
     const cities = Array.from(new Set(hospitals.map(hospital => hospital.city)))
-    .filter(city => city !== undefined);
+      .filter(city => city !== undefined);
     const specialities = await Doctor.distinct('speciality');
     const languages = await Doctor.distinct('languages');
     const genders = await Doctor.distinct('gender');
-    console.log(cities);
+
     res.render('patientDoctors', {
       doctors,
       countries,
@@ -153,6 +153,7 @@ router.get('/doctors', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
   try {
@@ -895,5 +896,22 @@ router.post('/notifications/:id/delete', isLoggedIn, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+router.get('/locations', async (req, res) => {
+  try {
+    const doctors = await Doctor.find({
+      'hospitals.lat': { $exists: true, $ne: null },
+      'hospitals.lng': { $exists: true, $ne: null }
+    }, 'name hospitals');
+
+    res.render('doctors_map', { doctors });
+  } catch (err) {
+    console.error('Error fetching doctor locations:', err);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+
 
 module.exports = router;

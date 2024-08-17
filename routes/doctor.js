@@ -194,7 +194,7 @@ try {
 }
 });
 
-  router.get('/insights', isLoggedIn, async (req, res) => {
+router.get('/insights', isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
         const doctor = await Doctor.findOne({ email: doctorEmail });
@@ -203,9 +203,12 @@ try {
             return res.status(404).send('Doctor not found');
         }
 
-        const totalPatients = await Patient.countDocuments(); 
-        const totalConsultations = doctor.consultationsCompleted;
-        const totalReviews = doctor.reviews.length; 
+        const totalPatients = await Patient.countDocuments();
+        const totalConsultations = await Booking.countDocuments({ doctor: doctor._id, status: 'completed' });
+        const totalReviews = doctor.reviews.length;
+
+        const totalRatings = doctor.reviews.reduce((acc, review) => acc + review.rating, 0);
+        const averageRating = totalReviews > 0 ? (totalRatings / totalReviews).toFixed(1) : 'No ratings';
 
         const bookingRates = await Booking.aggregate([
             { $match: { doctor: doctor._id } },
@@ -224,13 +227,25 @@ try {
             { $count: 'unreadCount' }
         ]);
 
+        const waitingAppointmentsCount = await Booking.countDocuments({
+            doctor: doctor._id,
+            status: 'waiting'
+        });
+
+        const totalPostedSlots = doctor.timeSlots.length;
+        const totalFilledSlots = doctor.timeSlots.filter(slot => slot.status === 'booked').length;
+
         res.render('doctorInsights', {
             doctor,
             totalPatients,
             totalConsultations,
             totalReviews,
+            averageRating,
             bookingRates,
-            totalUnreadMessages: totalUnreadMessages[0]?.unreadCount || 0
+            totalUnreadMessages: totalUnreadMessages[0]?.unreadCount || 0,
+            waitingAppointmentsCount,
+            totalPostedSlots,
+            totalFilledSlots
         });
     } catch (err) {
         console.error(err.message);

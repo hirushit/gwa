@@ -122,13 +122,35 @@ router.get('/doctors', async (req, res) => {
         sortCriteria = {};
     }
 
+    // Fetch doctors including their time slots
     const doctors = await Doctor.find({ verified: 'Verified' })
       .populate({
         path: 'hospitals',
-        select: 'name city lat lng -_id'  
+        select: 'name city lat lng -_id'
       })
       .sort(sortCriteria);
 
+    // Extract unique free time slot locations
+    const locationSet = new Set();
+
+    doctors.forEach(doctor => {
+      doctor.timeSlots.forEach(slot => {
+        if (slot.status === 'free' && slot.lat && slot.lng) {
+          const key = `${slot.lat},${slot.lng}`;
+          if (!locationSet.has(key)) {
+            locationSet.add(key);
+          }
+        }
+      });
+    });
+
+    // Convert set to array
+    const uniqueLocations = Array.from(locationSet).map(key => {
+      const [lat, lng] = key.split(',').map(Number);
+      return { lat, lng };
+    });
+
+    // Fetch other data for rendering
     const countries = await Doctor.distinct('country');
     const states = await Doctor.distinct('state');
     const hospitals = doctors.flatMap(doctor => doctor.hospitals);
@@ -145,13 +167,15 @@ router.get('/doctors', async (req, res) => {
       cities,
       specialities,
       languages,
-      genders
+      genders,
+      uniqueLocations // Pass unique locations to the frontend
     });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
+
 
 
 router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {

@@ -151,47 +151,45 @@
         });
 
         function initMap() {
-    const map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 10, 
-        center: { lat: 20.5937, lng: 78.9629 } 
-    });
+        const map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 10, 
+            center: { lat: 20.5937, lng: 78.9629 } 
+        });
 
-    const doctors = <%- JSON.stringify(doctors) %>;
-    const bounds = new google.maps.LatLngBounds();
+        const doctors = <%- JSON.stringify(doctors) %>;
+        const uniqueLocations = <%- JSON.stringify(uniqueLocations) %>; 
 
-    doctors.forEach(doctor => {
-        doctor.hospitals.forEach(hospital => {
-            if (hospital.lat && hospital.lng) {
-                const position = { lat: hospital.lat, lng: hospital.lng };
-                
-                const marker = new google.maps.Marker({
-                    position: position,
-                    map: map,
-                    title: doctor.name + ' - ' + hospital.name
-                });
+        const bounds = new google.maps.LatLngBounds();
 
-                const infoWindow = new google.maps.InfoWindow({
-                    content: `<strong>${doctor.name}</strong><br>${hospital.name}<br>${hospital.city}, ${hospital.state}`
-                });
+        uniqueLocations.forEach(location => {
+            const position = { lat: location.lat, lng: location.lng };
 
-                marker.addListener('click', () => {
-                    infoWindow.open(map, marker);
-                });
+            const marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: 'Free Time Slot Location'
+            });
 
-                bounds.extend(position);
+            const infoWindow = new google.maps.InfoWindow({
+                content: `Lat: ${location.lat}, Lng: ${location.lng}`
+            });
+
+            marker.addListener('click', () => {
+                infoWindow.open(map, marker);
+            });
+
+            bounds.extend(position);
+        });
+
+        map.fitBounds(bounds);
+
+        const maxZoomLevel = 10; 
+        map.addListener('bounds_changed', () => {
+            if (map.getZoom() > maxZoomLevel) {
+                map.setZoom(maxZoomLevel);
             }
         });
-    });
-
-    map.fitBounds(bounds);
-
-    const maxZoomLevel = 10; 
-    map.addListener('bounds_changed', () => {
-        if (map.getZoom() > maxZoomLevel) {
-            map.setZoom(maxZoomLevel);
-        }
-    });
-}
+    }
 
 
 

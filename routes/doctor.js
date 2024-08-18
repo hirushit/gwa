@@ -66,9 +66,18 @@ router.get('/doctor-index', isDoctor, isLoggedIn, async (req, res) => {
         if (!doctor) {
             return res.status(404).send('Doctor not found');
         }
+
+        // Retrieve blogs with high priority and verified status
         const blogs = await Blog.find({ priority: 'high', verificationStatus: 'Verified' }).limit(5).exec();
 
-        res.render('doctor-index', { doctor, blogs, user: req.session.user });
+        // Retrieve unique categories
+        const categories = await Blog.distinct('categories', { verificationStatus: 'Verified' });
+
+        // Retrieve unique hashtags and remove the '#' symbol
+        let hashtags = await Blog.distinct('hashtags', { verificationStatus: 'Verified' });
+        hashtags = hashtags.map(hashtag => hashtag.replace('#', ''));
+
+        res.render('doctor-index', { doctor, blogs, categories, hashtags, user: req.session.user });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -116,128 +125,143 @@ router.get('/edit', isLoggedIn, async (req, res) => {
     }
   });
   
-router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, async (req, res) => {
-try {
-    const doctorEmail = req.session.user.email;
-    let doctor = await Doctor.findOne({ email: doctorEmail });
-
-    let hospitals = [];
-    if (Array.isArray(req.body.hospitals)) {
-    hospitals = req.body.hospitals.map((hospital) => {
-        let hospitalData = {
-        name: hospital.name,
-        street: hospital.street,
-        city: hospital.city,
-        state: hospital.state,
-        country: hospital.country,
-        zip: hospital.zip
-        };
-
-        if (hospital.latitude && !isNaN(parseFloat(hospital.latitude))) {
-        hospitalData.lat = parseFloat(hospital.latitude);
-        }
-        if (hospital.longitude && !isNaN(parseFloat(hospital.longitude))) {
-        hospitalData.lng = parseFloat(hospital.longitude);
-        }
-
-        return hospitalData;
-    });
-    } else if (req.body.hospitals && req.body.hospitals.name) {
-    let hospitalData = {
-        name: req.body.hospitals.name,
-        street: req.body.hospitals.street,
-        city: req.body.hospitals.city,
-        state: req.body.hospitals.state,
-        country: req.body.hospitals.country,
-        zip: req.body.hospitals.zip
-    };
-
-    if (req.body.hospitals.latitude && !isNaN(parseFloat(req.body.hospitals.latitude))) {
-        hospitalData.lat = parseFloat(req.body.hospitals.latitude);
-    }
-    if (req.body.hospitals.longitude && !isNaN(parseFloat(req.body.hospitals.longitude))) {
-        hospitalData.lng = parseFloat(req.body.hospitals.longitude);
-    }
-
-    hospitals = [hospitalData];
-    }
-
-    const insuranceIds = (Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances])
-    .map(id => id.toString());
-
-    const updateData = {
-    ...req.body,
-    aboutMe: req.body.aboutMe || doctor.aboutMe,
-    speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
-    languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
-    insurances: insuranceIds,
-    awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
-    faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
-    hospitals: hospitals
-    };
-
-    if (req.file) {
-    updateData.profilePicture = {
-        data: req.file.buffer,
-        contentType: req.file.mimetype
-    };
-    }
-
-    doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });
-
-    await doctor.save();
-
-    res.redirect('/doctor/profile');
-} catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-}
-});
-
-  router.get('/insights', isLoggedIn, async (req, res) => {
+  router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
-        const doctor = await Doctor.findOne({ email: doctorEmail });
-
-        if (!doctor) {
-            return res.status(404).send('Doctor not found');
-        }
-
-        const totalPatients = await Patient.countDocuments(); 
-        const totalConsultations = doctor.consultationsCompleted;
-        const totalReviews = doctor.reviews.length; 
-
-        const bookingRates = await Booking.aggregate([
-            { $match: { doctor: doctor._id } },
-            {
-                $group: {
-                    _id: { $dayOfWeek: '$date' },
-                    count: { $sum: 1 }
-                }
+        let doctor = await Doctor.findOne({ email: doctorEmail });
+    
+        let hospitals = [];
+        if (Array.isArray(req.body.hospitals)) {
+        hospitals = req.body.hospitals.map((hospital) => {
+            let hospitalData = {
+            name: hospital.name,
+            street: hospital.street,
+            city: hospital.city,
+            state: hospital.state,
+            country: hospital.country,
+            zip: hospital.zip
+            };
+    
+            if (hospital.latitude && !isNaN(parseFloat(hospital.latitude))) {
+            hospitalData.lat = parseFloat(hospital.latitude);
             }
-        ]);
-
-        const totalUnreadMessages = await Chat.aggregate([
-            { $match: { doctorId: doctor._id } },
-            { $unwind: '$messages' },
-            { $match: { 'messages.read': false, 'messages.senderId': { $ne: doctor._id } } },
-            { $count: 'unreadCount' }
-        ]);
-
-        res.render('doctorInsights', {
-            doctor,
-            totalPatients,
-            totalConsultations,
-            totalReviews,
-            bookingRates,
-            totalUnreadMessages: totalUnreadMessages[0]?.unreadCount || 0
+            if (hospital.longitude && !isNaN(parseFloat(hospital.longitude))) {
+            hospitalData.lng = parseFloat(hospital.longitude);
+            }
+    
+            return hospitalData;
         });
+        } else if (req.body.hospitals && req.body.hospitals.name) {
+        let hospitalData = {
+            name: req.body.hospitals.name,
+            street: req.body.hospitals.street,
+            city: req.body.hospitals.city,
+            state: req.body.hospitals.state,
+            country: req.body.hospitals.country,
+            zip: req.body.hospitals.zip
+        };
+    
+        if (req.body.hospitals.latitude && !isNaN(parseFloat(req.body.hospitals.latitude))) {
+            hospitalData.lat = parseFloat(req.body.hospitals.latitude);
+        }
+        if (req.body.hospitals.longitude && !isNaN(parseFloat(req.body.hospitals.longitude))) {
+            hospitalData.lng = parseFloat(req.body.hospitals.longitude);
+        }
+    
+        hospitals = [hospitalData];
+        }
+    
+        const insuranceIds = (Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances])
+        .map(id => id.toString());
+    
+        const updateData = {
+        ...req.body,
+        aboutMe: req.body.aboutMe || doctor.aboutMe,
+        speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
+        languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
+        insurances: insuranceIds,
+        awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
+        faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
+        hospitals: hospitals
+        };
+    
+        if (req.file) {
+        updateData.profilePicture = {
+            data: req.file.buffer,
+            contentType: req.file.mimetype
+        };
+        }
+    
+        doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });
+    
+        await doctor.save();
+    
+        res.redirect('/doctor/profile');
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
-});
-
+    });
+    
+    router.get('/insights', isLoggedIn, async (req, res) => {
+        try {
+            const doctorEmail = req.session.user.email;
+            const doctor = await Doctor.findOne({ email: doctorEmail });
+    
+            if (!doctor) {
+                return res.status(404).send('Doctor not found');
+            }
+    
+            const totalPatients = await Patient.countDocuments();
+            const totalConsultations = await Booking.countDocuments({ doctor: doctor._id, status: 'completed' });
+            const totalReviews = doctor.reviews.length;
+    
+            const totalRatings = doctor.reviews.reduce((acc, review) => acc + review.rating, 0);
+            const averageRating = totalReviews > 0 ? (totalRatings / totalReviews).toFixed(1) : 'No ratings';
+    
+            const bookingRates = await Booking.aggregate([
+                { $match: { doctor: doctor._id } },
+                {
+                    $group: {
+                        _id: { $dayOfWeek: '$date' },
+                        count: { $sum: 1 }
+                    }
+                }
+            ]);
+    
+            const totalUnreadMessages = await Chat.aggregate([
+                { $match: { doctorId: doctor._id } },
+                { $unwind: '$messages' },
+                { $match: { 'messages.read': false, 'messages.senderId': { $ne: doctor._id } } },
+                { $count: 'unreadCount' }
+            ]);
+    
+            const waitingAppointmentsCount = await Booking.countDocuments({
+                doctor: doctor._id,
+                status: 'waiting'
+            });
+    
+            const totalPostedSlots = doctor.timeSlots.length;
+            const totalFilledSlots = doctor.timeSlots.filter(slot => slot.status === 'booked').length;
+    
+            res.render('doctorInsights', {
+                doctor,
+                totalPatients,
+                totalConsultations,
+                totalReviews,
+                averageRating,
+                bookingRates,
+                totalUnreadMessages: totalUnreadMessages[0]?.unreadCount || 0,
+                waitingAppointmentsCount,
+                totalPostedSlots,
+                totalFilledSlots
+            });
+        } catch (err) {
+            console.error(err.message);
+            res.status(500).send('Server Error');
+        }
+    });
+    
   
 router.post('/profile/verify', isLoggedIn, async (req, res) => {
     try {
@@ -991,41 +1015,224 @@ router.get('/blog', (req, res) => {
 router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
     try {
         const authorEmail = req.session.user.email;
-        const { title, author, description, summary, categories, subcategories, hashtags, priority } = req.body;
+        const { title, author, description, categories, hashtags, priority } = req.body;
 
         const doctor = await Doctor.findOne({ email: authorEmail });
 
         let authorId = null;
+        let authorTitle = '';
+        let profilePicture = null;
+        
         if (doctor) {
             authorId = doctor._id; 
+            authorTitle = doctor.title;
+            profilePicture = {
+                data: doctor.profilePicture.data, 
+                contentType: doctor.profilePicture.contentType
+            };
         }
 
         const newBlog = new Blog({
             title,
             author,
             description,
-            summary,
             authorEmail,
             authorId, 
-            categories: categories,
-            subcategories: subcategories, 
+            authorTitle,
+            profilePicture,
+            categories: categories, 
             hashtags: hashtags, 
             priority,
             image: {
                 data: req.file.buffer,
                 contentType: req.file.mimetype
             },
-            verificationStatus: 'Pending'
+            verificationStatus: 'Pending' 
         });
+
+        console.log('New Blog Data:', newBlog);
 
         await newBlog.save();
 
-        res.render('blog-success', { message: 'Blog uploaded successfully' });
+        res.json({ message: 'Blog uploaded successfully' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
     }
 });
+
+
+
+router.get('/blogs/category/:category', isDoctor, isLoggedIn, async (req, res) => {
+    try {
+        const { category } = req.params;
+
+        // Fetch blogs by category
+        const blogs = await Blog.find({ 
+            categories: { $in: [category] }, 
+            verificationStatus: 'Verified' 
+        }).lean();
+
+        // Fetch most read blogs
+        const mostReadBlogs = await Blog.find({ verificationStatus: 'Verified' })
+            .sort({ readCount: -1 })
+            .limit(5)
+            .lean();
+
+        // Fetch related posts by the same category
+        const relatedPosts = await Blog.find({
+            verificationStatus: 'Verified',
+            categories: { $in: [category] }
+        })
+        .limit(5)
+        .lean();
+
+        // Fetch all categories
+        const categories = await Blog.distinct('categories');
+
+        // Count the number of blogs in each category
+        const categoryCountMap = await Blog.aggregate([
+            { $match: { verificationStatus: 'Verified' } },
+            { $unwind: '$categories' },
+            { $group: { _id: '$categories', count: { $sum: 1 } } },
+            { $project: { _id: 1, count: 1 } }
+        ]).exec();
+
+        const categoryCountMapObj = categoryCountMap.reduce((acc, curr) => {
+            acc[curr._id] = curr.count;
+            return acc;
+        }, {});
+
+        // Fetch all hashtags
+        const hashtags = await Blog.distinct('hashtags');
+
+        // Count the number of blogs in each hashtag
+        const hashtagCountMap = await Blog.aggregate([
+            { $match: { verificationStatus: 'Verified' } },
+            { $unwind: '$hashtags' },
+            { $group: { _id: '$hashtags', count: { $sum: 1 } } },
+            { $project: { _id: 1, count: 1 } }
+        ]).exec();
+
+        const hashtagCountMapObj = hashtagCountMap.reduce((acc, curr) => {
+            acc[curr._id] = curr.count;
+            return acc;
+        }, {});
+
+        res.render('DoctorBlogs', {
+            blogs,
+            filterType: 'Category',
+            filterValue: category,
+            searchQuery: req.query.search || '',
+            user: req.session.user,
+            mostReadBlogs,
+            relatedPosts,
+            categories,
+            hashtags,
+            categoryCountMap: categoryCountMapObj,
+            hashtagCountMap: hashtagCountMapObj
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+router.get('/blogs/hashtag/:hashtag', isDoctor, isLoggedIn, async (req, res) => {
+    try {
+        // Retrieve hashtag from URL and format it
+        let hashtagParam = req.params.hashtag;
+        const hashtag = hashtagParam.startsWith('#') ? hashtagParam : `#${hashtagParam}`;
+
+        // Fetch blogs by hashtag
+        const blogs = await Blog.find({ 
+            hashtags: { $in: [hashtag] }, 
+            verificationStatus: 'Verified' 
+        }).lean();
+
+        // Fetch most read blogs
+        const mostReadBlogs = await Blog.find({ verificationStatus: 'Verified' })
+            .sort({ readCount: -1 })
+            .limit(5)
+            .lean();
+
+        // Fetch related posts by the same hashtag
+        const relatedPostsByHashtag = await Blog.find({
+            verificationStatus: 'Verified',
+            hashtags: { $in: [hashtag] }
+        })
+        .limit(5)
+        .lean();
+
+        // Fetch categories of the blogs that match the hashtag
+        const relatedCategories = await Blog.find({ 
+            hashtags: { $in: [hashtag] }, 
+            verificationStatus: 'Verified' 
+        }).distinct('categories');
+
+        // Fetch most read blogs within these categories
+        const mostReadBlogsByCategory = await Blog.find({
+            categories: { $in: relatedCategories },
+            verificationStatus: 'Verified'
+        })
+        .sort({ readCount: -1 })
+        .limit(5)
+        .lean();
+
+        // Fetch all hashtags
+        const hashtags = await Blog.distinct('hashtags');
+
+        // Count the number of blogs in each hashtag
+        const hashtagCountMap = await Blog.aggregate([
+            { $match: { verificationStatus: 'Verified' } },
+            { $unwind: '$hashtags' },
+            { $group: { _id: '$hashtags', count: { $sum: 1 } } },
+            { $project: { _id: 1, count: 1 } }
+        ]).exec();
+
+        const hashtagCountMapObj = hashtagCountMap.reduce((acc, curr) => {
+            acc[curr._id] = curr.count;
+            return acc;
+        }, {});
+
+        // Fetch all categories
+        const categories = await Blog.distinct('categories');
+
+        // Count the number of blogs in each category
+        const categoryCountMap = await Blog.aggregate([
+            { $match: { verificationStatus: 'Verified' } },
+            { $unwind: '$categories' },
+            { $group: { _id: '$categories', count: { $sum: 1 } } },
+            { $project: { _id: 1, count: 1 } }
+        ]).exec();
+
+        const categoryCountMapObj = categoryCountMap.reduce((acc, curr) => {
+            acc[curr._id] = curr.count;
+            return acc;
+        }, {});
+
+        res.render('DoctorBlogs', {
+            blogs,
+            filterType: 'Hashtag',
+            filterValue: hashtagParam,
+            searchQuery: req.query.search || '',
+            user: req.session.user,
+            mostReadBlogs,
+            relatedPosts: relatedPostsByHashtag,
+            mostReadBlogsByCategory,
+            categories,
+            hashtags,
+            categoryCountMap: categoryCountMapObj,
+            hashtagCountMap: hashtagCountMapObj
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
 
 
 
@@ -1219,9 +1426,6 @@ router.get('/chat/:id', isLoggedIn, checkSubscription, async (req, res) => {
     }
 });
 
-
-
-
 router.get('/blogs/view/:id', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const blogId = req.params.id;
@@ -1273,10 +1477,16 @@ router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
         if (!blog) {
             return res.status(404).send('Blog not found');
         }
-        console.log(req.session.user.name)
+
+        const user = req.session.user;
+
         blog.comments.push({
-            username: req.session.user.name, 
-            comment: comment
+            username: user.name,
+            comment: comment,
+            profilePicture: {
+                data: user.profilePicture.data, 
+                contentType: user.profilePicture.contentType
+            }
         });
   
         await blog.save();
@@ -1287,7 +1497,8 @@ router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
-  });
+});
+
   
   router.get('/author/:id', async (req, res) => {
     try {
@@ -1324,34 +1535,94 @@ router.get('/priority-blogs', async (req, res) => {
         res.status(500).send('Server Error');
       }
     });
-  
-router.get('/blogs', async (req, res) => {
-    try {
-      let filter = { verificationStatus: 'Verified' }; 
-  
-      if (req.query.search) {
-        const regex = new RegExp(escapeRegex(req.query.search), 'gi'); 
-  
-        filter = {
-          verificationStatus: 'Verified',
-          $or: [
-            { title: regex },
-            { categories: regex },
-            { hashtags: regex }
-          ]
-        };
+function escapeRegex(text) {
+        return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
       }
-  
-      const verifiedBlogs = await Blog.find(filter).lean();
-  
-      res.render('Doctorblogs', { blogs: verifiedBlogs, searchQuery: req.query.search });
-  
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
-    }
-  });
-
+      
+router.get('/blogs', isDoctor, isLoggedIn, async (req, res) => {
+        try {
+            let filter = { verificationStatus: 'Verified' };
+    
+            if (req.query.search) {
+                const regex = new RegExp(escapeRegex(req.query.search), 'gi');
+    
+                filter = {
+                    verificationStatus: 'Verified',
+                    $or: [
+                        { title: regex },
+                        { categories: regex },
+                        { hashtags: regex }
+                    ]
+                };
+            }
+    
+            // Retrieve distinct categories and hashtags
+            const categories = await Blog.distinct('categories', { verificationStatus: 'Verified' });
+            const hashtags = await Blog.distinct('hashtags', { verificationStatus: 'Verified' });
+    
+            // Count the number of blogs in each category
+            const categoryCountMap = await Blog.aggregate([
+                { $match: { verificationStatus: 'Verified' } },
+                { $unwind: '$categories' },
+                { $group: { _id: '$categories', count: { $sum: 1 } } },
+                { $project: { _id: 1, count: 1 } }
+            ]).exec();
+    
+            const categoryCountMapObj = categoryCountMap.reduce((acc, curr) => {
+                acc[curr._id] = curr.count;
+                return acc;
+            }, {});
+    
+            // Count the number of blogs in each hashtag
+            const hashtagCountMap = await Blog.aggregate([
+                { $match: { verificationStatus: 'Verified' } },
+                { $unwind: '$hashtags' },
+                { $group: { _id: '$hashtags', count: { $sum: 1 } } },
+                { $project: { _id: 1, count: 1 } }
+            ]).exec();
+    
+            const hashtagCountMapObj = hashtagCountMap.reduce((acc, curr) => {
+                acc[curr._id] = curr.count;
+                return acc;
+            }, {});
+    
+            // Find blogs based on the filter
+            const verifiedBlogs = await Blog.find(filter).lean();
+    
+            // Fetch most read blogs
+            const mostReadBlogs = await Blog.find({ verificationStatus: 'Verified' })
+                .sort({ readCount: -1 })
+                .limit(5)
+                .lean();
+    
+            // Fetch related posts based on categories (exclude current category)
+            const relatedPosts = await Blog.find({
+                verificationStatus: 'Verified',
+                categories: { $in: categories }
+            })
+            .limit(5)
+            .lean();
+    
+            res.render('DoctorBlogs', { 
+                blogs: verifiedBlogs, 
+                searchQuery: req.query.search,
+                categories,
+                hashtags,
+                categoryCountMap: categoryCountMapObj, // Pass category counts to template
+                hashtagCountMap: hashtagCountMapObj, // Pass hashtag counts to template
+                filterType: 'All', // Default filter type
+                filterValue: '', // Default filter value
+                mostReadBlogs, // Add most read blogs
+                relatedPosts // Add related posts
+            });
+        } catch (err) {
+            console.error(err.message);
+            res.status(500).send('Server Error');
+        }
+    });
+    
+    
+    
   router.get('/notifications', isLoggedIn, async (req, res) => {
     try {
       const notifications = await Notification.find({ userId: req.user._id }).lean();

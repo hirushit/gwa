@@ -5,16 +5,19 @@ const blogSchema = new Schema({
     title: { type: String, required: true },
     author: { type: String, required: true },
     description: { type: String, required: true },
-    summary: { type: String, required: true },
+    // summary: { type: String, required:   true },
     authorEmail: { type: String, required: true },
+    authorTitle: { type: String, required: true },
+    date: { type: Date, default: Date.now },
     image: {
         data: Buffer,
         contentType: String
     },
+    profilePicture: {
+        data: Buffer,
+        contentType: String 
+    },
     categories: {
-        type: [String]
-    }, 
-    subcategories: {
         type: [String]
     },
     hashtags: {
@@ -29,11 +32,14 @@ const blogSchema = new Schema({
         {
             username: String,
             comment: String,
+            profilePicture: {
+                data: Buffer,
+                contentType: String
+            },
             date: { type: Date, default: Date.now }
         }
     ],
-    authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    readCount: {type: Number} 
+    authorId: { type: String }
 });
 
 const Blog = mongoose.model('Blog', blogSchema);

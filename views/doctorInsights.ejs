@@ -8,18 +8,33 @@
 </head>
 <body>
     <div class="container">
-        <h1>Insights for Dr. <%= doctor.name %></h1>
-        
+        <h1>Insights</h1>
         <div class="insights-section">
-            <h2>Insights</h2>
+            <p><strong>Total Waiting Appointments:</strong> <%= waitingAppointmentsCount %></p>
             <p><strong>Total Patients:</strong> <%= totalPatients %></p>
-            <p><strong>Total Consultations Completed:</strong> <%= totalConsultations %></p>
-            <p><strong>Total Reviews:</strong> <%= totalReviews %></p>
-            <p><strong>Total Unread Messages:</strong> <%= totalUnreadMessages %></p>
+            <p><strong>Rating:</strong> <%= averageRating %></p>
         </div>
         
+        <h1>Profile</h1>
+        <div class="profile-section">
+            <p><strong>Name of the Doctor:</strong> Dr. <%= doctor.name %></p>
+            <p><strong>Specialization:</strong> <%= doctor.speciality.join(', ') %></p>
+            <p><strong>Total Unread Messages:</strong> <%= totalUnreadMessages %></p>
+            <p><strong>Slots:</strong> <%= totalFilledSlots %> / <%= totalPostedSlots %></p>
+        </div>
+
+        <h1>Total Consultations Completed</h1>
+        <div class="consultations-section">
+            <p><strong>Total Consultations Completed:</strong> <%= totalConsultations %></p>
+        </div>
+
+        <h1>Total Reviews</h1>
+        <div class="reviews-section">
+            <p><strong>Total Reviews:</strong> <%= totalReviews %></p>
+        </div>
+
+        <h2>Booking Rate by Day of the Week</h2>
         <div class="table-section">
-            <h2>Booking Rate by Day of the Week</h2>
             <% if (Array.isArray(bookingRates) && bookingRates.length > 0) { %>
                 <table border="1">
                     <thead>

@@ -102,6 +102,20 @@
             <button type="submit">Logout</button>
         </form>
         <div class="blogs-container">
+            <h2>Categories</h2>
+            <ul>
+                <% categories.forEach(category => { %>
+                    <li><a href="/doctor/blogs/category/<%= category %>"><%= category %></a></li>
+                <% }) %>
+            </ul>
+
+            <!-- Display Hashtags -->
+            <h2>Hashtags</h2>
+            <ul>
+                <% hashtags.forEach(hashtag => { %>
+                    <li><a href="/doctor/blogs/hashtag/<%= hashtag %>">#<%= hashtag %></a></li>
+                <% }) %>
+            </ul>
             <h2> Blogs</h2>
             <ul>
                 <% blogs.forEach(blog => { %>

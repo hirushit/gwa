@@ -20,25 +20,90 @@
     </style>
 </head>
 <body>
-    <h1>Blogs</h1>
-    <form action="/doctor/priority-blogs" method="GET">
+    <h1>Blogs - <%= filterType %>: <%= filterValue %></h1>
+    <form action="/doctor/blogs" method="GET">
         <label for="search">Search:</label>
         <input type="text" id="search" name="search" value="<%= searchQuery %>">
         <button type="submit">Search</button>
     </form>
+    <h2>Categories</h2>
+    <ul>
+        <% categories.forEach(category => { %>
+            <li><a href="/doctor/blogs/category/<%= category %>"><%= category %> (<%= categoryCountMap[category] || 0 %>)</a></li>
+        <% }) %>
+    </ul>
+
+    <h2>Hashtags</h2>
+    <ul>
+        <% if (hashtags) { %>
+            <% hashtags.forEach(hashtag => { %>
+                <li><a href="/doctor/blogs/hashtag/<%= hashtag.replace('#', '') %>"><%= hashtag %> (<%= hashtagCountMap[hashtag] || 0 %>)</a></li>
+            <% }) %>
+        <% } %>
+    </ul>
+    <h2>Blogs</h2>
     <ul>
         <% blogs.forEach(blog => { %>
+            <script>console.log("Rendering blog:", "<%= blog.title %>");</script>
             <li class="blog-container">
                 <% if (blog.image && blog.image.data) { %>
                     <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
                 <% } %>
                 <div>
                     <h3><%= blog.title %></h3>
-                    <p><%= blog.summary %></p>
+                    <p><%= blog.description %></p>
                     <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
                 </div>
             </li>
         <% }) %>
+        
     </ul>
+    <!-- Most Read Blogs Section -->
     
+    <% if (mostReadBlogs.length > 0) { %>
+        <section class="most-read-blogs">
+            <h2>Most Read Blogs</h2>
+            <ul>
+                <% mostReadBlogs.forEach(blog => { %>
+                    <script>console.log("Rendering most read blog:", "<%= blog.title %>");</script>
+                    <li class="blog-container">
+                        <% if (blog.image && blog.image.data) { %>
+                            <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                        <% } %>
+                        <div>
+                            <h3><%= blog.title %></h3>
+                            <p><%= blog.description %></p>
+                            <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                        </div>
+                    </li>
+                <% }) %>
+            </ul>
+        </section>
+    <% } %>
+
+    <!-- Related Posts Section -->
+    <% if (relatedPosts.length > 0) { %>
+        <section class="related-posts">
+            <h2>Related Posts</h2>
+            <ul>
+                <% relatedPosts.forEach(blog => { %>
+                    <script>console.log("Rendering related post:", "<%= blog.title %>");</script>
+                    <li class="blog-container">
+                        <% if (blog.image && blog.image.data) { %>
+                            <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                        <% } %>
+                        <div>
+                            <h3><%= blog.title %></h3>
+                            <p><%= blog.description %></p>
+                            <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                        </div>
+                    </li>
+                <% }) %>
+            </ul>
+        </section>
+    <% } %>
+  
+
+    
+</body>
 </html>

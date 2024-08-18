@@ -83,74 +83,88 @@
     }
 
     function addHospital() {
-      const container = document.getElementById('hospitals-container');
-      const newIndex = container.getElementsByClassName('input-group').length;
+  const container = document.getElementById('hospitals-container');
+  const newIndex = container.getElementsByClassName('input-group').length;
 
-      const hospitalWrapper = document.createElement('div');
-      hospitalWrapper.className = 'input-group';
+  const hospitalWrapper = document.createElement('div');
+  hospitalWrapper.className = 'input-group';
 
-      const hospitalNameInput = document.createElement('input');
-      hospitalNameInput.type = 'text';
-      hospitalNameInput.name = `hospitals[${newIndex}][name]`;
-      hospitalNameInput.className = 'form-control';
-      hospitalNameInput.placeholder = 'Hospital Name';
-      hospitalWrapper.appendChild(hospitalNameInput);
+  const hospitalNameInput = document.createElement('input');
+  hospitalNameInput.type = 'text';
+  hospitalNameInput.name = `hospitals[${newIndex}][name]`;
+  hospitalNameInput.className = 'form-control';
+  hospitalNameInput.placeholder = 'Hospital Name';
+  hospitalWrapper.appendChild(hospitalNameInput);
 
-      const hospitalStreetInput = document.createElement('input');
-      hospitalStreetInput.type = 'text';
-      hospitalStreetInput.name = `hospitals[${newIndex}][street]`;
-      hospitalStreetInput.className = 'form-control';
-      hospitalStreetInput.placeholder = 'Hospital Street';
-      hospitalWrapper.appendChild(hospitalStreetInput);
+  const hospitalStreetInput = document.createElement('input');
+  hospitalStreetInput.type = 'text';
+  hospitalStreetInput.name = `hospitals[${newIndex}][street]`;
+  hospitalStreetInput.className = 'form-control';
+  hospitalStreetInput.placeholder = 'Hospital Street';
+  hospitalWrapper.appendChild(hospitalStreetInput);
 
-      const hospitalCityInput = document.createElement('input');
-      hospitalCityInput.type = 'text';
-      hospitalCityInput.name = `hospitals[${newIndex}][city]`;
-      hospitalCityInput.className = 'form-control';
-      hospitalCityInput.placeholder = 'Hospital City';
-      hospitalWrapper.appendChild(hospitalCityInput);
+  const hospitalCityInput = document.createElement('input');
+  hospitalCityInput.type = 'text';
+  hospitalCityInput.name = `hospitals[${newIndex}][city]`;
+  hospitalCityInput.className = 'form-control';
+  hospitalCityInput.placeholder = 'Hospital City';
+  hospitalWrapper.appendChild(hospitalCityInput);
 
-      const hospitalStateInput = document.createElement('input');
-      hospitalStateInput.type = 'text';
-      hospitalStateInput.name = `hospitals[${newIndex}][state]`;
-      hospitalStateInput.className = 'form-control';
-      hospitalStateInput.placeholder = 'Hospital State';
-      hospitalWrapper.appendChild(hospitalStateInput);
+  const hospitalStateInput = document.createElement('input');
+  hospitalStateInput.type = 'text';
+  hospitalStateInput.name = `hospitals[${newIndex}][state]`;
+  hospitalStateInput.className = 'form-control';
+  hospitalStateInput.placeholder = 'Hospital State';
+  hospitalWrapper.appendChild(hospitalStateInput);
 
-      const hospitalCountryInput = document.createElement('input');
-      hospitalCountryInput.type = 'text';
-      hospitalCountryInput.name = `hospitals[${newIndex}][country]`;
-      hospitalCountryInput.className = 'form-control';
-      hospitalCountryInput.placeholder = 'Hospital Country';
-      hospitalWrapper.appendChild(hospitalCountryInput);
+  const hospitalCountryInput = document.createElement('input');
+  hospitalCountryInput.type = 'text';
+  hospitalCountryInput.name = `hospitals[${newIndex}][country]`;
+  hospitalCountryInput.className = 'form-control';
+  hospitalCountryInput.placeholder = 'Hospital Country';
+  hospitalWrapper.appendChild(hospitalCountryInput);
 
-      const hospitalZipInput = document.createElement('input');
-      hospitalZipInput.type = 'text';
-      hospitalZipInput.name = `hospitals[${newIndex}][zip]`;
-      hospitalZipInput.className = 'form-control';
-      hospitalZipInput.placeholder = 'Hospital ZIP';
-      hospitalWrapper.appendChild(hospitalZipInput);
+  const hospitalZipInput = document.createElement('input');
+  hospitalZipInput.type = 'text';
+  hospitalZipInput.name = `hospitals[${newIndex}][zip]`;
+  hospitalZipInput.className = 'form-control';
+  hospitalZipInput.placeholder = 'Hospital ZIP';
+  hospitalWrapper.appendChild(hospitalZipInput);
 
-      const addGeoButton = document.createElement('button');
-      addGeoButton.type = 'button';
-      addGeoButton.className = 'btn btn-primary';
-      addGeoButton.textContent = 'Add Geolocation';
-      addGeoButton.addEventListener('click', function() {
-        openMapModal(newIndex);
-      });
-      hospitalWrapper.appendChild(addGeoButton);
+  const hospitalLatitudeInput = document.createElement('input');
+  hospitalLatitudeInput.type = 'text';
+  hospitalLatitudeInput.name = `hospitals[${newIndex}][latitude]`;
+  hospitalLatitudeInput.className = 'form-control';
+  hospitalLatitudeInput.placeholder = 'Latitude';
+  hospitalWrapper.appendChild(hospitalLatitudeInput);
 
-      const removeButton = document.createElement('button');
-      removeButton.type = 'button';
-      removeButton.className = 'btn btn-danger';
-      removeButton.textContent = 'Remove';
-      removeButton.addEventListener('click', function() {
-        hospitalWrapper.remove();
-      });
-      hospitalWrapper.appendChild(removeButton);
+  const hospitalLongitudeInput = document.createElement('input');
+  hospitalLongitudeInput.type = 'text';
+  hospitalLongitudeInput.name = `hospitals[${newIndex}][longitude]`;
+  hospitalLongitudeInput.className = 'form-control';
+  hospitalLongitudeInput.placeholder = 'Longitude';
+  hospitalWrapper.appendChild(hospitalLongitudeInput);
 
-      container.appendChild(hospitalWrapper);
-    }
+  const addGeoButton = document.createElement('button');
+  addGeoButton.type = 'button';
+  addGeoButton.className = 'btn btn-primary';
+  addGeoButton.textContent = 'Add Geolocation';
+  addGeoButton.addEventListener('click', function() {
+    openMapModal(newIndex);
+  });
+  hospitalWrapper.appendChild(addGeoButton);
+
+  const removeButton = document.createElement('button');
+  removeButton.type = 'button';
+  removeButton.className = 'btn btn-danger';
+  removeButton.textContent = 'Remove';
+  removeButton.addEventListener('click', function() {
+    hospitalWrapper.remove();
+  });
+  hospitalWrapper.appendChild(removeButton);
+
+  container.appendChild(hospitalWrapper);
+}
 
     const allInsurances = <%- JSON.stringify(allInsurances) %>;
 
@@ -183,12 +197,13 @@
       container.appendChild(div);
     }
 
-    let initialized = false; 
+    let currentHospitalIndex = null; 
     let map;
     let marker;
     let searchBox;
+    let initialized = false;
 
-    function initMap() {
+function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 5,
         center: { lat: 20.5937, lng: 78.9629 }
@@ -243,22 +258,23 @@
         placeMarker(event.latLng);
     });
 
-    initialized = true; 
+    initialized = true;
 }
 
 function placeMarker(location) {
-  if (marker) {
-    marker.setMap(null);
-  }
-  marker = new google.maps.Marker({
-    position: location,
-    map: map
-  });
-  document.getElementById('latitude').value = location.lat();
-  document.getElementById('longitude').value = location.lng();
+    if (marker) {
+        marker.setMap(null);
+    }
+    marker = new google.maps.Marker({
+        position: location,
+        map: map
+    });
+    document.getElementById('latitude').value = location.lat();
+    document.getElementById('longitude').value = location.lng();
 }
+
 function openMapModal(index) {
-    currentHospitalIndex = index;
+    currentHospitalIndex = index; 
 
     document.getElementById('pac-input').value = '';
 
@@ -271,25 +287,38 @@ function openMapModal(index) {
     if (marker) {
         marker.setMap(null);
     }
-    map.setCenter({ lat: 20.5937, lng: 78.9629 }); 
+    map.setCenter({ lat: 20.5937, lng: 78.9629 });
     map.setZoom(5);
+
+    console.log('Opening map modal for hospital index:', currentHospitalIndex);
 }
 
-    function closeMapModal() {
-      document.getElementById('mapModal').style.display = 'none';
+function saveLocation() {
+  const lat = document.getElementById('latitude').value;
+  const lng = document.getElementById('longitude').value;
+
+  console.log('Saving location. Latitude:', lat, 'Longitude:', lng);
+  
+  if (lat && lng && currentHospitalIndex !== undefined) {
+    const latitudeInput = document.querySelector(`input[name="hospitals[${currentHospitalIndex}][latitude]"]`);
+    const longitudeInput = document.querySelector(`input[name="hospitals[${currentHospitalIndex}][longitude]"]`);
+    
+    if (latitudeInput && longitudeInput) {
+      latitudeInput.value = lat;
+      longitudeInput.value = lng;
     }
 
-    function saveLocation() {
-      const lat = document.getElementById('latitude').value;
-      const lng = document.getElementById('longitude').value;
+    console.log('Saved location for hospital index:', currentHospitalIndex, 'Latitude:', lat, 'Longitude:', lng);
+  }
 
-      if (lat && lng) {
-        document.querySelector(`input[name="hospitals[${currentHospitalIndex}][latitude]"]`).value = lat;
-        document.querySelector(`input[name="hospitals[${currentHospitalIndex}][longitude]"]`).value = lng;
-      }
+  closeMapModal();
+}
 
-      closeMapModal();
-    }
+
+function closeMapModal() {
+  document.getElementById('mapModal').style.display = 'none';
+}
+
   </script>
   <script src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAPS_API_KEY %>&libraries=places&callback=initMap" async defer></script></head>
 

@@ -17,29 +17,135 @@
             max-height: 150px;
             margin-right: 10px;
         }
+        .doctor-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .filters {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>Blogs</h1>
+    
+    <!-- Search Form -->
     <form action="/patient/blogs" method="GET">
         <label for="search">Search:</label>
         <input type="text" id="search" name="search" value="<%= searchQuery %>">
         <button type="submit">Search</button>
     </form>
-    <ul>
-        <% blogs.forEach(blog => { %>
-            <li class="blog-container">
-                <% if (blog.image && blog.image.data) { %>
-                    <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
-                <% } %>
-                <div>
-                    <h3><%= blog.title %></h3>
-                    <p><%= blog.summary %></p>
-                    <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
-                </div>
-            </li>
+
+    <!-- Featured Blogs -->
+    <div>
+        <h2>Featured Blogs</h2>
+        <ul>
+            <% featuredBlogs.forEach(blog => { %>
+                <li class="blog-container">
+                    <% if (blog.image && blog.image.data) { %>
+                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                    <% } %>
+                    <div>
+                        <h3><%= blog.title %></h3>
+                        <p><%= blog.summary %></p>
+                        <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
+                    </div>
+                </li>
+            <% }) %>
+        </ul>
+    </div>
+
+    <!-- Recent Blogs -->
+    <div>
+        <h2>Recent Blogs</h2>
+        <ul>
+            <% recentBlogs.forEach(blog => { %>
+                <li class="blog-container">
+                    <% if (blog.image && blog.image.data) { %>
+                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                    <% } %>
+                    <div>
+                        <h3><%= blog.title %></h3>
+                        <p><%= blog.summary %></p>
+                        <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
+                    </div>
+                </li>
+            <% }) %>
+        </ul>
+    </div>
+
+    <!-- Most Read Blogs -->
+    <div>
+        <h2>Most Read Blogs</h2>
+        <ul>
+            <% mostReadBlogs.forEach(blog => { %>
+                <li class="blog-container">
+                    <% if (blog.image && blog.image.data) { %>
+                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                    <% } %>
+                    <div>
+                        <h3><%= blog.title %></h3>
+                        <p><%= blog.summary %></p>
+                        <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
+                    </div>
+                </li>
+            <% }) %>
+        </ul>
+        <h2>Top Rated Doctors</h2>
+        <ul>
+            <% topRatedDoctors.forEach(doctor => { %>
+                <li class="doctor-container">
+                    <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
+                        <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Doctor Image" style="max-width: 150px; max-height: 150px; margin-right: 10px;">
+                    <% } else if (doctor.profilePicture && doctor.profilePicture.url) { %>
+                        <img src="<%= doctor.profilePicture.url %>" alt="Doctor Image" style="max-width: 150px; max-height: 150px; margin-right: 10px;">
+                    <% } %>
+                    <h3><%= doctor.name %></h3>
+                    <p>Rating: <%= doctor.rating %></p>
+                    <a href="/patient/doctors/<%= doctor._id %>/slots">Book Appointment</a>
+                </li>
+            <% }) %>
+        </ul>
+        
+    </div>
+
+    <!-- Blogs by Category -->
+    <div>
+        <% Object.keys(blogsByCategory).forEach(category => { %>
+            <h3><%= category %></h3>
+            <ul>
+                <% blogsByCategory[category].forEach(blog => { %>
+                    <li class="blog-container">
+                        <% if (blog.image && blog.image.data) { %>
+                            <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                        <% } %>
+                        <h4><%= blog.title %></h4>
+                        <p><%= blog.content %></p>
+                    </li>
+                <% }) %>
+            </ul>
         <% }) %>
-    </ul>
-    
+        
+        
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+        <h2>Categories</h2>
+        <ul>
+            <% categories.forEach(category => { %>
+                <li><a href="/patient/blogs/category/<%= category %>"><%= category %> (<%= categoryCounts[category] || 0 %>)</a></li>
+            <% }) %>
+        </ul>
+
+        <h2>Hashtags</h2>
+        <ul>
+            <% hashtags.forEach(hashtag => { %>
+                <li><a href="/patient/blogs/hashtag/<%= hashtag %>"><%= hashtag %> (<%= hashtagCounts[hashtag] || 0 %>)</a></li>
+            <% }) %>
+        </ul>
+
+    </div>
 </body>
 </html>

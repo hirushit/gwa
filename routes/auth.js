@@ -171,6 +171,38 @@ router.post('/signup/doctor', async (req, res) => {
   }
 });
 
+const sendWelcomeEmail = async (name, email, role) => {
+  const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+      }
+  });
+
+  const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: '🎉 Welcome to MedXBay! 🎉',
+      html: `
+          <p>Hi ${name},</p>
+
+          <p>Congratulations! Your email has been successfully verified, and we are delighted to welcome you to the MedXBay family!</p>
+
+          <p>Now that you're all set, you can start exploring our platform. Whether you're a user looking for top-notch medical care or a provider ready to offer your expertise, we are here to support you every step of the way.</p>
+
+          <p>If you have any questions, our support team is always here to help. We're excited to see you thrive on MedXBay!</p>
+
+          <p>Welcome aboard!</p>
+
+          <p>Best regards,</p>
+          <p>The MedXBay Team</p>
+      `
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
 
 router.get('/verify-email', async (req, res) => {
   const { token, role } = req.query;
@@ -193,6 +225,8 @@ router.get('/verify-email', async (req, res) => {
     await user.save();
 
     req.flash('success_msg', 'Your account has been verified. You can now login.');
+    await sendWelcomeEmail(user.name, user.email, role);
+
     return res.redirect('/auth/login');
   } catch (err) {
     console.error('Error in email verification:', err);

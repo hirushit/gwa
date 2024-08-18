@@ -22,19 +22,29 @@
 
         .container {
             display: flex;
+            flex-wrap: wrap;
             margin-top: 20px;
         }
 
-        .search-container {
-            margin-bottom: 20px;
+        .map-container {
+            flex: 1;
+            min-width: 300px; 
+            margin-right: 20px;
+        }
+
+        #map {
+            height: 300px; 
+            width: 30%; 
         }
 
         #results-container {
+            flex: 2;
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
         }
     </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAPS_API_KEY %>&callback=initMap" async defer></script>
 </head>
 <body>
     <h1>Find a Doctor</h1>
@@ -125,16 +135,63 @@
         </div>
 
         <div id="results-container">
-            <!-- Doctor cards will be dynamically generated here -->
         </div>
     </div>
 
+    <div class="map-container">
+        <div id="map"></div>
+    </div>
+</div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             populateDropdowns();
             populateSearchFieldsFromUrl();
             searchDoctors();
+            initMap(); 
         });
+
+        function initMap() {
+        const map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 10, 
+            center: { lat: 20.5937, lng: 78.9629 } 
+        });
+
+        const doctors = <%- JSON.stringify(doctors) %>;
+        const uniqueLocations = <%- JSON.stringify(uniqueLocations) %>; 
+
+        const bounds = new google.maps.LatLngBounds();
+
+        uniqueLocations.forEach(location => {
+            const position = { lat: location.lat, lng: location.lng };
+
+            const marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: 'Free Time Slot Location'
+            });
+
+            const infoWindow = new google.maps.InfoWindow({
+                content: `Lat: ${location.lat}, Lng: ${location.lng}`
+            });
+
+            marker.addListener('click', () => {
+                infoWindow.open(map, marker);
+            });
+
+            bounds.extend(position);
+        });
+
+        map.fitBounds(bounds);
+
+        const maxZoomLevel = 10; 
+        map.addListener('bounds_changed', () => {
+            if (map.getZoom() > maxZoomLevel) {
+                map.setZoom(maxZoomLevel);
+            }
+        });
+    }
+
+
 
         async function populateDropdowns() {
             await populateCountryDropdown();
@@ -186,16 +243,13 @@
                 const cities = await response.json();
                 const citySelect = document.getElementById('city');
         
-                // Clear existing options
                 citySelect.innerHTML = '';
         
-                // Add a default option if desired
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
                 defaultOption.textContent = 'Select a city';
                 citySelect.appendChild(defaultOption);
         
-                // Populate dropdown with cities
                 cities.forEach(city => {
                     const option = document.createElement('option');
                     option.value = city;

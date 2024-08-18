@@ -176,6 +176,8 @@ router.get('/doctors', async (req, res) => {
   }
 });
 
+
+
 router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
   try {
       const doctorId = req.params.id;
@@ -1176,5 +1178,22 @@ router.post('/notifications/:id/delete', isLoggedIn, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+router.get('/locations', async (req, res) => {
+  try {
+    const doctors = await Doctor.find({
+      'hospitals.lat': { $exists: true, $ne: null },
+      'hospitals.lng': { $exists: true, $ne: null }
+    }, 'name hospitals');
+
+    res.render('doctors_map', { doctors });
+  } catch (err) {
+    console.error('Error fetching doctor locations:', err);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+
 
 module.exports = router;

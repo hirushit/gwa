@@ -16,33 +16,39 @@
             border: 1px solid #ccc;
             padding: 10px;
             margin-bottom: 10px;
-            width: 300px;
+            width: 600px;
             height: 300px;
         }
 
         .container {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap; 
             margin-top: 20px;
         }
 
         .map-container {
             flex: 1;
-            min-width: 300px; 
-            margin-right: 20px;
+            min-width: 300px;
+            margin-left: 20px;
         }
 
         #map {
-    width: 310px;
-    height: 100vh; 
-}
-
+            width: 100%;
+            height: 100vh; 
+        }
 
         #results-container {
             flex: 2;
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column; 
             gap: 10px;
+            overflow-y: auto;
+        }
+
+        .custom-info-window {
+            max-width: 300px; 
+            padding: 10px;
+            font-size: 14px;
         }
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAPS_API_KEY %>&callback=initMap" async defer></script>
@@ -121,7 +127,6 @@
             <label for="dateAvailability">Date Availability:</label> 
             <input type="date" id="dateAvailability" onchange="searchDoctors()">
 
-
             <label for="consultation">Consultation Type:</label>
             <select id="consultation" onchange="searchDoctors()">
                 <option value="">Select Consultation Type</option>
@@ -137,12 +142,11 @@
 
         <div id="results-container">
         </div>
-    </div>
 
-    <div class="map-container">
-        <div id="map"></div>
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
     </div>
-</div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             populateDropdowns();
@@ -152,7 +156,7 @@
         });
 
         function initMap() {
-    const map = new google.maps.Map(document.getElementById('map'), {
+    map = new google.maps.Map(document.getElementById('map'), {
         zoom: 10,
         center: { lat: 20.5937, lng: 78.9629 }
     });
@@ -170,11 +174,11 @@
                     lng: position.coords.longitude
                 };
 
-                const userMarker = new google.maps.Marker({
+                userMarker = new google.maps.Marker({
                     position: userLocation,
                     map: map,
                     title: 'Your Location',
-                    icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png' 
+                    icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
                 });
 
                 bounds.extend(userLocation);
@@ -185,11 +189,18 @@
                     const marker = new google.maps.Marker({
                         position: position,
                         map: map,
-                        title: 'Free Time Slot Location'
+                        title: location.hospitalName
                     });
 
+                    const distance = computeDistance(userLocation, position);
                     const infoWindow = new google.maps.InfoWindow({
-                        content: `Lat: ${location.lat}, Lng: ${location.lng}`
+                        content: `
+                            <div class="custom-info-window">
+                                <strong>Doctor:</strong> ${location.doctorName}<br>
+                                <strong>Hospital:</strong> ${location.hospitalName}<br>
+                                <strong>Distance:</strong> ${distance.toFixed(2)} km away
+                            </div>
+                        `
                     });
 
                     marker.addListener('click', () => {
@@ -216,6 +227,20 @@
         handleLocationError(false, map.getCenter());
     }
 }
+
+
+
+function computeDistance(loc1, loc2) {
+            const rad = (x) => x * Math.PI / 180;
+            const R = 6371; 
+            const dLat = rad(loc2.lat - loc1.lat);
+            const dLng = rad(loc2.lng - loc1.lng);
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(rad(loc1.lat)) * Math.cos(rad(loc2.lat)) *
+                      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
 
 
 

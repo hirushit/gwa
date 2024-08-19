@@ -122,7 +122,6 @@ router.get('/doctors', async (req, res) => {
         sortCriteria = {};
     }
 
-    // Fetch doctors including their time slots
     const doctors = await Doctor.find({ verified: 'Verified' })
       .populate({
         path: 'hospitals',
@@ -130,27 +129,26 @@ router.get('/doctors', async (req, res) => {
       })
       .sort(sortCriteria);
 
-    // Extract unique free time slot locations
-    const locationSet = new Set();
+    const locationSet = new Map();
 
     doctors.forEach(doctor => {
       doctor.timeSlots.forEach(slot => {
         if (slot.status === 'free' && slot.lat && slot.lng) {
           const key = `${slot.lat},${slot.lng}`;
           if (!locationSet.has(key)) {
-            locationSet.add(key);
+            locationSet.set(key, {
+              lat: slot.lat,
+              lng: slot.lng,
+              hospitalName: slot.hospital,
+              doctorName: doctor.name
+            });
           }
         }
       });
     });
 
-    // Convert set to array
-    const uniqueLocations = Array.from(locationSet).map(key => {
-      const [lat, lng] = key.split(',').map(Number);
-      return { lat, lng };
-    });
+    const uniqueLocations = Array.from(locationSet.values());
 
-    // Fetch other data for rendering
     const countries = await Doctor.distinct('country');
     const states = await Doctor.distinct('state');
     const hospitals = doctors.flatMap(doctor => doctor.hospitals);
@@ -175,7 +173,6 @@ router.get('/doctors', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
 
 
 router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
@@ -496,7 +493,6 @@ router.get('/priority-blogs', async (req, res) => {
         const { search } = req.query;
         let filter = { verificationStatus: 'Verified' };
 
-        // Create a regex for search functionality
         if (search) {
             const regex = new RegExp(escapeRegex(search), 'gi');
             filter = {
@@ -509,48 +505,40 @@ router.get('/priority-blogs', async (req, res) => {
             };
         }
 
-        // Retrieve distinct categories and hashtags
         const categories = await Blog.distinct('categories', { verificationStatus: 'Verified' });
-        // Retrieve unique hashtags and remove the '#' symbol
         let hashtags = await Blog.distinct('hashtags', { verificationStatus: 'Verified' });
         hashtags = hashtags.map(hashtag => hashtag.replace('#', ''));
 
-        // Count the number of blogs per category
         const categoryCounts = await Blog.aggregate([
             { $match: { verificationStatus: 'Verified' } },
             { $unwind: '$categories' },
             { $group: { _id: '$categories', count: { $sum: 1 } } }
         ]);
 
-        // Count the number of blogs per hashtag
         const hashtagCounts = await Blog.aggregate([
             { $match: { verificationStatus: 'Verified' } },
             { $unwind: '$hashtags' },
             { $group: { _id: '$hashtags', count: { $sum: 1 } } }
         ]);
 
-        // Convert aggregate results to a more usable format
         const categoryCountMap = categoryCounts.reduce((map, item) => {
             map[item._id] = item.count;
             return map;
         }, {});
 
         const hashtagCountMap = hashtagCounts.reduce((map, item) => {
-            const cleanHashtag = item._id.replace('#', ''); // Clean the hashtag
+            const cleanHashtag = item._id.replace('#', ''); 
             map[cleanHashtag] = item.count;
             return map;
         }, {});
 
-        // Find high-priority blogs (featured blogs)
         const featuredBlogs = await Blog.find({ 
             priority: 'high', 
             verificationStatus: 'Verified' 
         }).sort({ createdAt: -1 }).limit(5).lean();
 
-        // Find recent blogs
         const recentBlogs = await Blog.find(filter).sort({ createdAt: -1 }).limit(5).lean();
 
-        // Group blogs by categories
         const blogsByCategory = {};
         for (const category of categories) {
             blogsByCategory[category] = await Blog.find({ 
@@ -559,17 +547,14 @@ router.get('/priority-blogs', async (req, res) => {
             }).sort({ createdAt: -1 }).lean();
         }
 
-        // Find most-read blogs
-        const mostReadBlogs = await Blog.find(filter).sort({ reads: -1 }).limit(5).lean(); // Assuming 'reads' tracks the number of views
+        const mostReadBlogs = await Blog.find(filter).sort({ reads: -1 }).limit(5).lean(); 
 
-        // Find top-rated doctors
         const topRatedDoctors = await Doctor.find({ 
-            rating: { $gte: 4.5 }, // Assuming rating is out of 5
+            rating: { $gte: 4.5 }, 
             subscriptionVerification: 'Verified' 
         }).sort({ rating: -1 }).limit(5).lean();
 
         console.log(topRatedDoctors);
-        // Render the view with blogs, categories, hashtags, top-rated doctors, and additional sections
         res.render('blogs', { 
             featuredBlogs,
             recentBlogs,
@@ -590,7 +575,6 @@ router.get('/priority-blogs', async (req, res) => {
 });
 
 
-// Route for categories
 router.get('/blogs/category/:category', async (req, res) => {
   try {
       const { category } = req.params;
@@ -598,34 +582,28 @@ router.get('/blogs/category/:category', async (req, res) => {
       const hashtagsArray = await Blog.distinct('hashtags');
       const hashtags = hashtagsArray.map(tag => tag.replace('#', ''));
 
-      // Find blogs by category
       const blogs = await Blog.find({ 
           categories: { $in: [category] }, 
           verificationStatus: 'Verified' 
       }).exec();
 
-      // Retrieve featured blogs
       const featuredBlogs = await Blog.find({ 
         priority: 'high', 
         verificationStatus: 'Verified' 
     }).sort({ createdAt: -1 }).limit(5).lean();
 
-      // Retrieve recent blogs
       const recentBlogs = await Blog.find({
           verificationStatus: 'Verified'
       }).sort({ createdAt: -1 }).limit(5).exec();
 
-      // Retrieve most-read blogs
       const mostReadBlogs = await Blog.find({
           verificationStatus: 'Verified'
       }).sort({ views: -1 }).limit(5).exec();
 
-      // Retrieve top-rated doctors
       const topRatedDoctors = await Doctor.find({
-          rating: { $gte: 4.5 } // Example condition
+          rating: { $gte: 4.5 } 
       }).sort({ rating: -1 }).limit(5).exec();
 
-      // Retrieve blogs by category
       const blogsByCategory = {};
       for (const category of categories) {
           blogsByCategory[category] = await Blog.find({ 
@@ -634,28 +612,25 @@ router.get('/blogs/category/:category', async (req, res) => {
           }).sort({ createdAt: -1 }).lean();
       }
 
-      // Count the number of blogs in each category
       const categoryCounts = await Blog.aggregate([
         { $match: { verificationStatus: 'Verified' } },
         { $unwind: '$categories' },
         { $group: { _id: '$categories', count: { $sum: 1 } } }
     ]);
 
-    // Count the number of blogs per hashtag
       const hashtagCounts = await Blog.aggregate([
           { $match: { verificationStatus: 'Verified' } },
           { $unwind: '$hashtags' },
           { $group: { _id: '$hashtags', count: { $sum: 1 } } }
       ]);
 
-      // Convert aggregate results to a more usable format
       const categoryCountMap = categoryCounts.reduce((map, item) => {
           map[item._id] = item.count;
           return map;
       }, {});
 
       const hashtagCountMap = hashtagCounts.reduce((map, item) => {
-          const cleanHashtag = item._id.replace('#', ''); // Clean the hashtag
+          const cleanHashtag = item._id.replace('#', ''); 
           map[cleanHashtag] = item.count;
           return map;
       }, {});
@@ -670,11 +645,11 @@ router.get('/blogs/category/:category', async (req, res) => {
           hashtagCounts: hashtagCountMap,
           categories,
           hashtags,
-          featuredBlogs,  // Pass featured blogs to the view
-          recentBlogs,    // Pass recent blogs to the view
-          mostReadBlogs,  // Pass most read blogs to the view
-          topRatedDoctors,// Pass top-rated doctors to the view
-          blogsByCategory // Pass blogs by category to the view
+          featuredBlogs,  
+          recentBlogs,   
+          mostReadBlogs,  
+          topRatedDoctors,
+          blogsByCategory 
       });
   } catch (err) {
       console.error(err.message);
@@ -684,41 +659,35 @@ router.get('/blogs/category/:category', async (req, res) => {
 
 router.get('/blogs/hashtag/:hashtag', async (req, res) => {
   try {
-      let hashtagParam = req.params.hashtag.replace('#', ''); // Remove # if present
-      const hashtag = `#${hashtagParam}`; // Add # to match the stored format
+      let hashtagParam = req.params.hashtag.replace('#', ''); 
+      const hashtag = `#${hashtagParam}`;
       const categories = await Blog.distinct('categories');
       const hashtagsArray = await Blog.distinct('hashtags');
       const hashtags = hashtagsArray.map(tag => tag.replace('#', ''));
 
-      // Fetch blogs by hashtag
       const blogs = await Blog.find({ 
           hashtags: { $in: [hashtag] }, 
           verificationStatus: 'Verified' 
       }).lean();
 
-      // Retrieve featured blogs
       const featuredBlogs = await Blog.find({ 
           priority: 'high', 
           verificationStatus: 'Verified' 
       }).sort({ createdAt: -1 }).limit(5).lean();
 
-      // Retrieve recent blogs
       const recentBlogs = await Blog.find({
           verificationStatus: 'Verified'
       }).sort({ createdAt: -1 }).limit(5).exec();
 
-      // Retrieve most-read blogs
       const mostReadBlogs = await Blog.find({
           verificationStatus: 'Verified'
       }).sort({ views: -1 }).limit(5).exec();
 
-      // Retrieve top-rated doctors
       const topRatedDoctors = await Doctor.find({
           rating: { $gte: 4.5 },
           subscriptionVerification: 'Verified'
       }).sort({ rating: -1 }).limit(5).exec();
 
-      // Group blogs by categories
       const blogsByCategory = {};
       for (const category of categories) {
           blogsByCategory[category] = await Blog.find({ 
@@ -727,48 +696,44 @@ router.get('/blogs/hashtag/:hashtag', async (req, res) => {
           }).sort({ createdAt: -1 }).lean();
       }
 
-      // Count the number of blogs in each category
       const categoryCounts = await Blog.aggregate([
           { $match: { verificationStatus: 'Verified' } },
           { $unwind: '$categories' },
           { $group: { _id: '$categories', count: { $sum: 1 } } }
       ]);
 
-      // Count the number of blogs per hashtag
       const hashtagCounts = await Blog.aggregate([
           { $match: { verificationStatus: 'Verified' } },
           { $unwind: '$hashtags' },
           { $group: { _id: '$hashtags', count: { $sum: 1 } } }
       ]);
 
-      // Convert aggregate results to a more usable format
       const categoryCountMap = categoryCounts.reduce((map, item) => {
           map[item._id] = item.count;
           return map;
       }, {});
 
       const hashtagCountMap = hashtagCounts.reduce((map, item) => {
-          const cleanHashtag = item._id.replace('#', ''); // Clean the hashtag
+          const cleanHashtag = item._id.replace('#', ''); 
           map[cleanHashtag] = item.count;
           return map;
       }, {});
 
-      // Render the blogs view with all necessary data
       res.render('blogs', {
           blogs,
           filterType: 'Hashtag',
           filterValue: hashtagParam,
           searchQuery: req.query.search || '',
           user: req.session.user,
-          categoryCounts: categoryCountMap,   // Pass category count to the view
-          hashtagCounts: hashtagCountMap,    // Pass hashtag count to the view
-          categories,         // Pass distinct categories to the view
-          hashtags,           // Pass distinct hashtags to the view
-          featuredBlogs,      // Pass featured blogs to the view
-          recentBlogs,        // Pass recent blogs to the view
-          mostReadBlogs,      // Pass most-read blogs to the view
-          topRatedDoctors,    // Pass top-rated doctors to the view
-          blogsByCategory     // Pass blogs categorized by category to the view
+          categoryCounts: categoryCountMap,  
+          hashtagCounts: hashtagCountMap,   
+          categories,        
+          hashtags,          
+          featuredBlogs,      
+          recentBlogs,        
+          mostReadBlogs,      
+          topRatedDoctors,    
+          blogsByCategory    
       });
   } catch (err) {
       console.error(err.message);

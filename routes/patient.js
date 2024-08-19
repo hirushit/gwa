@@ -168,7 +168,7 @@ router.get('/doctors', async (req, res) => {
       specialities,
       languages,
       genders,
-      uniqueLocations // Pass unique locations to the frontend
+      uniqueLocations 
     });
   } catch (err) {
     console.error(err.message);
@@ -1066,34 +1066,36 @@ router.get('/notifications', isLoggedIn, async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user._id }).lean();
 
-    const chatNotifications = notifications.filter(notification => notification.type === 'chat');
-    const otherNotifications = notifications.filter(notification => notification.type !== 'chat');
+    const chatDetailsPromises = notifications.map(async (notification) => {
+      if (notification.type !== 'chat') {
+        return {
+          ...notification,
+          timeAgo: timeSince(notification.createdAt)
+        };
+      }
 
-    const chatDetailsPromises = chatNotifications.map(async (notification) => {
+      if (!notification.chatId) {
+        console.warn(`No chatId for notification ${notification._id}`);
+        return {
+          ...notification,
+          senderName: 'Unknown',
+          senderProfilePic: null,
+          message: 'No message available',
+          timeAgo: timeSince(notification.createdAt)
+        };
+      }
+
       try {
-        if (!notification.chatId) {
-          console.warn(`No chatId for notification ${notification._id}`);
-          return {
-            ...notification,
-            senderName: 'Unknown',
-            senderProfilePic: null,
-            message: 'No message available',
-            timeAgo: timeSince(notification.createdAt) 
-          };
-        }
-
-        const chat = await Chat.findById(notification.chatId)
-                              .populate('doctorId patientId')
-                              .lean();
+        const chat = await Chat.findById(notification.chatId).populate('doctorId patientId').lean();
 
         if (!chat) {
-          console.warn(`Chat not found for notification ${notification._id}`);
+          console.warn(`Chat not found for notification ${notification._id} with chatId ${notification.chatId}`);
           return {
             ...notification,
             senderName: 'Unknown',
             senderProfilePic: null,
             message: 'No message available',
-            timeAgo: timeSince(notification.createdAt) 
+            timeAgo: timeSince(notification.createdAt)
           };
         }
 
@@ -1103,8 +1105,8 @@ router.get('/notifications', isLoggedIn, async (req, res) => {
           ...notification,
           senderName: sender.name || 'Unknown',
           senderProfilePic: sender.profilePicture ? `data:${sender.profilePicture.contentType};base64,${sender.profilePicture.data.toString('base64')}` : null,
-          message: notification.message,
-          timeAgo: timeSince(notification.createdAt) 
+          message: notification.message, // Keep the original message
+          timeAgo: timeSince(notification.createdAt)
         };
       } catch (err) {
         console.error(`Error fetching chat details for notification ${notification._id}:`, err);
@@ -1113,24 +1115,45 @@ router.get('/notifications', isLoggedIn, async (req, res) => {
           senderName: 'Error',
           senderProfilePic: null,
           message: 'Error fetching message',
-          timeAgo: timeSince(notification.createdAt) 
+          timeAgo: timeSince(notification.createdAt)
         };
       }
     });
 
     const chatNotificationsWithDetails = await Promise.all(chatDetailsPromises);
-
-    const allNotifications = [...chatNotificationsWithDetails, ...otherNotifications].map(notification => ({
-      ...notification,
-      timeAgo: timeSince(notification.createdAt)
-    }));
-
-    res.render('patientNotifications', { notifications: allNotifications });
+    res.json({ notifications: chatNotificationsWithDetails });
   } catch (error) {
     console.error('Error fetching notifications:', error);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error' });
   }
 });
+
+function timeSince(date) {
+  const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+  let interval = Math.floor(seconds / 31536000);
+
+  if (interval > 1) {
+    return interval + " years ago";
+  }
+  interval = Math.floor(seconds / 2592000);
+  if (interval > 1) {
+    return interval + " months ago";
+  }
+  interval = Math.floor(seconds / 86400);
+  if (interval > 1) {
+    return interval + " days ago";
+  }
+  interval = Math.floor(seconds / 3600);
+  if (interval > 1) {
+    return interval + " hours ago";
+  }
+  interval = Math.floor(seconds / 60);
+  if (interval > 1) {
+    return interval + " minutes ago";
+  }
+  return Math.floor(seconds) + " seconds ago";
+}
+
 
 function timeSince(date) {
   const seconds = Math.floor((new Date() - new Date(date)) / 1000);

@@ -129,10 +129,12 @@ app.get('/auth/search-doctors', async (req, res) => {
       speciality: 1,
       rating: 1,
       availability: 1,
-      city: '$timeSlots.hospitalLocation.city', 
-      state: '$timeSlots.hospitalLocation.state', 
-      country: '$timeSlots.hospitalLocation.country', 
-      hospitals: '$timeSlots.hospital'
+      city: '$timeSlots.hospitalLocation.city',
+      state: '$timeSlots.hospitalLocation.state',
+      country: '$timeSlots.hospitalLocation.country',
+      hospitals: '$timeSlots.hospital',
+      subscriptionType: 1, 
+      timeSlots: 1 
     };
 
     if (country) matchQuery['timeSlots.hospitalLocation.country'] = { $regex: new RegExp(country, 'i') };
@@ -143,7 +145,7 @@ app.get('/auth/search-doctors', async (req, res) => {
     if (gender) matchQuery.gender = gender;
     if (availability) matchQuery.availability = availability === 'true';
     if (consultation) matchQuery.consultation = consultation;
-    console.log(city);
+
     if (conditions) {
       const conditionsArray = conditions.split(',').map(cond => new RegExp(cond.trim(), 'i'));
       matchQuery.conditions = { $in: conditionsArray };
@@ -182,12 +184,13 @@ app.get('/auth/search-doctors', async (req, res) => {
   }
 });
 
+
 app.get('/auth/countries', async (req, res) => {
   try {
     const countries = await Doctor.aggregate([
       { $match: { role: 'doctor', verified: 'Verified', 'timeSlots.status': 'free' } },
-      { $unwind: '$timeSlots' }, // Unwind timeSlots to access individual records
-      { $group: { _id: '$timeSlots.hospitalLocation.country' } }, // Group by country to remove duplicates
+      { $unwind: '$timeSlots' }, 
+      { $group: { _id: '$timeSlots.hospitalLocation.country' } }, 
       { $sort: { _id: 1 } }, // Optional: Sort countries alphabetically
       { $project: { _id: 0, country: '$_id' } } // Project the country field
     ]);
@@ -292,19 +295,23 @@ app.get('/auth/conditions', async (req, res) => {
 app.get('/auth/what-options', async (req, res) => {
   try {
     const specialities = await Doctor.distinct('speciality');
-    const doctors = await Doctor.find({}, 'name').lean();
+    const doctors = await Doctor.find({}, 'name').lean();  
     const doctorNames = doctors.map(doctor => doctor.name);
     const conditions = await Doctor.distinct('conditions');
+
+    const allDoctorDetails = await Doctor.find().lean();  
 
     res.json({
       specialities,
       conditions,
-      doctors: doctorNames
+      doctors: doctorNames,
+      allDoctors: allDoctorDetails  
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching what options', error });
   }
 });
+
 
 
 app.get('/auth/where-options', async (req, res) => {
@@ -320,16 +327,19 @@ app.get('/auth/where-options', async (req, res) => {
     const cities = [...new Set([...citiesFromTimeSlots, ...citiesFromHospitals])];
     const states = [...new Set([...statesFromTimeSlots, ...statesFromHospitals])];
     const countries = [...new Set([...countriesFromTimeSlots, ...countriesFromHospitals])];
+    const doctors = await Doctor.find().lean(); 
 
     res.json({
       cities,
       states,
-      countries
+      countries,
+      doctors 
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching where options', error });
   }
 });
+
 
 
 app.post('/submit-lead', async (req, res) => {

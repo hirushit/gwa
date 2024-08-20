@@ -9,6 +9,15 @@
 <body>
     <div class="container">
         <h1>Insights</h1>
+        <form action="/doctor/insights" method="GET">
+            <label for="insight-filter">Filter Insights:</label>
+            <select id="insight-filter" name="insight-filter" onchange="this.form.submit()">
+                <option value="all" <%= insightsFilter === 'all' ? 'selected' : '' %>>All</option>
+                <option value="today" <%= insightsFilter === 'today' ? 'selected' : '' %>>Today</option>
+                <option value="week" <%= insightsFilter === 'week' ? 'selected' : '' %>>This Week</option>
+                <option value="month" <%= insightsFilter === 'month' ? 'selected' : '' %>>This Month</option>
+            </select>
+        </form>
         <div class="insights-section">
             <p><strong>Total Waiting Appointments:</strong> <%= waitingAppointmentsCount %></p>
             <p><strong>Total Patients:</strong> <%= totalPatients %></p>
@@ -34,6 +43,16 @@
         </div>
 
         <h2>Booking Rate by Day of the Week</h2>
+        <form action="/doctor/insights" method="GET">
+            <label for="booking-filter">Filter Booking Rates:</label>
+            <select id="booking-filter" name="booking-filter" onchange="this.form.submit()">
+                <option value="all" <%= bookingFilter === 'all' ? 'selected' : '' %>>All</option>
+                <option value="today" <%= bookingFilter === 'today' ? 'selected' : '' %>>Today</option>
+                <option value="week" <%= bookingFilter === 'week' ? 'selected' : '' %>>This Week</option>
+                <option value="month" <%= bookingFilter === 'month' ? 'selected' : '' %>>This Month</option>
+            </select>
+        </form>
+
         <div class="table-section">
             <% if (Array.isArray(bookingRates) && bookingRates.length > 0) { %>
                 <table border="1">

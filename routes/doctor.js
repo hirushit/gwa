@@ -219,8 +219,34 @@ router.get('/edit', isLoggedIn, async (req, res) => {
             const totalRatings = doctor.reviews.reduce((acc, review) => acc + review.rating, 0);
             const averageRating = totalReviews > 0 ? (totalRatings / totalReviews).toFixed(1) : 'No ratings';
     
+            const bookingFilter = req.query['booking-filter'] || 'all';
+            const insightsFilter = req.query['insight-filter'] || 'all';
+    
+            let startDate, endDate;
+    
+            if (bookingFilter === 'today') {
+                startDate = new Date();
+                startDate.setHours(0, 0, 0, 0); 
+                endDate = new Date();
+                endDate.setHours(23, 59, 59, 999); 
+            } else if (bookingFilter === 'week') {
+                startDate = new Date();
+                startDate.setDate(startDate.getDate() - startDate.getDay());
+                endDate = new Date();
+                endDate.setDate(endDate.getDate() + (6 - endDate.getDay())); 
+            } else if (bookingFilter === 'month') {
+                startDate = new Date();
+                startDate.setDate(1); 
+                endDate = new Date(startDate);
+                endDate.setMonth(endDate.getMonth() + 1);
+                endDate.setDate(0);
+            } else {
+                startDate = new Date('1970-01-01');
+                endDate = new Date();
+            }
+    
             const bookingRates = await Booking.aggregate([
-                { $match: { doctor: doctor._id } },
+                { $match: { doctor: doctor._id, date: { $gte: startDate, $lte: endDate } } },
                 {
                     $group: {
                         _id: { $dayOfWeek: '$date' },
@@ -254,13 +280,16 @@ router.get('/edit', isLoggedIn, async (req, res) => {
                 totalUnreadMessages: totalUnreadMessages[0]?.unreadCount || 0,
                 waitingAppointmentsCount,
                 totalPostedSlots,
-                totalFilledSlots
+                totalFilledSlots,
+                bookingFilter, 
+                insightsFilter
             });
         } catch (err) {
             console.error(err.message);
             res.status(500).send('Server Error');
         }
     });
+    
     
   
 router.post('/profile/verify', isLoggedIn, async (req, res) => {

@@ -73,10 +73,12 @@
                                     <td><%= slot.hospitalLocation ? `${slot.hospitalLocation.street}, ${slot.hospitalLocation.city}, ${slot.hospitalLocation.state}, ${slot.hospitalLocation.country}, ${slot.hospitalLocation.zip}` : 'N/A' %></td>
                                     <td><%= slot.status.charAt(0).toUpperCase() + slot.status.slice(1) %></td>
                                     <td>
-                                        <form action="/doctor/manage-time-slots/<%= index %>?_method=DELETE" method="POST">
+                                        <form action="/doctor/manage-time-slots/<%= slot._id %>?_method=DELETE" method="POST">
                                             <button type="submit" class="btn btn-danger">Delete</button>
                                         </form>
                                     </td>
+                                    
+                                    
                                 </tr>
                             <% }); %>
                         </tbody>

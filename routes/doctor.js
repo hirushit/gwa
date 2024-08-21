@@ -719,22 +719,20 @@ router.get('/manage-time-slots', isLoggedIn, checkSubscription, async (req, res)
         res.status(500).send('Server Error');
     }
 });
-
-router.delete('/manage-time-slots/:index', isLoggedIn, checkSubscription, async (req, res) => {
+router.delete('/manage-time-slots/:id', isLoggedIn, checkSubscription, async (req, res) => {
     try {
-
         console.log('Request Params:', req.params);
 
         const doctorEmail = req.session.user.email;
-        const { index } = req.params;
+        const { id } = req.params;
 
         let doctor = await Doctor.findOne({ email: doctorEmail });
 
         if (!doctor) {
             return res.status(404).send('Doctor not found');
-        }   
+        }
+        doctor.timeSlots = doctor.timeSlots.filter(slot => slot._id.toString() !== id);
 
-        doctor.timeSlots.splice(index, 1); 
         await doctor.save();
 
         res.redirect('/doctor/manage-time-slots');
@@ -743,7 +741,6 @@ router.delete('/manage-time-slots/:index', isLoggedIn, checkSubscription, async 
         res.status(500).send('Server Error');
     }
 });
-
 
 router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) => {
     try {

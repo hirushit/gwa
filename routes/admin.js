@@ -85,6 +85,7 @@ router.get('/view/:id', isLoggedIn, async (req, res) => {
 });
 
 
+
 router.post('/verify/:id', isLoggedIn, async (req, res) => {
   try {
     const doctorId = req.params.id;

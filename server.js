@@ -16,6 +16,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
+require('./cronJobs'); 
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

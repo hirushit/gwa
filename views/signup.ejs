@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signup</title>
+  <style>
+    .google-signin-btn {
+      display: inline-block;
+      background-color: #4285F4;
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 20px;
+      transition: background-color 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .google-signin-btn:hover {
+      background-color: #3171e0;
+    }
+    .google-signin-btn::before {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-radius: 20px;
+      width: 30px;
+      height: 30px;
+      background: url('https://developers.google.com/identity/images/g-logo.png') no-repeat;
+      background-size: contain;
+    }
+    .google-signin-btn span {
+      margin-left: 40px;
+      vertical-align: middle;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Signup</h1>
+  <% if (success_msg) { %>
+    <p style="color: green;"><%= success_msg %></p>
+  <% } %>
+  <% if (error_msg) { %>
+    <p style="color: red;"><%= error_msg %></p>
+  <% } %>
+
+  <% if (!showOtpForm && !selectRoleForm) { %>
+    <form action="/auth/signup" method="POST">
+      <div>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <div>
+        <label for="role">Role:</label>
+        <select id="role" name="role" required>
+          <option value="patient">Patient</option>
+          <option value="doctor">Doctor</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button type="submit">Signup</button>
+    </form>
+
+    <br>
+    <a href="/auth/google" class="google-signin-btn">
+      <span>Continue with Google</span>
+    </a>
+  <% } else if (selectRoleForm) { %>
+    <form action="/auth/select-role" method="POST">
+      <input type="hidden" name="name" value="<%= selectRoleForm.name %>">
+      <input type="hidden" name="email" value="<%= selectRoleForm.email %>">
+      <div>
+        <label for="role">Role:</label>
+        <select id="role" name="role" required>
+          <option value="patient">Patient</option>
+          <option value="doctor">Doctor</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button type="submit">Select Role</button>
+    </form>
+  <% } else { %>
+    <form action="/auth/verify" method="POST">
+      <div>
+        <label for="otp">OTP:</label>
+        <input type="text" id="otp" name="otp" required>
+      </div>
+      <button type="submit">Verify OTP</button>
+    </form>
+    <br>
+    <a href="/auth/exit" class="exit-btn">Exit</a>
+  <% } %>
+
+  <br><br>
+  <a href="/auth/login">Login</a>
+</body>
+</html>

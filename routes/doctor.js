@@ -125,83 +125,112 @@ router.get('/edit', isLoggedIn, async (req, res) => {
     }
   });
   
-  router.post('/profile/update', upload.single('profilePicture'), isLoggedIn, async (req, res) => {
+  router.post('/profile/update', upload.fields([
+    { name: 'profilePicture' },
+    { name: 'licenseProof' },
+    { name: 'certificationProof' },
+    { name: 'businessProof' }
+]), isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
         let doctor = await Doctor.findOne({ email: doctorEmail });
-    
+
         let hospitals = [];
         if (Array.isArray(req.body.hospitals)) {
-        hospitals = req.body.hospitals.map((hospital) => {
-            let hospitalData = {
-            name: hospital.name,
-            street: hospital.street,
-            city: hospital.city,
-            state: hospital.state,
-            country: hospital.country,
-            zip: hospital.zip
-            };
-    
-            if (hospital.latitude && !isNaN(parseFloat(hospital.latitude))) {
-            hospitalData.lat = parseFloat(hospital.latitude);
-            }
-            if (hospital.longitude && !isNaN(parseFloat(hospital.longitude))) {
-            hospitalData.lng = parseFloat(hospital.longitude);
-            }
-    
-            return hospitalData;
-        });
+            hospitals = req.body.hospitals.map((hospital) => {
+                let hospitalData = {
+                    name: hospital.name,
+                    street: hospital.street,
+                    city: hospital.city,
+                    state: hospital.state,
+                    country: hospital.country,
+                    zip: hospital.zip
+                };
+
+                if (hospital.latitude && !isNaN(parseFloat(hospital.latitude))) {
+                    hospitalData.lat = parseFloat(hospital.latitude);
+                }
+                if (hospital.longitude && !isNaN(parseFloat(hospital.longitude))) {
+                    hospitalData.lng = parseFloat(hospital.longitude);
+                }
+
+                return hospitalData;
+            });
         } else if (req.body.hospitals && req.body.hospitals.name) {
-        let hospitalData = {
-            name: req.body.hospitals.name,
-            street: req.body.hospitals.street,
-            city: req.body.hospitals.city,
-            state: req.body.hospitals.state,
-            country: req.body.hospitals.country,
-            zip: req.body.hospitals.zip
-        };
-    
-        if (req.body.hospitals.latitude && !isNaN(parseFloat(req.body.hospitals.latitude))) {
-            hospitalData.lat = parseFloat(req.body.hospitals.latitude);
+            let hospitalData = {
+                name: req.body.hospitals.name,
+                street: req.body.hospitals.street,
+                city: req.body.hospitals.city,
+                state: req.body.hospitals.state,
+                country: req.body.hospitals.country,
+                zip: req.body.hospitals.zip
+            };
+
+            if (req.body.hospitals.latitude && !isNaN(parseFloat(req.body.hospitals.latitude))) {
+                hospitalData.lat = parseFloat(req.body.hospitals.latitude);
+            }
+            if (req.body.hospitals.longitude && !isNaN(parseFloat(req.body.hospitals.longitude))) {
+                hospitalData.lng = parseFloat(req.body.hospitals.longitude);
+            }
+
+            hospitals = [hospitalData];
         }
-        if (req.body.hospitals.longitude && !isNaN(parseFloat(req.body.hospitals.longitude))) {
-            hospitalData.lng = parseFloat(req.body.hospitals.longitude);
-        }
-    
-        hospitals = [hospitalData];
-        }
-    
+
         const insuranceIds = (Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances])
-        .map(id => id.toString());
-    
+            .map(id => id.toString());
+
         const updateData = {
-        ...req.body,
-        aboutMe: req.body.aboutMe || doctor.aboutMe,
-        speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
-        languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
-        insurances: insuranceIds,
-        awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
-        faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
-        hospitals: hospitals
+            ...req.body,
+            aboutMe: req.body.aboutMe || doctor.aboutMe,
+            speciality: Array.isArray(req.body.speciality) ? req.body.speciality : [req.body.speciality],
+            languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
+            insurances: insuranceIds,
+            awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
+            faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
+            hospitals: hospitals
         };
-    
-        if (req.file) {
-        updateData.profilePicture = {
-            data: req.file.buffer,
-            contentType: req.file.mimetype
-        };
+
+        if (!updateData.documents) {
+            updateData.documents = {};
         }
-    
+
+        if (req.files['profilePicture'] && req.files['profilePicture'][0]) {
+            updateData.profilePicture = {
+                data: req.files['profilePicture'][0].buffer,
+                contentType: req.files['profilePicture'][0].mimetype
+            };
+        }
+
+        if (req.files['licenseProof'] && req.files['licenseProof'][0]) {
+            updateData.documents.licenseProof = {
+                data: req.files['licenseProof'][0].buffer,
+                contentType: req.files['licenseProof'][0].mimetype
+            };
+        }
+        if (req.files['certificationProof'] && req.files['certificationProof'][0]) {
+            updateData.documents.certificationProof = {
+                data: req.files['certificationProof'][0].buffer,
+                contentType: req.files['certificationProof'][0].mimetype
+            };
+        }
+        if (req.files['businessProof'] && req.files['businessProof'][0]) {
+            updateData.documents.businessProof = {
+                data: req.files['businessProof'][0].buffer,
+                contentType: req.files['businessProof'][0].mimetype
+            };
+        }
+
         doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });
-    
+
         await doctor.save();
-    
+
         res.redirect('/doctor/profile');
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
-    });
+});
+
     
     router.get('/insights', isLoggedIn, async (req, res) => {
         try {
@@ -929,27 +958,23 @@ router.get('/calendar', isLoggedIn, checkSubscription, async (req, res) => {
 });
 
 router.use(methodOverride('_method'));
-
 router.get('/subscribe', isLoggedIn, async (req, res) => {
     res.render('subscriptionForm');
 });
 
+// Route to handle subscription form submission
 router.post('/subscribe', upload.fields([{ name: 'licenseProof' }, { name: 'certificationProof' }, { name: 'businessProof' }]), isLoggedIn, async (req, res) => {
     try {
-    const { subscriptionType } = req.body;
-    const paymentDetails = req.body.paymentDetails;
-    const doctorId = req.session.user._id; 
-    const amount = parseInt(paymentDetails.amount, 10);
-    console.log(amount);
+        const { subscriptionType, subscriptionDuration } = req.body; // Capture subscriptionDuration from the form
+        const paymentDetails = req.body.paymentDetails;
+        const doctorId = req.session.user._id; 
+        const amount = parseInt(paymentDetails.amount, 10);
+        console.log(amount);
     
         if (isNaN(amount) || amount <= 0) {
             return res.status(400).send('Invalid payment amount');
         }
-    
-        const licenseProof = req.files['licenseProof'][0];
-        const certificationProof = req.files['certificationProof'][0];
-        const businessProof = req.files['businessProof'][0];
-    
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [{
@@ -967,16 +992,15 @@ router.post('/subscribe', upload.fields([{ name: 'licenseProof' }, { name: 'cert
             cancel_url: `${req.protocol}://${req.get('host')}/doctor/subscription-failure`,
         });
     
+        // Store subscription information, including subscriptionDuration, in the session
         req.session.subscriptionInfo = {
             doctorId,
             subscriptionType,
+            subscriptionDuration,  // Store the subscription duration
             paymentDetails: {
                 amount: amount,
                 currency: 'usd'
-            },
-            licenseProof,
-            certificationProof,
-            businessProof
+            }
         };
     
         res.redirect(303, session.url);
@@ -984,50 +1008,41 @@ router.post('/subscribe', upload.fields([{ name: 'licenseProof' }, { name: 'cert
         console.error(error.message);
         res.status(500).send('Server Error');
     }
-    });
-    
+});
+
+// Route to handle subscription success
 router.get('/subscription-success', async (req, res) => {
-        try {
-            const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
-        
-            if (session.payment_status === 'paid') {
-                const { doctorId, subscriptionType, paymentDetails, licenseProof, certificationProof, businessProof } = req.session.subscriptionInfo;
-    
-                const paymentDetailsString = JSON.stringify(paymentDetails);
-        
-                const updatedDoctor = await Doctor.findByIdAndUpdate(
-                    doctorId,
-                    {
-                        subscription: 'Pending',
-                        subscriptionType,
-                        paymentDetails: paymentDetailsString,
-                        'documents.licenseProof': {
-                            data: licenseProof.buffer,
-                            contentType: licenseProof.mimetype
-                        },
-                        'documents.certificationProof': {
-                            data: certificationProof.buffer,
-                            contentType: certificationProof.mimetype
-                        },
-                        'documents.businessProof': {
-                            data: businessProof.buffer,
-                            contentType: businessProof.mimetype
-                        },
-                        subscriptionVerification: 'Pending'
-                    },
-                    { new: true }
-                );
-        
-                res.render('subscriptionSuccess', { doctor: updatedDoctor });
-            } else {
-                res.status(400).send('Payment was not successful');
-            }
-        } catch (error) {
-            console.error(error.message);
-            res.status(500).send('Server Error');
+    try {
+        const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+
+        if (session.payment_status === 'paid') {
+            const { doctorId, subscriptionType, paymentDetails, subscriptionDuration } = req.session.subscriptionInfo;
+            const subscriptionDate = new Date();
+
+            const paymentDetailsString = JSON.stringify(paymentDetails);
+
+            const updatedDoctor = await Doctor.findByIdAndUpdate(
+                doctorId,
+                {
+                    subscription: 'Pending',
+                    subscriptionType,
+                    paymentDetails: paymentDetailsString,
+                    subscriptionVerification: 'Verified', // Set to Verified
+                    subscriptionDate,
+                    subscriptionDuration: subscriptionDuration === 'annual' ? 'annual' : 'monthly'
+                },
+                { new: true }
+            );
+
+            res.render('subscriptionSuccess', { doctor: updatedDoctor });
+        } else {
+            res.status(400).send('Payment was not successful');
         }
-    });
-    
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+});
 
 router.get('/subscription-failure', (req, res) => {
     res.send('Subscription payment failed. Please try again.');

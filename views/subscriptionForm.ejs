@@ -7,23 +7,43 @@
     <script>
         function updatePaymentDetails() {
             const tier = document.getElementById('subscriptionType').value;
+            const duration = document.getElementById('subscriptionDuration').value;
             const paymentDetails = document.getElementById('paymentDetails');
 
-            switch (tier) {
-                case 'Free':
-                    paymentDetails.value = '0';
-                    break;
-                case 'Standard':
-                    paymentDetails.value = '1000'; 
-                    break;
-                case 'Premium':
-                    paymentDetails.value = '4900'; 
-                    break;
-                case 'Enterprise':
-                    paymentDetails.value = '9900'; 
-                    break;
-                default:
-                    paymentDetails.value = '';
+            if (duration === 'monthly') {
+                switch (tier) {
+                    case 'Free':
+                        paymentDetails.value = '0';
+                        break;
+                    case 'Standard':
+                        paymentDetails.value = '1000'; 
+                        break;
+                    case 'Premium':
+                        paymentDetails.value = '4900'; 
+                        break;
+                    case 'Enterprise':
+                        paymentDetails.value = '9900'; 
+                        break;
+                    default:
+                        paymentDetails.value = '';
+                }
+            } else if (duration === 'annual') {
+                switch (tier) {
+                    case 'Free':
+                        paymentDetails.value = '0';
+                        break;
+                    case 'Standard':
+                        paymentDetails.value = '76500'; // Annual amount for Standard ($765.00)
+                        break;
+                    case 'Premium':
+                        paymentDetails.value = '102000'; // Annual amount for Premium ($1,020.00)
+                        break;
+                    case 'Enterprise':
+                        paymentDetails.value = '99000'; 
+                        break;
+                    default:
+                        paymentDetails.value = '';
+                }
             }
         }
 
@@ -37,22 +57,19 @@
         <label for="subscriptionType">Subscription Type:</label>
         <select id="subscriptionType" name="subscriptionType" onchange="updatePaymentDetails()" required>
             <option value="Free">Free</option>
-            <option value="Standard">Standard - $10</option>
-            <option value="Premium">Premium - $49</option>
-            <option value="Enterprise">Enterprise - $99</option>
+            <option value="Standard">Standard - $10 (Monthly) / $765 (Annual)</option>
+            <option value="Premium">Premium - $49 (Monthly) / $1,020 (Annual)</option>
+            <option value="Enterprise">Enterprise - $99 (Annually)</option>
+        </select>
+
+        <label for="subscriptionDuration">Subscription Duration:</label>
+        <select id="subscriptionDuration" name="subscriptionDuration" onchange="updatePaymentDetails()" required>
+            <option value="monthly">Monthly</option>
+            <option value="annual">Annual</option>
         </select>
 
         <label for="paymentDetails">Payment Details (in cents):</label>
         <input type="text" id="paymentDetails" name="paymentDetails[amount]" readonly>
-
-        <label for="licenseProof">License Proof:</label>
-        <input type="file" id="licenseProof" name="licenseProof" required>
-
-        <label for="certificationProof">Certification Proof:</label>
-        <input type="file" id="certificationProof" name="certificationProof" required>
-
-        <label for="businessProof">Business Proof:</label>
-        <input type="file" id="businessProof" name="businessProof" required>
 
         <button type="submit">Submit</button>
     </form>

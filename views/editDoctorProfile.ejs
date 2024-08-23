@@ -386,6 +386,25 @@ function closeMapModal() {
       </select>
     </div>
     <div>
+      <label for="profilePicture">Profile Picture:</label>
+      <input type="file" name="profilePicture" id="profilePicture" accept="image/*">
+    </div>
+    
+    <div>
+      <label for="licenseProof">License Proof:</label>
+      <input type="file" name="licenseProof" id="licenseProof" accept="image/*,application/pdf">
+    </div>
+    
+    <div>
+      <label for="certificationProof">Certification Proof:</label>
+      <input type="file" name="certificationProof" id="certificationProof" accept="image/*,application/pdf">
+    </div>
+    
+    <div>
+      <label for="businessProof">Business Proof:</label>
+      <input type="file" name="businessProof" id="businessProof" accept="image/*,application/pdf">
+    </div>
+    
       <label>Website:</label>
       <input type="url" name="website" value="<%= doctor.website %>">
     </div>

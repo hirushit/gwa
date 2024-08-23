@@ -83,6 +83,13 @@ const doctorSchema = new mongoose.Schema({
     businessProof: { data: Buffer, contentType: String }
   },
   subscriptionVerification: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' },
+  subscriptionDate: {
+    type: Date,
+  },
+  subscriptionDuration: {
+      type: String, 
+      enum: ['monthly', 'annual'],
+  },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
 });

@@ -559,7 +559,10 @@ function closeMapModal() {
       <label>Profile Picture:</label>
       <input type="file" name="profilePicture">
   </div>
-    
+  <div>
+    <label>Doctor Fee:</label>
+    <input type="number" name="doctorFee" value="<%= doctor.doctorFee %>" required>
+  </div> 
     
     <div>
       <button type="submit">Update Profile</button>

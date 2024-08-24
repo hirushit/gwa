@@ -324,6 +324,20 @@ function addInsurance() {
       <label>Profile Picture:</label>
       <input type="file" name="profilePicture">
   </div>
+  <% if (doctor.subscriptionType === 'Standard') { %>
+      <h1>Financial Overview</h1>
+      <div class="financial-section">
+          <p><strong>Total Fees:</strong> $<%= doctor.totalDoctorFee %></p>
+          <p><strong>Total Service Charge:</strong> $<%= doctor.serviceCharge %></p>
+      </div>
+  <% } %>
+
+  <% if (doctor.subscriptionType === 'Premium') { %>
+      <h1>Financial Overview</h1>
+      <div class="financial-section">
+          <p><strong>Total Fees:</strong> $<%= doctor.totalDoctorFee %></p>
+      </div>
+  <% } %>
     
     
     <div>

@@ -28,6 +28,7 @@ const doctorSchema = new mongoose.Schema({
   dateOfBirth: Date,
   bloodGroup: String,
   languages: [String],
+  doctorFee:{type: Number, default: 85},
   hospitals: [{
       name: { type: String, required: true },
       street: { type: String, required: true },
@@ -82,6 +83,11 @@ const doctorSchema = new mongoose.Schema({
     certificationProof: { data: Buffer, contentType: String },
     businessProof: { data: Buffer, contentType: String }
   },
+  trialEndDate: Date,
+  maxTimeSlots: {
+    type: Number,
+    default: 0
+  },
   subscriptionVerification: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' },
   subscriptionDate: {
     type: Date,
@@ -92,6 +98,8 @@ const doctorSchema = new mongoose.Schema({
   },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+  totalDoctorFee: Number,
+  serviceCharge: Number,
 });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

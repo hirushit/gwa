@@ -43,13 +43,22 @@ function isLoggedIn(req, res, next) {
 
 function checkSubscription(req, res, next) {
     const user = req.session.user;
-    if (user.subscriptionType === 'Premium' || user.subscriptionType === 'Standard') {
-        if (user.subscriptionVerification === 'Verified') {
+    const currentDate = new Date();
+
+    if (user.subscriptionVerification === 'Verified') {
+        if (user.subscriptionType === 'Free') {
+            if (user.trialEndDate && currentDate <= new Date(user.trialEndDate)) {
+                return next();
+            } else {
+                return res.redirect('/doctor/trial-expired');
+            }
+        } else if (user.subscriptionType === 'Premium' || user.subscriptionType === 'Standard') {
             return next();
         }
     }
     res.redirect('/doctor/subscription-message');
 }
+
 
 function isDoctor(req, res, next) {
     if (req.session.user && req.session.user.role === 'doctor') {
@@ -187,7 +196,8 @@ router.get('/edit', isLoggedIn, async (req, res) => {
             insurances: insuranceIds,
             awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
             faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
-            hospitals: hospitals
+            hospitals: hospitals,
+            doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : 85 // Default fee is $85
         };
 
         if (!updateData.documents) {
@@ -232,92 +242,100 @@ router.get('/edit', isLoggedIn, async (req, res) => {
 });
 
     
-    router.get('/insights', isLoggedIn, async (req, res) => {
-        try {
-            const doctorEmail = req.session.user.email;
-            const doctor = await Doctor.findOne({ email: doctorEmail });
-    
-            if (!doctor) {
-                return res.status(404).send('Doctor not found');
-            }
-    
-            const totalPatients = await Patient.countDocuments();
-            const totalConsultations = await Booking.countDocuments({ doctor: doctor._id, status: 'completed' });
-            const totalReviews = doctor.reviews.length;
-    
-            const totalRatings = doctor.reviews.reduce((acc, review) => acc + review.rating, 0);
-            const averageRating = totalReviews > 0 ? (totalRatings / totalReviews).toFixed(1) : 'No ratings';
-    
-            const bookingFilter = req.query['booking-filter'] || 'all';
-            const insightsFilter = req.query['insight-filter'] || 'all';
-    
-            let startDate, endDate;
-    
-            if (bookingFilter === 'today') {
-                startDate = new Date();
-                startDate.setHours(0, 0, 0, 0); 
-                endDate = new Date();
-                endDate.setHours(23, 59, 59, 999); 
-            } else if (bookingFilter === 'week') {
-                startDate = new Date();
-                startDate.setDate(startDate.getDate() - startDate.getDay());
-                endDate = new Date();
-                endDate.setDate(endDate.getDate() + (6 - endDate.getDay())); 
-            } else if (bookingFilter === 'month') {
-                startDate = new Date();
-                startDate.setDate(1); 
-                endDate = new Date(startDate);
-                endDate.setMonth(endDate.getMonth() + 1);
-                endDate.setDate(0);
-            } else {
-                startDate = new Date('1970-01-01');
-                endDate = new Date();
-            }
-    
-            const bookingRates = await Booking.aggregate([
-                { $match: { doctor: doctor._id, date: { $gte: startDate, $lte: endDate } } },
-                {
-                    $group: {
-                        _id: { $dayOfWeek: '$date' },
-                        count: { $sum: 1 }
-                    }
-                }
-            ]);
-    
-            const totalUnreadMessages = await Chat.aggregate([
-                { $match: { doctorId: doctor._id } },
-                { $unwind: '$messages' },
-                { $match: { 'messages.read': false, 'messages.senderId': { $ne: doctor._id } } },
-                { $count: 'unreadCount' }
-            ]);
-    
-            const waitingAppointmentsCount = await Booking.countDocuments({
-                doctor: doctor._id,
-                status: 'waiting'
-            });
-    
-            const totalPostedSlots = doctor.timeSlots.length;
-            const totalFilledSlots = doctor.timeSlots.filter(slot => slot.status === 'booked').length;
-    
-            res.render('doctorInsights', {
-                doctor,
-                totalPatients,
-                totalConsultations,
-                totalReviews,
-                averageRating,
-                bookingRates,
-                totalUnreadMessages: totalUnreadMessages[0]?.unreadCount || 0,
-                waitingAppointmentsCount,
-                totalPostedSlots,
-                totalFilledSlots,
-                bookingFilter, 
-                insightsFilter
-            });
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).send('Server Error');
+router.get('/insights', isLoggedIn, async (req, res) => {
+    try {
+        const doctorEmail = req.session.user.email;
+        const doctor = await Doctor.findOne({ email: doctorEmail });
+
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
         }
-    });
+
+        const totalPatients = await Patient.countDocuments();
+        const totalConsultations = await Booking.countDocuments({ doctor: doctor._id, status: 'completed' });
+        const totalReviews = doctor.reviews.length;
+
+        const totalRatings = doctor.reviews.reduce((acc, review) => acc + review.rating, 0);
+        const averageRating = totalReviews > 0 ? (totalRatings / totalReviews).toFixed(1) : 'No ratings';
+
+        const bookingFilter = req.query['booking-filter'] || 'all';
+        const insightsFilter = req.query['insight-filter'] || 'all';
+
+        let startDate, endDate;
+
+        if (bookingFilter === 'today') {
+            startDate = new Date();
+            startDate.setHours(0, 0, 0, 0); 
+            endDate = new Date();
+            endDate.setHours(23, 59, 59, 999); 
+        } else if (bookingFilter === 'week') {
+            startDate = new Date();
+            startDate.setDate(startDate.getDate() - startDate.getDay());
+            endDate = new Date();
+            endDate.setDate(endDate.getDate() + (6 - endDate.getDay())); 
+        } else if (bookingFilter === 'month') {
+            startDate = new Date();
+            startDate.setDate(1); 
+            endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + 1);
+            endDate.setDate(0);
+        } else {
+            startDate = new Date('1970-01-01');
+            endDate = new Date();
+        }
+
+        const bookingRates = await Booking.aggregate([
+            { $match: { doctor: doctor._id, date: { $gte: startDate, $lte: endDate } } },
+            {
+                $group: {
+                    _id: { $dayOfWeek: '$date' },
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        const totalUnreadMessages = await Chat.aggregate([
+            { $match: { doctorId: doctor._id } },
+            { $unwind: '$messages' },
+            { $match: { 'messages.read': false, 'messages.senderId': { $ne: doctor._id } } },
+            { $count: 'unreadCount' }
+        ]);
+
+        const waitingAppointmentsCount = await Booking.countDocuments({
+            doctor: doctor._id,
+            status: 'waiting'
+        });
+
+        const totalPostedSlots = doctor.timeSlots.length;
+        const totalFilledSlots = doctor.timeSlots.filter(slot => slot.status === 'booked').length;
+
+        
+
+        const totalFee = doctor.totalDoctorFee;
+        const totalServiceCharge = doctor.serviceCharge;
+
+        res.render('doctorInsights', {
+            doctor,
+            totalPatients,
+            totalConsultations,
+            totalReviews,
+            averageRating,
+            bookingRates,
+            totalUnreadMessages: totalUnreadMessages[0]?.unreadCount || 0,
+            waitingAppointmentsCount,
+            totalPostedSlots,
+            totalFilledSlots,
+            totalFee,
+            totalServiceCharge,
+            bookingFilter,
+            insightsFilter
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
     
     
   
@@ -773,58 +791,80 @@ router.delete('/manage-time-slots/:id', isLoggedIn, checkSubscription, async (re
 
 router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) => {
     try {
-      const doctorEmail = req.session.user.email;
-      const { date, startTime, endTime, hospital, slotType, endDate } = req.body;
-  
-      const doctor = await Doctor.findOne({ email: doctorEmail });
-      if (!doctor) {
-        return res.status(404).send('Doctor not found');
-      }
-  
-      const selectedHospital = doctor.hospitals.find(h => h.name === hospital);
-      if (!selectedHospital) {
-        return res.status(404).send('Hospital not found');
-      }
-  
-      const start = new Date(date);
-      const end = new Date(endDate || date);
-  
-      let currentDate = new Date(start);
-  
-      while (currentDate <= end) {
-        const newTimeSlot = {
-          date: new Date(currentDate),
-          startTime,
-          endTime,
-          status: 'free',
-          hospital: hospital,
-          hospitalLocation: {
-            street: selectedHospital.street,
-            city: selectedHospital.city,
-            state: selectedHospital.state,
-            country: selectedHospital.country,
-            zip: selectedHospital.zip
-          }
-        };
-  
-        if (selectedHospital.lat && selectedHospital.lng) {
-          newTimeSlot.lat = selectedHospital.lat;
-          newTimeSlot.lng = selectedHospital.lng;
-        }
-  
-        doctor.timeSlots.push(newTimeSlot);
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-  
-      await doctor.save();
-      res.redirect('/doctor/manage-time-slots');
-    } catch (error) {
-      console.error(error.message);
-      res.status(500).send('Server Error');
-    }
-  });
-  
+        const doctorEmail = req.session.user.email;
+        const { date, startTime, endTime, hospital, endDate } = req.body;
 
+        const doctor = await Doctor.findOne({ email: doctorEmail });
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        if (doctor.subscriptionType === 'Free' && doctor.maxTimeSlots <= 0) {
+            return res.json({ error: 'You have reached the limit of time slots for the free trial. Please subscribe to add more.' });
+        }
+
+        const selectedHospital = doctor.hospitals.find(h => h.name === hospital);
+        if (!selectedHospital) {
+            return res.status(404).send('Hospital not found');
+        }
+
+        const start = new Date(date);
+        const end = new Date(endDate || date);
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(startTime) || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(endTime)) {
+            return res.status(400).send('Invalid date or time format');
+        }
+
+        let currentDate = new Date(start);
+        let newTimeSlots = [];
+
+        while (currentDate <= end) {
+            if (doctor.subscriptionType === 'Free' && doctor.maxTimeSlots <= 0) {
+                return res.json({ error: 'You have reached the limit of time slots for the free trial. Please subscribe to add more.' });
+            }
+
+            const newTimeSlot = {
+                date: new Date(currentDate),
+                startTime,
+                endTime,
+                status: 'free',
+                hospital: hospital,
+                hospitalLocation: {
+                    street: selectedHospital.street,
+                    city: selectedHospital.city,
+                    state: selectedHospital.state,
+                    country: selectedHospital.country,
+                    zip: selectedHospital.zip
+                }
+            };
+
+            if (selectedHospital.lat && selectedHospital.lng) {
+                newTimeSlot.lat = selectedHospital.lat;
+                newTimeSlot.lng = selectedHospital.lng;
+            }
+
+            newTimeSlots.push(newTimeSlot);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        if (doctor.subscriptionType === 'Free' && newTimeSlots.length > doctor.maxTimeSlots) {
+            return res.json({ error: 'You are allowed to add only a limited number of time slots for the free trial. Please subscribe to add more.' });
+        }
+
+        doctor.timeSlots.push(...newTimeSlots);
+
+        if (doctor.subscriptionType === 'Free') {
+            doctor.maxTimeSlots -= newTimeSlots.length;
+        }
+
+        await doctor.save();
+        // res.json({ success: 'Time slots added successfully.' });
+        res.redirect('/doctor/manage-time-slots');
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+});
 
 
 

@@ -102,6 +102,13 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     }
 
     doctor.verified = verificationStatus;
+
+    if (verificationStatus === 'Verified') {
+      doctor.subscriptionVerification = 'Verified';
+      doctor.trialEndDate = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+      doctor.maxTimeSlots = 3;
+    }
+
     await doctor.save();
 
     const message = `Your profile has been ${verificationStatus.toLowerCase()}.`;
@@ -114,12 +121,13 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     await notification.save();
 
     req.flash('success_msg', 'Doctor verification status updated.');
-    res.redirect('/doctor-profile-requests');
+    res.redirect('/admin/doctor-profile-requests');
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
+
 
 
 router.get('/view-doctors', isLoggedIn, async (req, res) => {

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Success</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container text-center mt-5">
+        <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading">Payment Successful!</h4>
+            <p>Your payment for the appointment with Dr. <strong><%= booking.doctor.name %></strong> on <strong><%= booking.date.toDateString() %></strong> at <strong><%= booking.time %></strong> has been successfully processed.</p>
+            <hr>
+            <p class="mb-0">Thank you for your payment. You will receive a confirmation email shortly.</p>
+        </div>
+        <a href="/patient/bookings" class="btn btn-primary">View My Bookings</a>
+    </div>
+</body>
+</html>

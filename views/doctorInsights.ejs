@@ -42,6 +42,21 @@
             <p><strong>Total Reviews:</strong> <%= totalReviews %></p>
         </div>
 
+        <% if (doctor.subscriptionType === 'Standard') { %>
+            <h1>Financial Overview</h1>
+            <div class="financial-section">
+                <p><strong>Total Fees:</strong> $<%= totalFee.toFixed(2) %></p>
+                <p><strong>Total Service Charge:</strong> $<%= totalServiceCharge.toFixed(2) %></p>
+            </div>
+        <% } %>
+
+        <% if (doctor.subscriptionType === 'Premium') { %>
+            <h1>Financial Overview</h1>
+            <div class="financial-section">
+                <p><strong>Total Fees:</strong> $<%= totalFee.toFixed(2) %></p>
+            </div>
+        <% } %>
+
         <h2>Booking Rate by Day of the Week</h2>
         <form action="/doctor/insights" method="GET">
             <label for="booking-filter">Filter Booking Rates:</label>

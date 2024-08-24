@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Doctor Profile</title>
-
 </head>
 <body>
 <h1>Doctor Profile</h1>
@@ -47,6 +46,7 @@
     <p><strong>Consultations Completed:</strong> <%= doctor.consultationsCompleted %></p>
     
     <h3>Subscription Details</h3>
+    <p><strong>Doctor Fee:</strong> <%= doctor.doctorFee %></p>
     <p><strong>Subscription Type:</strong> <%= doctor.subscriptionType %></p>
     <p><strong>Subscription Verification:</strong> <%= doctor.subscriptionVerification %></p>
 
@@ -84,7 +84,6 @@
     <h3>About Me</h3>
     <p><%= doctor.aboutMe || 'No information available.' %></p>
 
-
     <h3>Languages Spoken</h3>
     <% if (doctor.languages && doctor.languages.length > 0) { %>
     <ul>
@@ -95,27 +94,25 @@
     <% } else { %>
     <p>No languages listed.</p>
     <% } %>
+
     <div class="hospitals-section">
         <h3>Hospitals</h3>
-<% if (doctor && doctor.hospitals && doctor.hospitals.length > 0) { %>
-    <ul>
-        <% doctor.hospitals.forEach(hospital => { %>
-            <li>
-                <p><strong>Name:</strong> <%= hospital.name %></p>
-                <p><strong>Location:</strong> <%= hospital.street %>, <%= hospital.city %>, <%= hospital.state %>, <%= hospital.country %>, <%= hospital.zip %></p>
-                <% if (hospital.lat && hospital.lng) { %>
-                    <a href="https://www.google.com/maps/dir/?api=1&destination=<%= hospital.lat %>,<%= hospital.lng %>" target="_blank">Get Directions</a>
-                <% } %>
-            </li>
-        <% }) %>
-    </ul>
-<% } else { %>
-    <p>No hospitals available.</p>
-<% } %>
-
+        <% if (doctor && doctor.hospitals && doctor.hospitals.length > 0) { %>
+            <ul>
+                <% doctor.hospitals.forEach(hospital => { %>
+                    <li>
+                        <p><strong>Name:</strong> <%= hospital.name %></p>
+                        <p><strong>Location:</strong> <%= hospital.street %>, <%= hospital.city %>, <%= hospital.state %>, <%= hospital.country %>, <%= hospital.zip %></p>
+                        <% if (hospital.lat && hospital.lng) { %>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=<%= hospital.lat %>,<%= hospital.lng %>" target="_blank">Get Directions</a>
+                        <% } %>
+                    </li>
+                <% }) %>
+            </ul>
+        <% } else { %>
+            <p>No hospitals available.</p>
+        <% } %>
     </div>
-    
-    
 
     <h3>Insurances:</h3>
     <ul>
@@ -154,27 +151,23 @@
     <% } %>
 
     <h3>Time Slots</h3>
-<ul>
-    <% doctor.timeSlots.forEach((timeSlot, index) => { %>
-        <% if (timeSlot) { %>
-            <li>
-                <strong>Date:</strong> <%= timeSlot.date ? new Date(timeSlot.date).toLocaleDateString() : 'N/A' %><br>
-                <strong>Start Time:</strong> <%= timeSlot.startTime %><br>
-                <strong>End Time:</strong> <%= timeSlot.endTime %><br>
-                <strong>Hospital:</strong> <%= timeSlot.hospital %><br> 
-                <strong>Status:</strong> <%= timeSlot.status %><br>
-            </li>
-        <% } %>
-    <% }) %>
-</ul>
+    <ul>
+        <% doctor.timeSlots.forEach((timeSlot, index) => { %>
+            <% if (timeSlot) { %>
+                <li>
+                    <strong>Date:</strong> <%= timeSlot.date ? new Date(timeSlot.date).toLocaleDateString() : 'N/A' %><br>
+                    <strong>Start Time:</strong> <%= timeSlot.startTime %><br>
+                    <strong>End Time:</strong> <%= timeSlot.endTime %><br>
+                    <strong>Hospital:</strong> <%= timeSlot.hospital %><br> 
+                    <strong>Status:</strong> <%= timeSlot.status %><br>
+                </li>
+            <% } %>
+        <% }) %>
+    </ul>
 
     <form action="/doctor/blog" method="GET">
-        <% if (doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') { %>
-            <% if (doctor.subscriptionVerification === 'Verified') { %>
-                <button type="submit">Upload Blog Post</button>
-            <% } else { %>
-                <button type="button" onclick="handleRestrictedAccess()">Upload Blog Post</button>
-            <% } %>
+        <% if ((doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') || (doctor.subscriptionVerification === 'Verified' && doctor.trialEndDate && new Date() <= new Date(doctor.trialEndDate))) { %>
+            <button type="submit">Upload Blog Post</button>
         <% } else { %>
             <button type="button" onclick="handleRestrictedAccess()">Upload Blog Post</button>
         <% } %>
@@ -182,7 +175,7 @@
     <a href="/doctor/doctor-index">Home</a>
     
     <a href="/doctor/edit">Edit Profile</a>
-    <% if ((doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') && doctor.subscriptionVerification === 'Verified') { %>
+    <% if ((doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') || (doctor.subscriptionVerification === 'Verified' && doctor.trialEndDate && new Date() <= new Date(doctor.trialEndDate))) { %>
         <a href="/doctor/bookings">Manage Bookings</a>
         <a href="/doctor/manage-time-slots">Manage Time Slots</a>
         <a href="/doctor/profile/blogs">View My Blogs</a>
@@ -191,7 +184,7 @@
         <button onclick="handleRestrictedAccess()">Manage Bookings</button>
         <button onclick="handleRestrictedAccess()">Manage Time Slots</button>
         <button onclick="handleRestrictedAccess()">Manage Blogs</button>
-        <button onclick="handleRestrictedAccess()">Chat box</button>
+        <button onclick="handleRestrictedAccess()">Chat Box</button>
     <% } %>
 
     <a href="/doctor/calendar" class="btn">View Calendar</a>
@@ -199,13 +192,13 @@
     <a href="/doctor/insights" class="btn">View Insights</a>
     <a href="/doctor/reviews/<%= doctor._id %>">View Reviews</a>
     <form action="/auth/logout" method="GET">
-    <button type="submit">Logout</button>
+        <button type="submit">Logout</button>
     </form>
 </div>
 
 <script>
     function handleRestrictedAccess() {
-        alert('You need to subscribe to a package to access this feature.');
+        alert('You need to subscribe to a package or be verified on a trial period to access this feature.');
     }
 </script>
 </body>

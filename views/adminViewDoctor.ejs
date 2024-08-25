@@ -158,6 +158,46 @@
       font-size: 14px;
       color: #A0AAC8; 
     }
+
+    .modal {
+      display: none; 
+      position: fixed; 
+      z-index: 1; 
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto; 
+      background-color: rgba(0, 0, 0, 0.4); 
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 800px;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    iframe {
+      width: 100%;
+      height: 500px;
+    }
   </style>
 </head>
 <body>
@@ -216,32 +256,41 @@
         <p><strong>Website:</strong> <a href="<%= doctor.website %>" target="_blank"><%= doctor.website %></a></p>
 
         <h3>Proof Documents</h3>
-<% if (doctor.documents && doctor.documents.licenseProof && doctor.documents.licenseProof.data) { %>
-  <div>
-    <h4>License Proof</h4>
-    <img src="data:<%= doctor.documents.licenseProof.contentType %>;base64,<%= doctor.documents.licenseProof.data.toString('base64') %>" alt="License Proof" style="width: 300px; height: auto;">
-  </div>
-<% } else { %>
-  <p>No license proof available</p>
-<% } %>
+        <% if (doctor.documents && doctor.documents.licenseProof && doctor.documents.licenseProof.data) { %>
+          <div>
+            <h4>License Proof</h4>
+            <button onclick="viewProof('licenseProof')">View License Proof</button>
+          </div>
+        <% } else { %>
+          <p>No license proof available</p>
+        <% } %>
 
-<% if (doctor.documents && doctor.documents.certificationProof && doctor.documents.certificationProof.data) { %>
-  <div>
-    <h4>Certification Proof</h4>
-    <img src="data:<%= doctor.documents.certificationProof.contentType %>;base64,<%= doctor.documents.certificationProof.data.toString('base64') %>" alt="Certification Proof" style="width: 300px; height: auto;">
-  </div>
-<% } else { %>
-  <p>No certification proof available</p>
-<% } %>
+        <% if (doctor.documents && doctor.documents.certificationProof && doctor.documents.certificationProof.data) { %>
+          <div>
+            <h4>Certification Proof</h4>
+            <button onclick="viewProof('certificationProof')">View Certification Proof</button>
+          </div>
+        <% } else { %>
+          <p>No certification proof available</p>
+        <% } %>
 
-<% if (doctor.documents && doctor.documents.businessProof && doctor.documents.businessProof.data) { %>
-  <div>
-    <h4>Business Proof</h4>
-    <img src="data:<%= doctor.documents.businessProof.contentType %>;base64,<%= doctor.documents.businessProof.data.toString('base64') %>" alt="Business Proof" style="width: 300px; height: auto;">
-  </div>
-<% } else { %>
-  <p>No business proof available</p>
-<% } %>
+        <% if (doctor.documents && doctor.documents.businessProof && doctor.documents.businessProof.data) { %>
+          <div>
+            <h4>Business Proof</h4>
+            <button onclick="viewProof('businessProof')">View Business Proof</button>
+          </div>
+        <% } else { %>
+          <p>No business proof available</p>
+        <% } %>
+
+        <!-- Modal Structure -->
+        <div id="proofModal" class="modal">
+          <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="proofContent"></div>
+          </div>
+        </div>
+
 
         <h3>Subscription Details</h3>
         <p><strong>Subscription Type:</strong> <%= doctor.subscriptionType %></p>
@@ -325,5 +374,50 @@
       </div>
     </div>
   </div>
+
+  <script>
+    function viewProof(type) {
+      const proofModal = document.getElementById('proofModal');
+      const proofContent = document.getElementById('proofContent');
+      let proofData;
+      let contentType;
+
+      <% if (doctor.documents && doctor.documents.licenseProof && doctor.documents.licenseProof.data) { %>
+        if (type === 'licenseProof') {
+          proofData = "<%= doctor.documents.licenseProof.data.toString('base64') %>";
+          contentType = "<%= doctor.documents.licenseProof.contentType %>";
+        }
+      <% } %>
+
+      <% if (doctor.documents && doctor.documents.certificationProof && doctor.documents.certificationProof.data) { %>
+        if (type === 'certificationProof') {
+          proofData = "<%= doctor.documents.certificationProof.data.toString('base64') %>";
+          contentType = "<%= doctor.documents.certificationProof.contentType %>";
+        }
+      <% } %>
+
+      <% if (doctor.documents && doctor.documents.businessProof && doctor.documents.businessProof.data) { %>
+        if (type === 'businessProof') {
+          proofData = "<%= doctor.documents.businessProof.data.toString('base64') %>";
+          contentType = "<%= doctor.documents.businessProof.contentType %>";
+        }
+      <% } %>
+
+      if (contentType === 'application/pdf') {
+        proofContent.innerHTML = `<iframe src="data:${contentType};base64,${proofData}" frameborder="0"></iframe>`;
+      } else {
+        proofContent.innerHTML = `<img src="data:${contentType};base64,${proofData}" alt="${type}" style="width:100%; height:auto;">`;
+      }
+
+      proofModal.style.display = "block";
+    }
+
+    function closeModal() {
+      const proofModal = document.getElementById('proofModal');
+      proofModal.style.display = "none";
+    }
+  </script>
+
+
 </body>
 </html>

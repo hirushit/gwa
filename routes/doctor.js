@@ -197,37 +197,35 @@ router.get('/edit', isLoggedIn, async (req, res) => {
             awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
             faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
             hospitals: hospitals,
-            doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : 85 // Default fee is $85
+            doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : 85 
         };
 
         if (!updateData.documents) {
             updateData.documents = {};
         }
 
+        updateData.documents.licenseProof = req.files['licenseProof'] && req.files['licenseProof'][0] ? {
+            data: req.files['licenseProof'][0].buffer,
+            contentType: req.files['licenseProof'][0].mimetype
+        } : doctor.documents.licenseProof;
+
+        updateData.documents.certificationProof = req.files['certificationProof'] && req.files['certificationProof'][0] ? {
+            data: req.files['certificationProof'][0].buffer,
+            contentType: req.files['certificationProof'][0].mimetype
+        } : doctor.documents.certificationProof;
+
+        updateData.documents.businessProof = req.files['businessProof'] && req.files['businessProof'][0] ? {
+            data: req.files['businessProof'][0].buffer,
+            contentType: req.files['businessProof'][0].mimetype
+        } : doctor.documents.businessProof;
+
         if (req.files['profilePicture'] && req.files['profilePicture'][0]) {
             updateData.profilePicture = {
                 data: req.files['profilePicture'][0].buffer,
                 contentType: req.files['profilePicture'][0].mimetype
             };
-        }
-
-        if (req.files['licenseProof'] && req.files['licenseProof'][0]) {
-            updateData.documents.licenseProof = {
-                data: req.files['licenseProof'][0].buffer,
-                contentType: req.files['licenseProof'][0].mimetype
-            };
-        }
-        if (req.files['certificationProof'] && req.files['certificationProof'][0]) {
-            updateData.documents.certificationProof = {
-                data: req.files['certificationProof'][0].buffer,
-                contentType: req.files['certificationProof'][0].mimetype
-            };
-        }
-        if (req.files['businessProof'] && req.files['businessProof'][0]) {
-            updateData.documents.businessProof = {
-                data: req.files['businessProof'][0].buffer,
-                contentType: req.files['businessProof'][0].mimetype
-            };
+        } else {
+            updateData.profilePicture = doctor.profilePicture;
         }
 
         doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });

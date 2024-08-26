@@ -24,8 +24,10 @@ const bookingSchema = new mongoose.Schema({
             state: { type: String },
             country: { type: String },
             zip: { type: String }
-        }
-    }
+        },
+    },
+    payment: Number,
+    paid: { type: Boolean, default: false }
 });
 
 module.exports = mongoose.model('Booking', bookingSchema);

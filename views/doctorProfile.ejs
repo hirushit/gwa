@@ -32,7 +32,7 @@
     <p><strong>Name:</strong> <%= doctor.name %></p>
     <p><strong>Email:</strong> <%= doctor.email %></p>
     <p><strong>Title:</strong> <%= doctor.title %></p>
-    <p><strong>Speciality:</strong> <%= doctor.speciality.join(', ') %></p>
+    <p><strong>Speciality:</strong> <%= doctor.speciality && Array.isArray(doctor.speciality) ? doctor.speciality.join(', ') : 'N/A' %></p>
     <p><strong>Location:</strong> <%= doctor.city %>, <%= doctor.state %>, <%= doctor.country %></p>
     <p><strong>Gender:</strong> <%= doctor.gender %></p>
     <p><strong>Date of Birth:</strong> <%= doctor.dateOfBirth ? new Date(doctor.dateOfBirth).toLocaleDateString() : 'N/A' %></p>

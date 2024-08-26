@@ -42,21 +42,6 @@
             <p><strong>Total Reviews:</strong> <%= totalReviews %></p>
         </div>
 
-        <% if (doctor.subscriptionType === 'Standard') { %>
-            <h1>Financial Overview</h1>
-            <div class="financial-section">
-                <p><strong>Total Fees:</strong> $<%= totalFee.toFixed(2) %></p>
-                <p><strong>Total Service Charge:</strong> $<%= totalServiceCharge.toFixed(2) %></p>
-            </div>
-        <% } %>
-
-        <% if (doctor.subscriptionType === 'Premium') { %>
-            <h1>Financial Overview</h1>
-            <div class="financial-section">
-                <p><strong>Total Fees:</strong> $<%= totalFee.toFixed(2) %></p>
-            </div>
-        <% } %>
-
         <h2>Booking Rate by Day of the Week</h2>
         <form action="/doctor/insights" method="GET">
             <label for="booking-filter">Filter Booking Rates:</label>
@@ -89,6 +74,32 @@
             <% } else { %>
                 <p>No booking data available.</p>
             <% } %>
+        </div>
+
+        <h1>Financial Overview</h1>
+        <div class="financial-section">
+            <p><strong>Total Income Received:</strong> $<%= totalIncomeReceived.toFixed(2) %></p>
+        </div>
+
+        <h1>Income Over the Last 5 Months</h1>
+        <div class="income-section">
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Income ($)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']; %>
+                    <% for (let i = 0; i < 5; i++) { %>
+                        <tr>
+                            <td><%= months[(new Date().getMonth() - i + 12) % 12] %></td>
+                            <td><%= incomeByMonth[4 - i].toFixed(2) %></td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
         </div>
         
         <a href="/doctor/profile">Back to Profile</a>

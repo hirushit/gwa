@@ -249,7 +249,12 @@ router.get('/insights', isLoggedIn, async (req, res) => {
             return res.status(404).send('Doctor not found');
         }
 
-        const totalPatients = await Patient.countDocuments();
+        const totalPatients = await Booking.aggregate([
+            { $match: { doctor: doctor._id, status: 'completed' } },
+            { $group: { _id: "$patient" } },
+            { $count: "uniquePatients" }
+        ]);
+
         const totalConsultations = await Booking.countDocuments({ doctor: doctor._id, status: 'completed' });
         const totalReviews = doctor.reviews.length;
 
@@ -263,23 +268,23 @@ router.get('/insights', isLoggedIn, async (req, res) => {
 
         if (bookingFilter === 'today') {
             startDate = new Date();
-            startDate.setHours(0, 0, 0, 0); 
+            startDate.setHours(0, 0, 0, 0);
             endDate = new Date();
-            endDate.setHours(23, 59, 59, 999); 
+            endDate.setHours(23, 59, 59, 999);
         } else if (bookingFilter === 'week') {
             startDate = new Date();
             startDate.setDate(startDate.getDate() - startDate.getDay());
             endDate = new Date();
-            endDate.setDate(endDate.getDate() + (6 - endDate.getDay())); 
+            endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
         } else if (bookingFilter === 'month') {
             startDate = new Date();
-            startDate.setDate(1); 
+            startDate.setDate(1);
             endDate = new Date(startDate);
             endDate.setMonth(endDate.getMonth() + 1);
             endDate.setDate(0);
-        } else {
-            startDate = new Date('1970-01-01');
-            endDate = new Date();
+        } else if (bookingFilter === 'all') {
+            startDate = new Date('1970-01-01'); 
+            endDate = new Date(); 
         }
 
         const bookingRates = await Booking.aggregate([
@@ -289,7 +294,8 @@ router.get('/insights', isLoggedIn, async (req, res) => {
                     _id: { $dayOfWeek: '$date' },
                     count: { $sum: 1 }
                 }
-            }
+            },
+            { $sort: { _id: 1 } } 
         ]);
 
         const totalUnreadMessages = await Chat.aggregate([
@@ -307,14 +313,26 @@ router.get('/insights', isLoggedIn, async (req, res) => {
         const totalPostedSlots = doctor.timeSlots.length;
         const totalFilledSlots = doctor.timeSlots.filter(slot => slot.status === 'booked').length;
 
-        
+        const incomeByMonth = Array(5).fill(0);
+        const currentDate = new Date();
 
-        const totalFee = doctor.totalDoctorFee;
-        const totalServiceCharge = doctor.serviceCharge;
+        for (let i = 0; i < 5; i++) {
+            const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+            const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 0);
+
+            const monthlyIncome = await Booking.aggregate([
+                { $match: { doctor: doctor._id, status: 'completed', paid: true, date: { $gte: startOfMonth, $lte: endOfMonth } } },
+                { $group: { _id: null, total: { $sum: '$payment' } } }
+            ]);
+
+            incomeByMonth[4 - i] = monthlyIncome[0]?.total || 0;
+        }
+
+        const totalIncomeReceived = incomeByMonth.reduce((acc, income) => acc + income, 0);
 
         res.render('doctorInsights', {
             doctor,
-            totalPatients,
+            totalPatients: totalPatients[0]?.uniquePatients || 0,
             totalConsultations,
             totalReviews,
             averageRating,
@@ -323,8 +341,8 @@ router.get('/insights', isLoggedIn, async (req, res) => {
             waitingAppointmentsCount,
             totalPostedSlots,
             totalFilledSlots,
-            totalFee,
-            totalServiceCharge,
+            totalIncomeReceived,
+            incomeByMonth,
             bookingFilter,
             insightsFilter
         });
@@ -334,8 +352,8 @@ router.get('/insights', isLoggedIn, async (req, res) => {
     }
 });
 
-    
-    
+
+
   
 router.post('/profile/verify', isLoggedIn, async (req, res) => {
     try {

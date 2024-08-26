@@ -323,8 +323,11 @@ router.get('/book/payment-success', async (req, res) => {
         hospital: {
           name: doctor.timeSlots[slotIndex].hospital,
           location: doctor.timeSlots[slotIndex].hospitalLocation
-        }
+        },
+        payment: totalFee,
+        paid: 'true'
       });
+      console.log(booking);
 
       await booking.save();
       
@@ -339,7 +342,7 @@ router.get('/book/payment-success', async (req, res) => {
 });
 
 router.get('/book/payment-failure', (req, res) => {
-  res.render('-patient-payment-failure');
+  res.render('patient-payment-failure');
 });
 
 

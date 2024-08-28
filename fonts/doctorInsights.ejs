@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Insights</title>
+    <link rel="stylesheet" href="/path/to/your/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Insights</h1>
+        <form action="/doctor/insights" method="GET">
+            <label for="insight-filter">Filter Insights:</label>
+            <select id="insight-filter" name="insight-filter" onchange="this.form.submit()">
+                <option value="all" <%= insightsFilter === 'all' ? 'selected' : '' %>>All</option>
+                <option value="today" <%= insightsFilter === 'today' ? 'selected' : '' %>>Today</option>
+                <option value="week" <%= insightsFilter === 'week' ? 'selected' : '' %>>This Week</option>
+                <option value="month" <%= insightsFilter === 'month' ? 'selected' : '' %>>This Month</option>
+            </select>
+        </form>
+        <div class="insights-section">
+            <p><strong>Total Waiting Appointments:</strong> <%= waitingAppointmentsCount %></p>
+            <p><strong>Total Patients:</strong> <%= totalPatients %></p>
+            <p><strong>Rating:</strong> <%= averageRating %></p>
+        </div>
+        
+        <h1>Profile</h1>
+        <div class="profile-section">
+            <p><strong>Name of the Doctor:</strong> Dr. <%= doctor.name %></p>
+            <p><strong>Specialization:</strong> <%= doctor.speciality.join(', ') %></p>
+            <p><strong>Total Unread Messages:</strong> <%= totalUnreadMessages %></p>
+            <p><strong>Slots:</strong> <%= totalFilledSlots %> / <%= totalPostedSlots %></p>
+        </div>
+
+        <h1>Total Consultations Completed</h1>
+        <div class="consultations-section">
+            <p><strong>Total Consultations Completed:</strong> <%= totalConsultations %></p>
+        </div>
+
+        <h1>Total Reviews</h1>
+        <div class="reviews-section">
+            <p><strong>Total Reviews:</strong> <%= totalReviews %></p>
+        </div>
+
+        <h2>Booking Rate by Day of the Week</h2>
+        <form action="/doctor/insights" method="GET">
+            <label for="booking-filter">Filter Booking Rates:</label>
+            <select id="booking-filter" name="booking-filter" onchange="this.form.submit()">
+                <option value="all" <%= bookingFilter === 'all' ? 'selected' : '' %>>All</option>
+                <option value="today" <%= bookingFilter === 'today' ? 'selected' : '' %>>Today</option>
+                <option value="week" <%= bookingFilter === 'week' ? 'selected' : '' %>>This Week</option>
+                <option value="month" <%= bookingFilter === 'month' ? 'selected' : '' %>>This Month</option>
+            </select>
+        </form>
+
+        <div class="table-section">
+            <% if (Array.isArray(bookingRates) && bookingRates.length > 0) { %>
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Booking Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].forEach((day, index) => { %>
+                            <tr>
+                                <td><%= day %></td>
+                                <td><%= bookingRates.find(br => br._id === index + 1)?.count || 0 %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <p>No booking data available.</p>
+            <% } %>
+        </div>
+
+        <h1>Financial Overview</h1>
+        <div class="financial-section">
+            <p><strong>Total Income Received:</strong> $<%= totalIncomeReceived.toFixed(2) %></p>
+        </div>
+
+        <h1>Income Over the Last 5 Months</h1>
+        <div class="income-section">
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Income ($)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']; %>
+                    <% for (let i = 0; i < 5; i++) { %>
+                        <tr>
+                            <td><%= months[(new Date().getMonth() - i + 12) % 12] %></td>
+                            <td><%= incomeByMonth[4 - i].toFixed(2) %></td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+        
+        <a href="/doctor/profile">Back to Profile</a>
+    </div>
+</body>
+</html>

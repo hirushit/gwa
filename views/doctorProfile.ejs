@@ -32,7 +32,7 @@
     <p><strong>Name:</strong> <%= doctor.name %></p>
     <p><strong>Email:</strong> <%= doctor.email %></p>
     <p><strong>Title:</strong> <%= doctor.title %></p>
-    <p><strong>Speciality:</strong> <%= doctor.speciality && Array.isArray(doctor.speciality) ? doctor.speciality.join(', ') : 'N/A' %></p>
+    <p><strong>Speciality:</strong> <%= doctor.speciality.join(', ') %></p>
     <p><strong>Location:</strong> <%= doctor.city %>, <%= doctor.state %>, <%= doctor.country %></p>
     <p><strong>Gender:</strong> <%= doctor.gender %></p>
     <p><strong>Date of Birth:</strong> <%= doctor.dateOfBirth ? new Date(doctor.dateOfBirth).toLocaleDateString() : 'N/A' %></p>
@@ -164,6 +164,24 @@
             <% } %>
         <% }) %>
     </ul>
+    <% if (doctor.subscriptionType === 'Standard') { %>
+        <h1>Financial Overview</h1>
+        <div class="financial-section">
+            <p><strong>Total Fees:</strong> $<%= (doctor.totalDoctorFee / 100).toFixed(2) %></p>
+            <p><strong>Total Service Charge:</strong> $<%= (doctor.serviceCharge / 100).toFixed(2) %></p>
+            <p><strong>Temporary Amount:</strong> $<%= (doctor.tempDoctorFee / 100).toFixed(2) %></p>
+            <p><strong>Settlement Status: </strong> <%= (doctor.tempDoctorFeeStatus) %></p>
+        </div>
+    <% } %>
+    
+    <% if (doctor.subscriptionType === 'Premium') { %>
+        <h1>Financial Overview</h1>
+        <div class="financial-section">
+            <p><strong>Total Fees:</strong> $<%= (doctor.totalDoctorFee / 100).toFixed(2) %></p>
+            <p><strong>Temporary Amount:</strong> $<%= (doctor.tempDoctorFee / 100).toFixed(2) %></p>
+        </div>
+    <% } %>
+    
 
     <form action="/doctor/blog" method="GET">
         <% if ((doctor.subscriptionType === 'Standard' || doctor.subscriptionType === 'Premium' || doctor.subscriptionType === 'Enterprise') || (doctor.subscriptionVerification === 'Verified' && doctor.trialEndDate && new Date() <= new Date(doctor.trialEndDate))) { %>

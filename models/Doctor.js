@@ -98,8 +98,10 @@ const doctorSchema = new mongoose.Schema({
   },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+  tempDoctorFee: Number,
   totalDoctorFee: Number,
   serviceCharge: Number,
+  tempDoctorFeeStatus: { type: String, enum: ['Pending', 'Not Paid', 'Paid', "Partially Paid"], default: 'Pending' },
 });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

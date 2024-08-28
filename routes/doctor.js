@@ -352,8 +352,8 @@ router.get('/insights', isLoggedIn, async (req, res) => {
     }
 });
 
-
-
+    
+    
   
 router.post('/profile/verify', isLoggedIn, async (req, res) => {
     try {

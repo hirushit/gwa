@@ -167,6 +167,10 @@ router.post('/update-doctor/:doctorId', upload.single('profilePicture'), isAdmin
       const doctorId = req.params.doctorId;
       let doctor = await Doctor.findById(doctorId);
 
+      if (!doctor) {
+          return res.status(404).send('Doctor not found');
+      }
+
       let hospitals = [];
       if (Array.isArray(req.body.hospitals)) {
           hospitals = req.body.hospitals.map(hospital => ({
@@ -209,6 +213,14 @@ router.post('/update-doctor/:doctorId', upload.single('profilePicture'), isAdmin
           };
       }
 
+      if (req.body.tempDoctorFee !== undefined) {
+          updateData.tempDoctorFee = req.body.tempDoctorFee;
+      }
+
+      if (req.body.tempDoctorFeeStatus !== undefined) {
+          updateData.tempDoctorFeeStatus = req.body.tempDoctorFeeStatus;
+      }
+
       doctor = await Doctor.findByIdAndUpdate(doctorId, updateData, { new: true });
 
       await doctor.save();
@@ -219,6 +231,8 @@ router.post('/update-doctor/:doctorId', upload.single('profilePicture'), isAdmin
       res.status(500).send('Server Error');
   }
 });
+
+
 
 router.get('/view-patients', isLoggedIn, async (req, res) => {
   try {
@@ -783,5 +797,190 @@ router.post('/view-appointments/:id', isLoggedIn, async (req, res) => {
       res.status(500).send('Server error');
   }
 });
+
+// router.get('/bookings', async (req, res) => {
+//   try {
+//       const bookings = await Booking.find().select('doctor patient date consultationType').lean();
+
+//       // Prepare an array to hold booking details
+//       const bookingDetails = await Promise.all(
+//           bookings.map(async (booking) => {
+//               try {
+//                   // Fetch the doctor details using doctorId
+//                   const doctor = await Doctor.findById(booking.doctor, 'name email').lean();
+//                   if (!doctor) {
+//                       throw new Error('Doctor not found');
+//                   }
+
+//                   // Fetch the patient details using patientId
+//                   const patient = await Patient.findById(booking.patient, 'name').lean();
+//                   if (!patient) {
+//                       throw new Error('Patient not found');
+//                   }
+
+//                   // Combine the data
+//                   return {
+//                       _id: booking._id,
+//                       patientName: patient.name,
+//                       doctorName: doctor.name,
+//                       doctorEmail: doctor.email,
+//                       appointmentDate: booking.date,
+//                       appointmentTime: booking.time,
+//                       consultationType: booking.consultationType,
+//                       status: booking.status,
+//                       meetingLink: booking.meetingLink,
+//                       hospital: booking.hospital,
+//                       payment: booking.payment,
+//                       paid: booking.paid
+//                   };
+//               } catch (error) {
+//                   console.error('Error fetching details:', error);
+//                   return {
+//                       _id: booking._id,
+//                       patientName: 'Error',
+//                       doctorName: 'Error',
+//                       doctorEmail: 'Error',
+//                       appointmentDate: booking.date,
+//                       appointmentTime: booking.time,
+//                       consultationType: booking.consultationType,
+//                       status: booking.status,
+//                       meetingLink: booking.meetingLink,
+//                       hospital: booking.hospital,
+//                       payment: booking.payment,
+//                       paid: booking.paid
+//                   };
+//               }
+//           })
+//       );
+
+//       res.render('bookings', { bookings: bookingDetails });
+//   } catch (error) {
+//       console.error('Error fetching bookings:', error);
+//       res.status(500).send('Internal Server Error');
+//   }
+// });
+
+router.get('/bookings', async (req, res) => {
+  try {
+      const { doctorName, doctorEmail, consultationType, patientName, appointmentDate } = req.query;
+
+      // Initialize empty arrays to store IDs
+      let doctorIds = [];
+      let patientIds = [];
+
+      // Fetch doctor IDs based on doctorName and doctorEmail
+      if (doctorName || doctorEmail) {
+          const doctorQuery = {};
+          if (doctorName) doctorQuery.name = new RegExp(doctorName, 'i'); // Case-insensitive search
+          if (doctorEmail) doctorQuery.email = doctorEmail;
+
+          const doctors = await Doctor.find(doctorQuery, '_id').lean();
+          doctorIds = doctors.map(doc => doc._id);
+      }
+
+      // Fetch patient IDs based on patientName
+      if (patientName) {
+          const patientQuery = { name: new RegExp(patientName, 'i') }; // Case-insensitive search
+
+          const patients = await Patient.find(patientQuery, '_id').lean();
+          patientIds = patients.map(patient => patient._id);
+      }
+
+      // Build the booking query using the doctor and patient IDs
+      const bookingQuery = {};
+      if (doctorIds.length > 0) bookingQuery.doctor = { $in: doctorIds };
+      if (patientIds.length > 0) bookingQuery.patient = { $in: patientIds };
+      if (consultationType) bookingQuery.consultationType = consultationType;
+
+      // Handle appointment date filtering
+      if (appointmentDate) {
+          const date = new Date(appointmentDate);
+          bookingQuery.date = {
+              $gte: new Date(date.setHours(0, 0, 0, 0)),
+              $lt: new Date(date.setHours(23, 59, 59, 999))
+          };
+      }
+
+      // Fetch bookings based on the query
+      const bookings = await Booking.find(bookingQuery).lean();
+
+      // Prepare the booking details with doctor and patient info
+      const bookingDetails = await Promise.all(
+          bookings.map(async (booking) => {
+              const doctor = await Doctor.findById(booking.doctor, 'name email').lean();
+              const patient = await Patient.findById(booking.patient, 'name').lean();
+
+              return {
+                  _id: booking._id,
+                  patientName: patient ? patient.name : 'Unknown',
+                  doctorName: doctor ? doctor.name : 'Unknown',
+                  doctorEmail: doctor ? doctor.email : 'Unknown',
+                  appointmentDate: booking.date,
+                  consultationType: booking.consultationType,
+                  status: booking.status,
+                  meetingLink: booking.meetingLink,
+                  hospital: booking.hospital,
+                  payment: booking.payment,
+                  paid: booking.paid
+              };
+          })
+      );
+
+      // Render the results
+      res.render('bookings', { bookings: bookingDetails, query: req.query || {} });
+  } catch (error) {
+      console.error('Error fetching bookings:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+
+router.get('/booking-details/:bookingId', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+      const bookingId = req.params.bookingId;
+
+      // Fetch the booking details using the bookingId
+      const booking = await Booking.findById(bookingId).lean();
+      
+      if (!booking) {
+          return res.status(404).send('Booking not found');
+      }
+      console.log(booking.doctor)
+      // Fetch the doctor details using doctorId
+      const doctor = await Doctor.findById(booking.doctor, 'name email').lean();
+      if (!doctor) {
+          return res.status(404).send('Doctor not found');
+      }
+      console.log(doctor);
+      // Fetch the patient details using patientId
+      const patient = await Patient.findById(booking.patient, 'name').lean();
+      if (!patient) {
+          return res.status(404).send('Patient not found');
+      }
+
+      // Combine the data
+      const bookingDetails = {
+        doctorName: doctor.name,
+        doctorEmail: doctor.email,
+        patientName: patient.name,
+        appointmentDate: booking.date,
+        appointmentTime: booking.time,
+        consultationType: booking.consultationType,
+        status: booking.status,
+        meetingLink: booking.meetingLink,
+        hospital: booking.hospital,
+        payment: booking.payment,
+        paid: booking.paid
+    };
+
+
+      // Send the booking details as response
+      res.render('booking-details', { booking: bookingDetails });
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Server error');
+  }
+});
+
 
 module.exports = router;

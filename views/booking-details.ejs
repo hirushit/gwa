@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+        }
+        p {
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+        strong {
+            color: #007bff;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .payment-status {
+            font-weight: bold;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .payment-status.paid {
+            background-color: #28a745;
+        }
+        .payment-status.unpaid {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Booking Details</h1>
+
+    <p><strong>Patient Name:</strong> <%= booking.patientName %></p>
+    <p><strong>Doctor Name:</strong> <%= booking.doctorName %></p>
+    <p><strong>Doctor Email:</strong> <%= booking.doctorEmail %></p>
+    <p><strong>Appointment Date:</strong> <%= booking.appointmentDate.toDateString() %></p>
+    <p><strong>Appointment Time:</strong> <%= booking.appointmentTime %></p>
+    <p><strong>Consultation Type:</strong> <%= booking.consultationType %></p>
+    <p><strong>Status:</strong> <%= booking.status.charAt(0).toUpperCase() + booking.status.slice(1) %></p>
+
+    <% if (booking.meetingLink) { %>
+        <p><strong>Meeting Link:</strong> <a href="<%= booking.meetingLink %>"><%= booking.meetingLink %></a></p>
+    <% } %>
+
+    <h2>Hospital Details</h2>
+    <p><strong>Hospital Name:</strong> <%= booking.hospital.name %></p>
+    <p><strong>Street:</strong> <%= booking.hospital.location.street %></p>
+    <p><strong>City:</strong> <%= booking.hospital.location.city %></p>
+    <p><strong>State:</strong> <%= booking.hospital.location.state %></p>
+    <p><strong>Country:</strong> <%= booking.hospital.location.country %></p>
+    <p><strong>ZIP Code:</strong> <%= booking.hospital.location.zip %></p>
+
+    <h2>Payment Details</h2>
+    <p><strong>Amount:</strong> $<%= booking.payment.toFixed(2) %></p>
+    <p><strong>Paid:</strong> <span class="payment-status <%= booking.paid ? 'paid' : 'unpaid' %>">
+        <%= booking.paid ? 'Yes' : 'No' %>
+    </span></p>
+</div>
+
+</body>
+</html>

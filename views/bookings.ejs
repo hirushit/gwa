@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f2f2f2;
+        }
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .filter-section {
+            margin-bottom: 20px;
+        }
+        .filter-section label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .filter-section input[type="text"],
+        .filter-section input[type="date"],
+        .filter-section select {
+            padding: 5px;
+            margin-right: 10px;
+        }
+        .filter-section button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .filter-section button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Bookings</h1>
+
+    <!-- Filter and Search Form -->
+    <div class="filter-section">
+        <form method="GET" action="/admin/bookings">
+            <label for="doctorName">Doctor Name:</label>
+            <input type="text" id="doctorName" name="doctorName" placeholder="Enter doctor's name" value="<%= typeof query.doctorName !== 'undefined' ? query.doctorName : '' %>">
+            
+            <label for="doctorEmail">Doctor Email:</label>
+            <input type="text" id="doctorEmail" name="doctorEmail" placeholder="Enter doctor's email" value="<%= typeof query.doctorEmail !== 'undefined' ? query.doctorEmail : '' %>">
+            
+            <label for="consultationType">Consultation Type:</label>
+            <select id="consultationType" name="consultationType">
+                <option value="">All</option>
+                <option value="Video Call" <%= query.consultationType === 'Video Call' ? 'selected' : '' %>>Video</option>
+                <option value="In-person" <%= query.consultationType === 'In-person' ? 'selected' : '' %>>In-Person</option>
+            </select>
+
+            <label for="patientName">Patient Name:</label>
+            <input type="text" id="patientName" name="patientName" placeholder="Enter patient's name" value="<%= typeof query.patientName !== 'undefined' ? query.patientName : '' %>">
+
+            <label for="appointmentDate">Appointment Date:</label>
+            <input type="date" id="appointmentDate" name="appointmentDate" value="<%= typeof query.appointmentDate !== 'undefined' ? query.appointmentDate : '' %>">
+            
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    <!-- Bookings Table -->
+    <table>
+        <thead>
+            <tr>
+                <th>Patient Name</th>
+                <th>Doctor Name</th>
+                <th>Doctor Email</th>
+                <th>Appointment Date</th>
+                <th>Consultation Type</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% bookings.forEach(function(booking) { %>
+                <tr>
+                    <td><%= booking.patientName %></td>
+                    <td><%= booking.doctorName %></td>
+                    <td><%= booking.doctorEmail %></td>
+                    <td><%= new Date(booking.appointmentDate).toDateString() %></td>
+                    <td><%= booking.consultationType %></td>
+                    <td><a href="/admin/booking-details/<%= booking._id %>">View Details</a></td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+
+</body>
+</html>

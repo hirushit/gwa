@@ -430,21 +430,18 @@ function closeMapModal() {
       </select>
     </div>
 
-    <label>Specialities:</label>
-    <div id="speciality-container">
-      <% if (Array.isArray(doctor.speciality)) { %>
+    <div>
+      <label>Specialities:</label>
+      <div id="speciality-container">
         <% doctor.speciality.forEach((speciality, index) => { %>
           <div class="input-group">
             <input type="text" name="speciality[<%= index %>]" value="<%= speciality %>" class="form-control">
             <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
           </div>
         <% }) %>
-      <% } else { %>
-        <p>No specialities found.</p>
-      <% } %>
+      </div>
+      <button type="button" onclick="addInput('speciality')">Add Speciality</button>
     </div>
-    <button type="button" onclick="addInput('speciality')">Add Speciality</button>
-    
     
     <div>
       <label>Conditions:</label>
@@ -459,11 +456,10 @@ function closeMapModal() {
       <button type="button" onclick="addInput('conditions')">Add Condition</button>
     </div>
     
-    <% const languages = doctor.languages || []; %>
     <div>
       <label>Languages:</label>
       <div id="languages-container">
-        <% languages.forEach((language, index) => { %>
+        <% doctor.languages.forEach((language, index) => { %>
           <div class="input-group">
             <input type="text" name="languages[<%= index %>]" value="<%= language %>" class="form-control">
             <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
@@ -472,7 +468,6 @@ function closeMapModal() {
       </div>
       <button type="button" onclick="addInput('languages')">Add Language</button>
     </div>
-    
     
     <div id="hospitals-container">
       <% doctor.hospitals.forEach((hospital, index) => { %>
@@ -530,11 +525,10 @@ function closeMapModal() {
     </div>
     
     
-    <% const awards = doctor.awards || []; %>
     <div>
       <label>Awards:</label>
       <div id="awards-container">
-        <% awards.forEach((award, index) => { %>
+        <% doctor.awards.forEach((award, index) => { %>
           <div class="input-group">
             <input type="text" name="awards[<%= index %>]" value="<%= award %>" class="form-control">
             <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
@@ -544,12 +538,10 @@ function closeMapModal() {
       <button type="button" onclick="addInput('awards')">Add Award</button>
     </div>
     
-    
-    <% const faqs = doctor.faqs || []; %>
     <div>
       <label>FAQs:</label>
       <div id="faqs-container">
-        <% faqs.forEach((faq, index) => { %>
+        <% doctor.faqs.forEach((faq, index) => { %>
           <div class="input-group">
             <input type="text" name="faqs[<%= index %>]" value="<%= faq %>" class="form-control">
             <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">Remove</button>
@@ -558,7 +550,6 @@ function closeMapModal() {
       </div>
       <button type="button" onclick="addInput('faqs')">Add FAQ</button>
     </div>
-    
 
     <div>
       <label>Profile Picture:</label>

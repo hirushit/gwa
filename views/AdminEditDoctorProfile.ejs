@@ -319,27 +319,40 @@ function addInsurance() {
       </div>
       <button type="button" onclick="addInput('faqs')">Add FAQ</button>
     </div>
+    
 
     <div>
       <label>Profile Picture:</label>
       <input type="file" name="profilePicture">
   </div>
   <% if (doctor.subscriptionType === 'Standard') { %>
-      <h1>Financial Overview</h1>
-      <div class="financial-section">
-          <p><strong>Total Fees:</strong> $<%= doctor.totalDoctorFee %></p>
-          <p><strong>Total Service Charge:</strong> $<%= doctor.serviceCharge %></p>
-      </div>
-  <% } %>
+    <h1>Financial Overview</h1>
+    <div class="financial-section">
+        <p><strong>Total Fees:</strong> $<%= (doctor.totalDoctorFee / 100).toFixed(2) %></p>
+        <p><strong>Total Service Charge:</strong> $<%= (doctor.serviceCharge / 100).toFixed(2) %></p>
+        <p><strong>Temporary Amount:</strong> $<%= (doctor.tempDoctorFee / 100).toFixed(2) %></p>
+        <input type="number" id="tempDoctorFee" name="tempDoctorFee" value="<%= (doctor.tempDoctorFee / 100).toFixed(2) %>">
+    </div>
+<% } %>
 
-  <% if (doctor.subscriptionType === 'Premium') { %>
-      <h1>Financial Overview</h1>
-      <div class="financial-section">
-          <p><strong>Total Fees:</strong> $<%= doctor.totalDoctorFee %></p>
+<% if (doctor.subscriptionType === 'Premium') { %>
+    <h1>Financial Overview</h1>
+    <div class="financial-section">
+        <p><strong>Total Fees:</strong> $<%= (doctor.totalDoctorFee / 100).toFixed(2) %></p>
+        <p><strong>Temporary Amount:</strong> $<%= (doctor.tempDoctorFee / 100).toFixed(2) %></p>
+        <input type="number" id="tempDoctorFee" name="tempDoctorFee" value="<%= (doctor.tempDoctorFee / 100).toFixed(2) %>">
+    </div>
+<% } %>
+
+      <div>
+        <label for="tempDoctorFeeStatus">Settlement Status:</label>
+            <select id="tempDoctorFeeStatus" name="tempDoctorFeeStatus">
+                <option value="Pending" <%= doctor.tempDoctorFeeStatus === 'Pending' ? 'selected' : '' %>>Pending</option>
+                <option value="Not Paid" <%= doctor.tempDoctorFeeStatus === 'Not Paid' ? 'selected' : '' %>>Not Paid</option>
+                <option value="Partially Paid" <%= doctor.tempDoctorFeeStatus === 'Partially Paid' ? 'selected' : '' %>>Partially Paid</option>
+                <option value="Paid" <%= doctor.tempDoctorFeeStatus === 'Paid' ? 'selected' : '' %>>Paid</option>
+            </select>
       </div>
-  <% } %>
-    
-    
     <div>
       <button type="submit">Update Profile</button>
     </div>

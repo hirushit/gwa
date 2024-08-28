@@ -306,10 +306,14 @@ router.get('/book/payment-success', async (req, res) => {
         totalFee -= serviceCharge;
         doctor.serviceCharge = (doctor.serviceCharge || 0) + Math.round(serviceCharge * 100);
         doctor.totalDoctorFee = (doctor.totalDoctorFee || 0) + Math.round(totalFee * 100);
+        doctor.tempDoctorFee = (doctor.tempDoctorFee || 0) + Math.round(totalFee * 100);
+        doctor.tempDoctorFeeStatus = 'Pending';
       }
 
       if (doctor.subscriptionType === 'Premium'){
       doctor.totalDoctorFee = (doctor.totalDoctorFee || 0) + Math.round(totalFee * 100);
+      doctor.tempDoctorFee = (doctor.tempDoctorFee || 0) + Math.round(totalFee * 100);
+      doctor.tempDoctorFeeStatus = 'Pending';  
       }
       await doctor.save();
 

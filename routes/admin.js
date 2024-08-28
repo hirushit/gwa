@@ -89,7 +89,7 @@ router.get('/view/:id', isLoggedIn, async (req, res) => {
 router.post('/verify/:id', isLoggedIn, async (req, res) => {
   try {
     const doctorId = req.params.id;
-    const { verificationStatus } = req.body;
+    const { verificationStatus, reason, trialPeriod, maxTimeSlots } = req.body;
 
     if (!['Verified', 'Pending', 'Not Verified'].includes(verificationStatus)) {
       return res.status(400).send('Invalid verification status');
@@ -104,14 +104,28 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     doctor.verified = verificationStatus;
 
     if (verificationStatus === 'Verified') {
+      const customTrialPeriod = parseInt(trialPeriod) || 60;
+      const customMaxTimeSlots = parseInt(maxTimeSlots) || 3;
+
       doctor.subscriptionVerification = 'Verified';
-      doctor.trialEndDate = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
-      doctor.maxTimeSlots = 3;
+      doctor.trialEndDate = new Date(Date.now() + customTrialPeriod * 24 * 60 * 60 * 1000);
+      doctor.maxTimeSlots = customMaxTimeSlots;
     }
 
     await doctor.save();
 
-    const message = `Your profile has been ${verificationStatus.toLowerCase()}.`;
+    let message = `Your profile has been ${verificationStatus.toLowerCase()}.`;
+
+    if (verificationStatus === 'Verified') {
+      const customTrialPeriod = parseInt(trialPeriod) || 60;
+      const customMaxTimeSlots = parseInt(maxTimeSlots) || 3;
+      message = `Your profile has been verified. You have a trial period of ${customTrialPeriod} days and you can add up to ${customMaxTimeSlots} time slots.`;
+    }
+
+    if (verificationStatus === 'Not Verified' && reason) {
+      message = `Your profile has been rejected. Reason: ${reason}`;
+    }
+
     const notification = new Notification({
       userId: doctor._id, 
       message,
@@ -127,7 +141,6 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
-
 
 
 router.get('/view-doctors', isLoggedIn, async (req, res) => {

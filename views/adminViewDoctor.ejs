@@ -231,12 +231,23 @@
           <p>Current Verification Status: <%= doctor.verified %></p>
           <form action="/admin/verify/<%= doctor._id %>" method="POST">
             <label for="verificationStatus">Update Verification Status:</label>
-            <select id="verificationStatus" name="verificationStatus" required>
+            <select id="verificationStatus" name="verificationStatus" required onchange="toggleAdditionalFields()">
               <option value="" disabled selected>Select</option>
               <option value="Not Verified">Not Verified</option>
               <option value="Pending">Pending</option>
               <option value="Verified">Verified</option>
             </select>
+            <div id="additionalFields" style="display: none;">
+              <label for="trialPeriod">Trial Period (in days):</label>
+              <input type="number" id="trialPeriod" name="trialPeriod" value="60" min="1">
+              
+              <label for="maxTimeSlots">Max Time Slots:</label>
+              <input type="number" id="maxTimeSlots" name="maxTimeSlots" value="3" min="0">
+            </div>
+            <div id="reasonField" style="display: none;">
+              <label for="reason">Reason for Rejection:</label>
+              <textarea id="reason" name="reason" rows="4" placeholder="Enter the reason here"></textarea>
+            </div>
             <button type="submit">Update</button>
           </form>
         </div>
@@ -376,6 +387,16 @@
   </div>
 
   <script>
+
+function toggleAdditionalFields() {
+    const status = document.getElementById('verificationStatus').value;
+    const additionalFields = document.getElementById('additionalFields');
+    const reasonField = document.getElementById('reasonField');
+    additionalFields.style.display = (status === 'Verified') ? 'block' : 'none';
+    reasonField.style.display = (status === 'Not Verified') ? 'block' : 'none';
+  }
+
+
     function viewProof(type) {
       const proofModal = document.getElementById('proofModal');
       const proofContent = document.getElementById('proofContent');

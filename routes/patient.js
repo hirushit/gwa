@@ -249,7 +249,7 @@ router.post('/book', isLoggedIn, async (req, res) => {
           price_data: {
               currency: 'usd',
               product_data: {
-                  name: `Service charge for Dr. ${doctor.name}`,
+                  name: `Appointment Booking for Dr. ${doctor.name}: ${consultationType} on ${parsedDate.toLocaleDateString()} at ${startTime}`,
               },
               unit_amount: Math.round(totalFee * 100),
           },

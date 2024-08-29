@@ -153,6 +153,63 @@ router.get('/view-doctors', isLoggedIn, async (req, res) => {
   }
 });
 
+router.get('/manage-payments', isLoggedIn, async (req, res) => {
+  try {
+    const doctors = await Doctor.find().lean();
+    res.render('managePayments', { doctors, activePage: 'manage-payments' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.get('/update-payments/:doctorId', isAdmin, async (req,res) => {
+  try {
+    const doctorId = req.params.doctorId;
+    const doctor = await Doctor.findById(doctorId).lean();
+
+    res.render('updatePayments', {doctor});
+  }
+  catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+}
+});
+
+router.post('/update-payments/:doctorId', isAdmin, async (req, res) => {
+  try {
+      const doctorId = req.params.doctorId;
+      const updateData = {};
+
+      // Check if tempDoctorFee is provided in the request body
+      if (req.body.tempDoctorFee !== undefined) {
+          updateData.tempDoctorFee = req.body.tempDoctorFee * 100;
+          console.log(updateData); // Convert to cents (assuming the value in the form is in dollars)
+      }
+
+      // Check if tempDoctorFeeStatus is provided in the request body
+      if (req.body.tempDoctorFeeStatus !== undefined) {
+          updateData.tempDoctorFeeStatus = req.body.tempDoctorFeeStatus;
+      }
+      console.log(updateData)
+
+      // Update the doctor document with the new values
+      const doctor = await Doctor.findByIdAndUpdate(doctorId, updateData, { new: true });
+
+      if (!doctor) {
+          return res.status(404).send('Doctor not found');
+      }
+
+      // Redirect after successful update
+      res.redirect('/admin/manage-payments');
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+
+
 
 router.get('/edit-doctor/:doctorId', isAdmin, async (req, res) => {
   try {

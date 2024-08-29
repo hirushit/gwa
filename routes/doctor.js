@@ -1329,10 +1329,6 @@ router.get('/blogs/hashtag/:hashtag', isDoctor, isLoggedIn, async (req, res) => 
     }
 });
 
-
-
-
-
 router.get('/profile/blogs', isLoggedIn, async (req, res) => {
     try {
       const doctorEmail = req.session.user.email; 

@@ -1053,4 +1053,71 @@ router.get('/booking-details/:bookingId', isLoggedIn, isAdmin, async (req, res) 
 });
 
 
+
+router.get('/insights', async (req, res) => {
+  try {
+      const totalDoctors = await Doctor.countDocuments({});
+      const totalPremiumDoctors = await Doctor.countDocuments({ subscriptionType: { $ne: 'Free' } });
+      const totalPatients = await Patient.countDocuments({});
+
+      const totalBlogs = await Blog.countDocuments({});
+      const blogsVerified = await Blog.countDocuments({ verificationStatus: 'verified' });
+      const blogsPendingRequest = await Blog.countDocuments({ verificationStatus: 'pending' });
+
+      const totalConsultations = await Booking.countDocuments({ status: 'completed' });
+      const totalReviews = await Doctor.aggregate([{ $unwind: "$reviews" }, { $count: "totalReviews" }]);
+      
+      const bookingFilter = req.query['booking-filter'] || 'all';
+      let startDate, endDate;
+
+      if (bookingFilter === 'today') {
+          startDate = new Date();
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+      } else if (bookingFilter === 'week') {
+          startDate = new Date();
+          startDate.setDate(startDate.getDate() - startDate.getDay());
+          endDate = new Date();
+          endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+      } else if (bookingFilter === 'month') {
+          startDate = new Date();
+          startDate.setDate(1);
+          endDate = new Date(startDate);
+          endDate.setMonth(endDate.getMonth() + 1);
+          endDate.setDate(0);
+      } else if (bookingFilter === 'all') {
+          startDate = new Date('1970-01-01'); 
+          endDate = new Date(); 
+      }
+
+      const bookingRates = await Booking.aggregate([
+          { $match: { date: { $gte: startDate, $lte: endDate } } },
+          {
+              $group: {
+                  _id: { $dayOfWeek: '$date' },
+                  count: { $sum: 1 }
+              }
+          },
+          { $sort: { _id: 1 } } 
+      ]);
+
+      res.render('adminInsights', {
+          totalDoctors,
+          totalPremiumDoctors,
+          totalPatients,
+          totalBlogs,
+          blogsVerified,
+          blogsPendingRequest,
+          totalConsultations,
+          totalReviews: totalReviews[0]?.totalReviews || 0,
+          bookingRates,
+          bookingFilter
+      });
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

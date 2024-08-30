@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Insights</title>
+    <link rel="stylesheet" href="/path/to/your/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Insights</h1>
+        <div class="insights-section">
+            <p><strong>Total Doctors:</strong> <%= totalDoctors %></p>
+            <p><strong>Total Premium Doctors:</strong> <%= totalPremiumDoctors %></p>
+            <p><strong>Total Patients:</strong> <%= totalPatients %></p>
+        </div>
+        
+        <h1>Blogs</h1>
+        <div class="blogs-section">
+            <p><strong>Total Blogs:</strong> <%= totalBlogs %></p>
+            <p><strong>Blogs Verified:</strong> <%= blogsVerified %></p>
+            <p><strong>Blogs Pending Request:</strong> <%= blogsPendingRequest %></p>
+        </div>
+
+        <h1>Total Consultations Completed by All Doctors</h1>
+        <div class="consultations-section">
+            <p><strong>Total Consultations Completed:</strong> <%= totalConsultations %></p>
+        </div>
+
+        <h1>Total Reviews for All Doctors</h1>
+        <div class="reviews-section">
+            <p><strong>Total Reviews:</strong> <%= totalReviews %></p>
+        </div>
+
+        <h2>Booking Rate by Day of the Week</h2>
+        <form action="/admin/insights" method="GET">
+            <label for="booking-filter">Filter Booking Rates:</label>
+            <select id="booking-filter" name="booking-filter" onchange="this.form.submit()">
+                <option value="all" <%= bookingFilter === 'all' ? 'selected' : '' %>>All</option>
+                <option value="today" <%= bookingFilter === 'today' ? 'selected' : '' %>>Today</option>
+                <option value="week" <%= bookingFilter === 'week' ? 'selected' : '' %>>This Week</option>
+                <option value="month" <%= bookingFilter === 'month' ? 'selected' : '' %>>This Month</option>
+            </select>
+        </form>
+
+        <div class="table-section">
+            <% if (Array.isArray(bookingRates) && bookingRates.length > 0) { %>
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Booking Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].forEach((day, index) => { %>
+                            <tr>
+                                <td><%= day %></td>
+                                <td><%= bookingRates.find(br => br._id === index + 1)?.count || 0 %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <p>No booking data available.</p>
+            <% } %>
+        </div>
+        
+        <a href="/admin/dashboard">Back to Dashboard</a>
+    </div>
+</body>
+</html>

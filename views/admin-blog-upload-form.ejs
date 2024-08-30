@@ -16,21 +16,23 @@
 <body>
     <div class="dashboard">
         <!-- Sidebar -->
-        <div class="sidebar">
+        <!-- <div class="sidebar">
             <div class="sidebar-logo">
                 <img src="/logo.png" alt="Admin Logo">
-            </div>
+            </div> -->
             <h2>Admin Functions</h2>
             <ul class="sidebar-menu">
-                <li><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View Admin Blogs</a></li>
-                <li><a href="/admin/blog-upload" <% if (activePage === 'blog-upload') { %> class="active" <% } %>>Upload Admin Blog</a></li>
+                <li><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View and Approve Blogs</a></li>
+                <li><a href="/admin/blog" <% if (activePage === 'blog') { %> class="active" <% } %>>Upload Admin Blog</a></li>
                 <li><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
                 <li><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
                 <li><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
+                <!-- <li><a href="/admin/blogs-all" <% if (activePage === 'blogs-all') { %> class="active" <% } %>>Search Blogs</a></li> -->
                 <li><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
                 <li><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
-                <li><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
-            </ul>
+                <li><a href="/admin/bookings" <% if (activePage === 'bookings') { %> class="active" <% } %>>View Bookings</a></li>
+                <li><a href="/admin/insights" <% if (activePage === 'insights') { %> class="active" <% } %>>View Insights</a></li>
+                <li><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>            </ul>
         </div>
 
         <!-- Main Content -->

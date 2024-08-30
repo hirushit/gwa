@@ -1,8 +1,7 @@
 const cron = require('node-cron');
-const Doctor = require('./models/Doctor'); // Adjust the path to your Doctor model
+const Doctor = require('./models/Doctor'); 
 
-// Define the cron job
-cron.schedule('0 0 * * *', async () => { // Runs daily at midnight
+cron.schedule('0 0 * * *', async () => { 
     try {
         const today = new Date();
         

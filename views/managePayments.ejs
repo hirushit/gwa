@@ -166,6 +166,53 @@
       display: flex;
       gap: 10px;
     }
+    input[type="text"], select {
+      padding: 10px;
+      margin-right: 10px;
+      font-size: 14px;
+      border: 1px solid #e9ecef;
+      border-radius: 5px;
+      background-color: #f8f9fa;
+      color: #42427D; /* Text color for input and select */
+      width: 200px; /* Adjust width as needed */
+      transition: border-color 0.3s ease, background-color 0.3s ease;
+    }
+  
+    input[type="text"]:focus, select:focus {
+      border-color: #FF7F50;
+      background-color: #ffffff;
+      outline: none;
+    }
+  
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      padding-right: 30px; /* Space for dropdown arrow */
+      background-image: url('data:image/svg+xml;base64,...'); /* Add an SVG or icon for the dropdown arrow */
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+  
+    /* Adjusting the size and placement of the dropdown arrow */
+    select::-ms-expand {
+      display: none; /* Remove the dropdown arrow in IE */
+    }
+  
+    button[type="submit"] {
+      background-color: #FF7F50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+  
+    button[type="submit"]:hover {
+      background-color: #FF5733;
+    }
 
   </style>
 </head>
@@ -193,6 +240,20 @@
     <div class="main-content">
       <div class="container">
         <h1>Doctors</h1>
+        <form action="/admin/manage-payments" method="GET">
+          <input type="text" name="name" placeholder="Search by name" value="<%= name %>">
+          <input type="text" name="email" placeholder="Search by email" value="<%= email %>">
+          
+          <select name="subscriptionType">
+            <option value="">All Types</option>
+            <option value="Standard" <%= subscriptionType === 'Standard' ? 'selected' : '' %>>Standard</option>
+            <option value="Premium" <%= subscriptionType === 'Premium' ? 'selected' : '' %>>Premium</option>
+            <option value="Enterprise" <%= subscriptionType === 'Enterprise' ? 'selected' : '' %>>Enterprise</option>
+          </select>
+        
+          <button type="submit">Search</button>
+        </form>
+        
 
         <% if (doctors.length > 0) { %>
           <ul>
@@ -203,6 +264,7 @@
                   <span><%= doctor.email %></span>
                 </div>
                 <div class = "action-buttons">
+                  <strong><%= doctor.subscriptionType %></strong>
                   <a class="edit" href="/admin/update-payments/<%= doctor._id %>">Pay the Settlement</a>
 
                 </div>

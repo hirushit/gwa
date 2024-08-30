@@ -155,26 +155,58 @@ router.get('/view-doctors', isLoggedIn, async (req, res) => {
 
 router.get('/manage-payments', isLoggedIn, async (req, res) => {
   try {
-    const doctors = await Doctor.find().lean();
-    res.render('managePayments', { doctors, activePage: 'manage-payments' });
+    const { name, email, subscriptionType } = req.query;
+
+    // Build the search query
+    let query = {};
+
+    if (name) {
+      query.name = new RegExp(name, 'i'); // Case-insensitive regex search for the name
+    }
+
+    if (email) {
+      query.email = new RegExp(email, 'i'); // Case-insensitive regex search for the email
+    }
+
+    // Filter by subscriptionType only if provided in the query; otherwise, default to Standard, Premium, and Enterprise
+    if (subscriptionType) {
+      query.subscriptionType = subscriptionType;
+    } else {
+      query.subscriptionType = { $in: ['Standard', 'Premium', 'Enterprise'] };
+    }
+
+    // Fetch doctors based on the constructed query
+    const doctors = await Doctor.find(query).lean();
+
+    res.render('managePayments', { doctors, activePage: 'manage-payments', name, email, subscriptionType });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
 
-router.get('/update-payments/:doctorId', isAdmin, async (req,res) => {
+router.get('/update-payments/:doctorId', isAdmin, async (req, res) => {
   try {
     const doctorId = req.params.doctorId;
     const doctor = await Doctor.findById(doctorId).lean();
 
-    res.render('updatePayments', {doctor});
-  }
-  catch (err) {
+    // Check if the subscription type is 'Standard', 'Premium', or 'Enterprise'
+    if (doctor.subscriptionType === 'Standard' || 
+        doctor.subscriptionType === 'Premium' || 
+        doctor.subscriptionType === 'Enterprise') {
+      
+      res.render('updatePayments', { doctor });
+      
+    } else {
+      // If subscriptionType is not 'Standard', 'Premium', or 'Enterprise', redirect or show error
+      res.status(403).send('Access denied: The doctor does not have the correct subscription type.');
+    }
+  } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
-}
+  }
 });
+
 
 router.post('/update-payments/:doctorId', isAdmin, async (req, res) => {
   try {
@@ -207,9 +239,6 @@ router.post('/update-payments/:doctorId', isAdmin, async (req, res) => {
       res.status(500).send('Server Error');
   }
 });
-
-
-
 
 router.get('/edit-doctor/:doctorId', isAdmin, async (req, res) => {
   try {

@@ -5,10 +5,12 @@ cron.schedule('0 * * * *', async () => {
     console.log(`Cron Job Started at ${new Date().toISOString()}`);
     try {
         const currentDate = new Date();
+        const bufferDate = new Date(currentDate.getTime() - (55 * 60 * 1000)); 
         console.log(`Current Date and Time: ${currentDate}`);
+        console.log(`Buffer Date and Time (55 mins prior): ${bufferDate}`);
 
         const doctors = await Doctor.find({ 
-            "timeSlots.date": { $lt: currentDate }, 
+            "timeSlots.date": { $lt: bufferDate }, 
             "timeSlots.status": 'free' 
         });
 
@@ -17,7 +19,7 @@ cron.schedule('0 * * * *', async () => {
         for (const doctor of doctors) {
             const originalSlotCount = doctor.timeSlots.length;
 
-            doctor.timeSlots = doctor.timeSlots.filter(slot => !(slot.date < currentDate && slot.status === 'free'));
+            doctor.timeSlots = doctor.timeSlots.filter(slot => !(slot.date < bufferDate && slot.status === 'free'));
 
             const updatedSlotCount = doctor.timeSlots.length;
             await doctor.save();

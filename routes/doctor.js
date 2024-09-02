@@ -1113,52 +1113,41 @@ router.get('/blog', (req, res) => {
 router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
     try {
         const authorEmail = req.session.user.email;
-        const { title, author, description, categories, hashtags, priority } = req.body;
+        const { title, author, description, summary, categories, subcategories, hashtags, priority } = req.body;
 
         const doctor = await Doctor.findOne({ email: authorEmail });
 
         let authorId = null;
-        let authorTitle = '';
-        let profilePicture = null;
-        
         if (doctor) {
             authorId = doctor._id; 
-            authorTitle = doctor.title;
-            profilePicture = {
-                data: doctor.profilePicture.data, 
-                contentType: doctor.profilePicture.contentType
-            };
         }
 
         const newBlog = new Blog({
             title,
             author,
             description,
+            summary,
             authorEmail,
             authorId, 
-            authorTitle,
-            profilePicture,
-            categories: categories, 
+            categories: categories,
+            subcategories: subcategories, 
             hashtags: hashtags, 
             priority,
             image: {
                 data: req.file.buffer,
                 contentType: req.file.mimetype
             },
-            verificationStatus: 'Pending' 
+            verificationStatus: 'Pending'
         });
-
-        console.log('New Blog Data:', newBlog);
 
         await newBlog.save();
 
-        res.json({ message: 'Blog uploaded successfully' });
+        res.render('blog-success', { message: 'Blog uploaded successfully' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
     }
 });
-
 
 
 router.get('/blogs/category/:category', isDoctor, isLoggedIn, async (req, res) => {
@@ -1235,6 +1224,7 @@ router.get('/blogs/category/:category', isDoctor, isLoggedIn, async (req, res) =
         res.status(500).send('Server Error');
     }
 });
+
 
 
 router.get('/blogs/hashtag/:hashtag', isDoctor, isLoggedIn, async (req, res) => {
@@ -1330,6 +1320,8 @@ router.get('/blogs/hashtag/:hashtag', isDoctor, isLoggedIn, async (req, res) => 
     }
 });
 
+
+
 router.get('/profile/blogs', isLoggedIn, async (req, res) => {
     try {
       const doctorEmail = req.session.user.email; 
@@ -1343,7 +1335,7 @@ router.get('/profile/blogs', isLoggedIn, async (req, res) => {
     }
   });
 
-router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
+  router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
     try {
       const blog = await Blog.findById(req.params.id);
   
@@ -1372,7 +1364,6 @@ router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
       res.status(500).send('Server Error');
     }
   });
-  
   
   router.post('/blogs/edit/:id', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
     try {

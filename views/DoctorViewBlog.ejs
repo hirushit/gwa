@@ -74,15 +74,25 @@
             <p><strong>Author:</strong> <%= blog.author %></p>
             <p><strong>Author Email:</strong> <%= blog.authorEmail %></p>
             <a href="/doctor/author/<%= blog.authorId %>">View Author Info</a>
+            
             <h2>Description</h2>
-            <p><%= blog.description %></p>
+            <!-- Render the HTML content with decoration -->
+            <div><%- blog.description %></div>
+            
             <h2>Summary</h2>
-            <p><%= blog.summary %></p>
+            <div><%- blog.summary %></div>
 
             <h2>Categories</h2>
             <ul>
                 <% blog.categories.forEach(category => { %>
                     <li><%= category %></li>
+                <% }); %>
+            </ul>
+
+            <h2>Sub Categories</h2>
+            <ul>
+                <% blog.subcategories.forEach(subcategory => { %>
+                    <li><%= subcategory %></li>
                 <% }); %>
             </ul>
 

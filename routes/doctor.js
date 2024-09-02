@@ -1113,7 +1113,7 @@ router.get('/blog', (req, res) => {
 router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
     try {
         const authorEmail = req.session.user.email;
-        const { title, author, description, summary, categories, subcategories, hashtags, priority } = req.body;
+        const { title, author, description, categories, subcategories, hashtags, priority } = req.body;
 
         const doctor = await Doctor.findOne({ email: authorEmail });
 
@@ -1126,7 +1126,6 @@ router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), asyn
             title,
             author,
             description,
-            summary,
             authorEmail,
             authorId, 
             categories: categories,

@@ -5,7 +5,6 @@ const blogSchema = new Schema({
     title: { type: String, required: true },
     author: { type: String, required: true },
     description: { type: String, required: true },
-    summary: { type: String, required: true },
     authorEmail: { type: String, required: true },
     image: {
         data: Buffer,

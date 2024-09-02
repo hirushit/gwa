@@ -1,7 +1,7 @@
 const cron = require('node-cron');
 const Doctor = require('./models/Doctor'); 
 
-cron.schedule('0 * * * *', async () => {
+cron.schedule('* * * * *', async () => {
     console.log(`Cron Job Started at ${new Date().toISOString()}`);
     try {
         const currentDate = new Date();

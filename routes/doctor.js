@@ -918,6 +918,9 @@ async function createGoogleMeetLink(booking) {
                 }
             }
         },
+        guestsCanModify: true, 
+        guestsCanInviteOthers: true, 
+        guestsCanSeeOtherGuests: true, 
     };
 
     try {
@@ -1018,10 +1021,9 @@ router.get('/subscribe', isLoggedIn, async (req, res) => {
     res.render('subscriptionForm');
 });
 
-// Route to handle subscription form submission
-router.post('/subscribe', upload.fields([{ name: 'licenseProof' }, { name: 'certificationProof' }, { name: 'businessProof' }]), isLoggedIn, async (req, res) => {
+router.post('/subscribe', isLoggedIn, async (req, res) => {
     try {
-        const { subscriptionType, subscriptionDuration } = req.body; // Capture subscriptionDuration from the form
+        const { subscriptionType, subscriptionDuration } = req.body; 
         const paymentDetails = req.body.paymentDetails;
         const doctorId = req.session.user._id; 
         const amount = parseInt(paymentDetails.amount, 10);
@@ -1048,11 +1050,10 @@ router.post('/subscribe', upload.fields([{ name: 'licenseProof' }, { name: 'cert
             cancel_url: `${req.protocol}://${req.get('host')}/doctor/subscription-failure`,
         });
     
-        // Store subscription information, including subscriptionDuration, in the session
         req.session.subscriptionInfo = {
             doctorId,
             subscriptionType,
-            subscriptionDuration,  // Store the subscription duration
+            subscriptionDuration,  
             paymentDetails: {
                 amount: amount,
                 currency: 'usd'

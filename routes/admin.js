@@ -522,8 +522,7 @@ router.post('/blogs/verify/:id', isLoggedIn, async (req, res) => {
           return res.status(404).send('Blog not found');
       }
 
-      blog.verificationStatus = verificationStatus;
-      await blog.save();
+      await Blog.updateOne({ _id: blogId }, { verificationStatus });
 
       const notification = new Notification({
           userId: blog.authorId, 

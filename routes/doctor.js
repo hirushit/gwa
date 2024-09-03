@@ -1016,21 +1016,31 @@ router.get('/calendar', isLoggedIn, checkSubscription, async (req, res) => {
     }
 });
 
-router.use(methodOverride('_method'));
 router.get('/subscribe', isLoggedIn, async (req, res) => {
     res.render('subscriptionForm');
 });
+
 
 router.post('/subscribe', isLoggedIn, async (req, res) => {
     try {
         const { subscriptionType, subscriptionDuration } = req.body; 
         const paymentDetails = req.body.paymentDetails;
         const doctorId = req.session.user._id; 
+
         const amount = parseInt(paymentDetails.amount, 10);
-        console.log(amount);
-    
-        if (isNaN(amount) || amount <= 0) {
+
+        if (isNaN(amount) || amount < 0) {
             return res.status(400).send('Invalid payment amount');
+        }
+
+        const doctor = await Doctor.findById(doctorId);
+
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        if (doctor.subscriptionType !== 'Free') {
+            return res.status(403).send('You already have an active subscription. You cannot subscribe again until the current plan ends.');
         }
 
         const session = await stripe.checkout.sessions.create({
@@ -1049,7 +1059,7 @@ router.post('/subscribe', isLoggedIn, async (req, res) => {
             success_url: `${req.protocol}://${req.get('host')}/doctor/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${req.protocol}://${req.get('host')}/doctor/subscription-failure`,
         });
-    
+
         req.session.subscriptionInfo = {
             doctorId,
             subscriptionType,
@@ -1059,7 +1069,7 @@ router.post('/subscribe', isLoggedIn, async (req, res) => {
                 currency: 'usd'
             }
         };
-    
+
         res.redirect(303, session.url);
     } catch (error) {
         console.error(error.message);

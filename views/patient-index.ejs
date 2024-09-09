@@ -17,7 +17,7 @@
             margin-bottom: 20px;
         }
 
-        .filter-container select, .filter-container input, .filter-container button, .auth-container a, .blogs-container button {
+        .filter-container input, .filter-container button, .auth-container a, .blogs-container button {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
@@ -29,12 +29,6 @@
             margin-bottom: 10px;
         }
 
-        .user-info {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-weight: bold;
-        }
         .blogs-container {
             width: 80%;
             margin: auto;
@@ -83,12 +77,49 @@
         button:hover {
             background-color: #0056b3;
         }
+
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none; 
+        }
+
+        .dropdown-list.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .dropdown-item.disabled {
+            background-color: #e9e9e9;
+            cursor: default;
+            font-weight: bold;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Find a Doctor</h1>
-
 
         <div class="auth-container">
             <% if (patient) { %>
@@ -100,6 +131,22 @@
             <a href="/patient/profile">View Profile</a>
             <form action="/auth/logout" method="POST" style="display: inline;">
                 <button type="submit">Logout</button>
+            </form>
+        </div>
+
+        <div class="filter-container">
+            <form action="/patient/doctors" method="get">
+                <label for="what">What:</label>
+                <div class="custom-dropdown">
+                    <input type="text" id="what" name="what" placeholder="Select Speciality, Condition or Doctor">
+                    <div class="dropdown-list" id="what-options"></div>
+                </div>
+
+                <label for="where">Where:</label>
+                <input type="text" id="where" name="where" placeholder="Enter City, State or Country" list="where-options">
+                <datalist id="where-options"></datalist>
+
+                <button type="submit">Search</button>
             </form>
         </div>
 
@@ -119,61 +166,142 @@
             </ul>
             <button onclick="window.location.href='/patient/blogs'">View All Blogs</button>
         </div>
-
-        <div class="filter-container">
-            <form action="/patient/doctors" method="get">
-                <label for="what">What:</label>
-                <input type="text" id="what" name="what" placeholder="Select Speciality, Condition or Doctor" list="what-options">
-                <datalist id="what-options"></datalist>
-
-                <label for="where">Where:</label>
-                <input type="text" id="where" name="where" placeholder="Enter City, State or Country" list="where-options">
-                <datalist id="where-options"></datalist>
-
-                <button type="submit">Search</button>
-            </form>
-        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            populateWhatOptions();
-            populateWhereOptions();
+            const whatInput = document.getElementById('what');
+            const dropdown = document.getElementById('what-options');
+            let isDropdownVisible = false;
+
+            whatInput.addEventListener('focus', () => {
+                if (!isDropdownVisible) {
+                    populateSpecialities(); 
+                }
+                dropdown.classList.add('active');
+                isDropdownVisible = true;
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!whatInput.contains(event.target) && !dropdown.contains(event.target)) {
+                    dropdown.classList.remove('active');
+                    isDropdownVisible = false;
+                }
+            });
+
+            whatInput.addEventListener('input', handleWhatInput);
+
+            async function populateSpecialities() {
+                try {
+                    const response = await fetch('/auth/what-options');
+                    const { specialities = [] } = await response.json();
+                    dropdown.innerHTML = ''; 
+                    if (specialities.length > 0) {
+                        const specialitiesLabel = document.createElement('div');
+                        specialitiesLabel.classList.add('dropdown-item', 'disabled');
+                        specialitiesLabel.textContent = 'Specialities';
+                        dropdown.appendChild(specialitiesLabel);
+
+                        specialities.forEach(speciality => {
+                            const optionElement = document.createElement('div');
+                            optionElement.classList.add('dropdown-item');
+                            optionElement.textContent = speciality;
+                            optionElement.addEventListener('click', () => selectOption('what', speciality));
+                            dropdown.appendChild(optionElement);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching specialities:', error);
+                }
+            }
+
+            async function handleWhatInput(event) {
+                const query = event.target.value.toLowerCase();
+
+                if (!query) {
+                    populateSpecialities(); 
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/auth/what-options?search=${encodeURIComponent(query)}`);
+                    const { specialities = [], conditions = [], doctors = [] } = await response.json(); 
+                    dropdown.innerHTML = ''; 
+
+                    let hasItems = false;
+
+                    if (specialities.length > 0) {
+                        const specialitiesLabel = document.createElement('div');
+                        specialitiesLabel.classList.add('dropdown-item', 'disabled');
+                        specialitiesLabel.textContent = 'Specialities';
+                        dropdown.appendChild(specialitiesLabel);
+
+                        specialities.forEach(speciality => {
+                            if (speciality.toLowerCase().includes(query)) {
+                                const optionElement = document.createElement('div');
+                                optionElement.classList.add('dropdown-item');
+                                optionElement.textContent = speciality;
+                                optionElement.addEventListener('click', () => selectOption('what', speciality));
+                                dropdown.appendChild(optionElement);
+                                hasItems = true;
+                            }
+                        });
+                    }
+
+                    if (conditions.length > 0) {
+                        const conditionsLabel = document.createElement('div');
+                        conditionsLabel.classList.add('dropdown-item', 'disabled');
+                        conditionsLabel.textContent = 'Conditions';
+                        dropdown.appendChild(conditionsLabel);
+
+                        conditions.forEach(condition => {
+                            if (condition.toLowerCase().includes(query)) {
+                                const optionElement = document.createElement('div');
+                                optionElement.classList.add('dropdown-item');
+                                optionElement.textContent = condition;
+                                optionElement.addEventListener('click', () => selectOption('what', condition));
+                                dropdown.appendChild(optionElement);
+                                hasItems = true;
+                            }
+                        });
+                    }
+
+                    if (doctors.length > 0) {
+                        const doctorsLabel = document.createElement('div');
+                        doctorsLabel.classList.add('dropdown-item', 'disabled');
+                        doctorsLabel.textContent = 'Doctors';
+                        dropdown.appendChild(doctorsLabel);
+
+                        doctors.forEach(doctor => {
+                            if (doctor.name.toLowerCase().includes(query)) {
+                                const optionElement = document.createElement('div');
+                                optionElement.classList.add('dropdown-item');
+                                optionElement.textContent = doctor.name;
+                                optionElement.addEventListener('click', () => selectOption('what', doctor.name));
+                                dropdown.appendChild(optionElement);
+                                hasItems = true;
+                            }
+                        });
+                    }
+
+                    if (hasItems) {
+                        dropdown.classList.add('active'); 
+                    } else {
+                        dropdown.classList.remove('active');
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching what options:', error);
+                }
+            }
+
+            function selectOption(inputId, value) {
+                const input = document.getElementById(inputId);
+                input.value = value;
+                dropdown.classList.remove('active'); 
+                isDropdownVisible = false;
+            }
         });
-
-        async function populateWhatOptions() {
-            try {
-                const response = await fetch('/auth/what-options');
-                const { specialities, conditions, doctors } = await response.json();
-                const whatOptions = [...specialities, ...conditions, ...doctors];
-                const dataList = document.getElementById('what-options');
-
-                whatOptions.forEach(option => {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = option;
-                    dataList.appendChild(optionElement);
-                });
-            } catch (error) {
-                console.error('Error fetching what options:', error);
-            }
-        }
-
-        async function populateWhereOptions() {
-            try {
-                const response = await fetch('/auth/where-options');
-                const { cities, states, countries } = await response.json();
-                const whereOptions = [...cities, ...states, ...countries];
-                const dataList = document.getElementById('where-options');
-
-                whereOptions.forEach(option => {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = option;
-                    dataList.appendChild(optionElement);
-                });
-            } catch (error) {
-                console.error('Error fetching where options:', error);
-            }
-        }
     </script>
 </body>
 </html>

@@ -301,23 +301,33 @@ app.get('/auth/conditions', async (req, res) => {
 
 app.get('/auth/what-options', async (req, res) => {
   try {
-    const specialities = await Doctor.distinct('speciality');
-    const doctors = await Doctor.find({}, 'name').lean();  
-    const doctorNames = doctors.map(doctor => doctor.name);
-    const conditions = await Doctor.distinct('conditions');
+    const searchQuery = req.query.search || '';  
 
-    const allDoctorDetails = await Doctor.find().lean();  
+    let specialities = await Doctor.distinct('speciality');
+
+    if (searchQuery) {
+      const queryRegex = new RegExp(searchQuery, 'i');
+      specialities = specialities.filter(speciality => queryRegex.test(speciality));
+    }
+
+    let conditions = [];
+    let doctors = [];
+    if (searchQuery) {
+      const conditionRegex = new RegExp(searchQuery, 'i');
+      conditions = await Doctor.distinct('conditions', { conditions: conditionRegex });
+      doctors = await Doctor.find({ name: conditionRegex }, 'name').lean();
+    }
 
     res.json({
-      specialities,
-      conditions,
-      doctors: doctorNames,
-      allDoctors: allDoctorDetails  
+      specialities,  
+      conditions,   
+      doctors      
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching what options', error });
   }
 });
+
 
 
 

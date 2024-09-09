@@ -17,7 +17,7 @@
             margin-bottom: 20px;
         }
 
-        .filter-container select, .filter-container input, .filter-container button, .auth-container a {
+        .filter-container input, .filter-container button, .auth-container a {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
@@ -35,6 +35,44 @@
             right: 10px;
             font-weight: bold;
         }
+
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+
+        .dropdown-list.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .dropdown-item.disabled {
+            background-color: #e9e9e9;
+            cursor: default;
+            font-weight: bold;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -42,71 +80,278 @@
         <h1>Find a Doctor</h1>
 
         <div class="auth-container">
-
-                <a href="/auth/login">Login</a>
-                <div class="mt-3">
-                  <a href="/auth/signup/patient">Patient Sign Up</a>
-              </div>
-              <div class="mt-3">
-                  <a href="/auth/signup/doctor">Doctor Sign Up</a>
-              </div>        </div>
+            <a href="/auth/login">Login</a>
+            <div class="mt-3">
+                <a href="/auth/signup/patient">Patient Sign Up</a>
+            </div>
+            <div class="mt-3">
+                <a href="/auth/signup/doctor">Doctor Sign Up</a>
+            </div>
+        </div>
 
         <div class="filter-container">
             <form action="/patient/doctors" method="get">
                 <label for="what">What:</label>
-                <input type="text" id="what" name="what" placeholder="Select Speciality, Condition or Doctor" list="what-options">
-                <datalist id="what-options"></datalist>
+                <div class="custom-dropdown">
+                    <input type="text" id="what" name="what" placeholder="Select Speciality, Condition or Doctor">
+                    <div class="dropdown-list" id="what-options"></div>
+                </div>
 
                 <label for="where">Where:</label>
-                <input type="text" id="where" name="where" placeholder="Enter City, State or Country" list="where-options">
-                <datalist id="where-options"></datalist>
+                <div class="custom-dropdown">
+                    <input type="text" id="where" name="where" placeholder="Enter City, State or Country">
+                    <div class="dropdown-list" id="where-options"></div>
+                </div>
 
                 <button type="submit">Search</button>
             </form>
         </div>
     </div>
 
-<!-- Update the script section in index.ejs -->
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-      populateWhatOptions();
-      populateWhereOptions();
-    });
-  
-    async function populateWhatOptions() {
-      try {
-        const response = await fetch('/auth/what-options');
-        const { specialities, conditions, doctors } = await response.json();
-        const whatOptions = [...specialities, ...conditions, ...doctors];
-        const dataList = document.getElementById('what-options');
-  
-        whatOptions.forEach(option => {
-          const optionElement = document.createElement('option');
-          optionElement.value = option;
-          dataList.appendChild(optionElement);
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const whatInput = document.getElementById('what');
+            const whereInput = document.getElementById('where');
+            const whatDropdown = document.getElementById('what-options');
+            const whereDropdown = document.getElementById('where-options');
+
+            whatInput.addEventListener('focus', () => {
+                if (!whatDropdown.classList.contains('active')) {
+                    populateWhatOptions(); 
+                }
+            });
+
+            whereInput.addEventListener('focus', () => {
+                if (!whereDropdown.classList.contains('active')) {
+                    populateWhereOptions(); 
+                }
+            });
+
+            whatInput.addEventListener('input', handleWhatInput);
+            whereInput.addEventListener('input', handleWhereInput);
+
+            async function populateWhatOptions() {
+                try {
+                    const response = await fetch('/auth/what-options');
+                    const { specialities, conditions, doctors } = await response.json();
+                    const whatOptions = [...specialities, ...conditions, ...doctors];
+                    whatDropdown.innerHTML = '';
+
+                    let hasItems = false;
+
+                    if (specialities.length > 0) {
+                        const specialitiesLabel = document.createElement('div');
+                        specialitiesLabel.classList.add('dropdown-item', 'disabled');
+                        specialitiesLabel.textContent = 'Specialities';
+                        whatDropdown.appendChild(specialitiesLabel);
+
+                        specialities.forEach(speciality => {
+                            const optionElement = document.createElement('div');
+                            optionElement.classList.add('dropdown-item');
+                            optionElement.textContent = speciality;
+                            optionElement.addEventListener('click', () => selectOption('what', speciality));
+                            whatDropdown.appendChild(optionElement);
+                            hasItems = true;
+                        });
+                    }
+
+                    if (conditions.length > 0) {
+                        const conditionsLabel = document.createElement('div');
+                        conditionsLabel.classList.add('dropdown-item', 'disabled');
+                        conditionsLabel.textContent = 'Conditions';
+                        whatDropdown.appendChild(conditionsLabel);
+
+                        conditions.forEach(condition => {
+                            const optionElement = document.createElement('div');
+                            optionElement.classList.add('dropdown-item');
+                            optionElement.textContent = condition;
+                            optionElement.addEventListener('click', () => selectOption('what', condition));
+                            whatDropdown.appendChild(optionElement);
+                            hasItems = true;
+                        });
+                    }
+
+                    if (doctors.length > 0) {
+                        const doctorsLabel = document.createElement('div');
+                        doctorsLabel.classList.add('dropdown-item', 'disabled');
+                        doctorsLabel.textContent = 'Doctors';
+                        whatDropdown.appendChild(doctorsLabel);
+
+                        doctors.forEach(doctor => {
+                            const optionElement = document.createElement('div');
+                            optionElement.classList.add('dropdown-item');
+                            optionElement.textContent = doctor.name;
+                            optionElement.addEventListener('click', () => selectOption('what', doctor.name));
+                            whatDropdown.appendChild(optionElement);
+                            hasItems = true;
+                        });
+                    }
+
+                    if (hasItems) {
+                        whatDropdown.classList.add('active'); 
+                    } else {
+                        whatDropdown.classList.remove('active'); 
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching what options:', error);
+                }
+            }
+
+            async function handleWhatInput(event) {
+                const query = event.target.value.toLowerCase();
+
+                if (!query) {
+                    populateWhatOptions(); 
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/auth/what-options?search=${encodeURIComponent(query)}`);
+                    const { specialities = [], conditions = [], doctors = [] } = await response.json();
+                    const whatOptions = [...specialities, ...conditions, ...doctors];
+                    whatDropdown.innerHTML = '';
+
+                    let hasItems = false;
+
+                    if (specialities.length > 0) {
+                        const specialitiesLabel = document.createElement('div');
+                        specialitiesLabel.classList.add('dropdown-item', 'disabled');
+                        specialitiesLabel.textContent = 'Specialities';
+                        whatDropdown.appendChild(specialitiesLabel);
+
+                        specialities.forEach(speciality => {
+                            if (speciality.toLowerCase().includes(query)) {
+                                const optionElement = document.createElement('div');
+                                optionElement.classList.add('dropdown-item');
+                                optionElement.textContent = speciality;
+                                optionElement.addEventListener('click', () => selectOption('what', speciality));
+                                whatDropdown.appendChild(optionElement);
+                                hasItems = true;
+                            }
+                        });
+                    }
+
+                    if (conditions.length > 0) {
+                        const conditionsLabel = document.createElement('div');
+                        conditionsLabel.classList.add('dropdown-item', 'disabled');
+                        conditionsLabel.textContent = 'Conditions';
+                        whatDropdown.appendChild(conditionsLabel);
+
+                        conditions.forEach(condition => {
+                            if (condition.toLowerCase().includes(query)) {
+                                const optionElement = document.createElement('div');
+                                optionElement.classList.add('dropdown-item');
+                                optionElement.textContent = condition;
+                                optionElement.addEventListener('click', () => selectOption('what', condition));
+                                whatDropdown.appendChild(optionElement);
+                                hasItems = true;
+                            }
+                        });
+                    }
+
+                    if (doctors.length > 0) {
+                        const doctorsLabel = document.createElement('div');
+                        doctorsLabel.classList.add('dropdown-item', 'disabled');
+                        doctorsLabel.textContent = 'Doctors';
+                        whatDropdown.appendChild(doctorsLabel);
+
+                        doctors.forEach(doctor => {
+                            if (doctor.name.toLowerCase().includes(query)) {
+                                const optionElement = document.createElement('div');
+                                optionElement.classList.add('dropdown-item');
+                                optionElement.textContent = doctor.name;
+                                optionElement.addEventListener('click', () => selectOption('what', doctor.name));
+                                whatDropdown.appendChild(optionElement);
+                                hasItems = true;
+                            }
+                        });
+                    }
+
+                    if (hasItems) {
+                        whatDropdown.classList.add('active'); 
+                    } else {
+                        whatDropdown.classList.remove('active');
+                    }
+                } catch (error) {
+                    console.error('Error fetching what options:', error);
+                }
+            }
+
+            async function populateWhereOptions() {
+                try {
+                    const response = await fetch('/auth/where-options');
+                    const { cities, states, countries } = await response.json();
+                    const whereOptions = [...cities, ...states, ...countries];
+                    whereDropdown.innerHTML = '';
+
+                    whereOptions.forEach(option => {
+                        const optionElement = document.createElement('div');
+                        optionElement.classList.add('dropdown-item');
+                        optionElement.textContent = option;
+                        optionElement.addEventListener('click', () => selectOption('where', option));
+                        whereDropdown.appendChild(optionElement);
+                    });
+
+                    if (whereOptions.length > 0) {
+                        whereDropdown.classList.add('active'); 
+                    } else {
+                        whereDropdown.classList.remove('active'); 
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching where options:', error);
+                }
+            }
+
+            function handleWhereInput(event) {
+                const query = event.target.value.toLowerCase();
+
+                if (!query) {
+                    populateWhereOptions(); 
+                    return;
+                }
+
+                fetch(`/auth/where-options?search=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(({ cities = [], states = [], countries = [] }) => {
+                        const whereOptions = [...cities, ...states, ...countries];
+                        whereDropdown.innerHTML = '';
+
+                        whereOptions.forEach(option => {
+                            if (option.toLowerCase().includes(query)) {
+                                const optionElement = document.createElement('div');
+                                optionElement.classList.add('dropdown-item');
+                                optionElement.textContent = option;
+                                optionElement.addEventListener('click', () => selectOption('where', option));
+                                whereDropdown.appendChild(optionElement);
+                            }
+                        });
+
+                        if (whereOptions.length > 0) {
+                            whereDropdown.classList.add('active');
+                        } else {
+                            whereDropdown.classList.remove('active'); 
+                        }
+                    })
+                    .catch(error => console.error('Error fetching where options:', error));
+            }
+
+            function selectOption(inputId, value) {
+                const input = document.getElementById(inputId);
+                input.value = value;
+                document.getElementById(`${inputId}-options`).classList.remove('active'); 
+            }
+
+            document.addEventListener('click', (event) => {
+                if (!event.target.closest('.custom-dropdown')) {
+                    document.querySelectorAll('.dropdown-list').forEach(dropdown => {
+                        dropdown.classList.remove('active');
+                    });
+                }
+            });
         });
-      } catch (error) {
-        console.error('Error fetching what options:', error);
-      }
-    }
-  
-    async function populateWhereOptions() {
-      try {
-        const response = await fetch('/auth/where-options');
-        const { cities, states, countries } = await response.json();
-        const whereOptions = [...cities, ...states, ...countries];
-        const dataList = document.getElementById('where-options');
-  
-        whereOptions.forEach(option => {
-          const optionElement = document.createElement('option');
-          optionElement.value = option;
-          dataList.appendChild(optionElement);
-        });
-      } catch (error) {
-        console.error('Error fetching where options:', error);
-      }
-    }
-  </script>
-  
+    </script>
 </body>
 </html>
+

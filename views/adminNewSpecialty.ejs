@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Blogs Dashboard</title>
+    <title>Admin Dashboard</title>
     <style>
 body {
     font-family: Arial, sans-serif;
@@ -64,8 +64,8 @@ body {
 
 .sidebar-menu li a.active,
 .sidebar-menu li a:hover {
-    color: #42427D; /* Text color on hover or active */
-    background-color: transparent; /* No background color change */
+    color: #42427D; 
+    background-color: transparent; 
 }
 
 .main-content {
@@ -81,7 +81,7 @@ body {
     border-radius: 5px;
     background-color: #fff;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    color: #42427D; /* Updated font color for the main card */
+    color: #42427D; 
 }
 
 .blogs-list {
@@ -115,9 +115,9 @@ body {
 }
 
 button {
-    background-color: transparent; /* No fill color */
-    color: #42427D; /* Text color */
-    border: 1px solid #42427D; /* Border color */
+    background-color: transparent; 
+    color: #42427D; 
+    border: 1px solid #42427D; 
     padding: 5px 10px;
     border-radius: 5px;
     cursor: pointer;
@@ -125,24 +125,24 @@ button {
 }
 
 button:hover {
-    background-color: #42427D; /* Fill color on hover */
-    color: white; /* Text color on hover */
+    background-color: #42427D; 
+    color: white; 
 }
 
 a {
-    color: #007bff; /* Updated color for "View Details" */
+    color: #007bff; 
     text-decoration: none;
-    font-size: 14px; /* Font size for consistency */
+    font-size: 14px; 
     display: inline-block;
     padding: 5px 10px;
-    border: 1px solid transparent; /* Add border for alignment */
+    border: 1px solid transparent; 
     border-radius: 5px;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 a:hover {
-    background-color: #f0f0f0; /* Light gray background on hover */
-    color: #42427D; /* Darker text color on hover */
+    background-color: #f0f0f0;
+    color: #42427D; 
     text-decoration: underline;
 }
 
@@ -150,28 +150,27 @@ a:hover {
     display: block;
     margin-top: 10px;
     font-size: 14px;
-    color: #42427D; /* Updated color for "View Details" */
+    color: #42427D; 
 }
 
 select {
-    border: 1px solid #42427D; /* Updated border color */
+    border: 1px solid #42427D;
     padding: 5px;
     border-radius: 5px;
     font-size: 14px;
-    color: #42427D; /* Text color */
-    background-color: #fff; /* Background color */
+    color: #42427D; 
+    background-color: #fff;
 }
 
 select:focus {
-    outline: none; /* Remove default focus outline */
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2); /* Optional: add custom focus shadow */
+    outline: none; 
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
 }
 
     </style>
 </head>
 <body>
     <div class="dashboard">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-logo">
                 <img src="/logo.png" alt="Admin Logo">
@@ -183,51 +182,41 @@ select:focus {
                 <li><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
                 <li><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
                 <li><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
-                <!-- <li><a href="/admin/blogs-all" <% if (activePage === 'blogs-all') { %> class="active" <% } %>>Search Blogs</a></li> -->
                 <li><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
                 <li><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
                 <li><a href="/admin/bookings" <% if (activePage === 'bookings') { %> class="active" <% } %>>View Bookings</a></li>
                 <li><a href="/admin/insights" <% if (activePage === 'insights') { %> class="active" <% } %>>View Insights</a></li>
                 <li><a href="/admin/manage-payments" <% if (activePage === 'manage-payments') { %> class="active" <% } %>>Manage Payments</a></li>
-                <li><a href="/admin/specialty/new" class="<%= activePage === 'specialties' ? 'active' : '' %>">Manage Specialties</a></li>
-                <li><a href="/admin/condition/new" class="<%= activePage === 'conditions' ? 'active' : '' %>">Manage Conditions</a></li>
+                <li><a href="/admin/specialty/new" <% if (activePage === 'specialties') { %> class="active" <% } %>>Manage Specialties</a></li>
+                <li><a href="/admin/condition/new" <% if (activePage === 'conditions') { %> class="active" <% } %>>Manage Conditions</a></li>
                 <li><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
                 
             </ul>
         </div>
 
-        <!-- Main Content -->
         <div class="main-content">
             <div class="container">
-                <h1>Admin Blogs Dashboard</h1>
+                <h1>Add Specialty</h1>
+                <form action="/admin/specialty" method="POST">
+                    <label for="name">Specialty Name:</label>
+                    <input type="text" id="name" name="name" required>
+                    <button type="submit">Add Specialty</button>
+                </form>
+                <% if (typeof error_msg !== 'undefined') { %>
+                    <p class="error-msg"><%= error_msg %></p>
+                <% } %>
 
-                <div class="blogs-list">
-                    <% if (blogs.length > 0) { %>
-                        <% blogs.forEach(blog => { %>
-                            <div class="blog-item">
-                                <h3><%= blog.title %></h3>
-                                <p><strong>Author:</strong> <%= blog.author %></p>
-                                <p><strong>Description:</strong> <%= blog.description %></p>
-                                <p><strong>Author Email:</strong> <%= blog.authorEmail %></p>
-                                <p><strong>Verification Status:</strong> <%= blog.verificationStatus %></p>
-
-                                <form action="/admin/blogs/verify/<%= blog._id %>" method="POST">
-                                    <label for="verificationStatus">Update Verification Status:</label>
-                                    <select name="verificationStatus" id="verificationStatus">
-                                        <option value="Verified" <%= blog.verificationStatus === 'Verified' ? 'selected' : '' %>>Verified</option>
-                                        <option value="Pending" <%= blog.verificationStatus === 'Pending' ? 'selected' : '' %>>Pending</option>
-                                        <option value="Not Verified" <%= blog.verificationStatus === 'Not Verified' ? 'selected' : '' %>>Not Verified</option>
-                                    </select>
-                                    <button type="submit">Update</button>
-                                </form>
-                                <a href="/admin/blogs/view/<%= blog._id %>" class="view-blog-link">View Details</a>
-                            </div>
-                            <hr>
-                        <% }); %>
-                    <% } else { %>
-                        <p>No blogs found.</p>
-                    <% } %>
-                </div>
+                <h2>Existing Specialties</h2>
+                <ul>
+                    <% specialties.forEach(specialty => { %>
+                        <li>
+                            <%= specialty.name %>
+                            <form action="/admin/specialty/<%= specialty._id %>/delete" method="POST" style="display:inline;">
+                                <button type="submit" onclick="return confirm('Are you sure you want to delete this specialty?');">Delete</button>
+                            </form>
+                        </li>
+                    <% }) %>
+                </ul>
             </div>
         </div>
     </div>

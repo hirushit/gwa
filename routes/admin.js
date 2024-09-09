@@ -8,6 +8,8 @@ const Blog = require('../models/Blog');
 const Booking = require('../models/Booking');
 const Notification = require('../models/Notification'); 
 const Insurance = require('../models/Insurance'); 
+const Specialty = require('../models/Specialty');
+const Condition = require('../models/Condition');
 const storage = multer.memoryStorage(); 
 const upload = multer({ storage: storage });
 
@@ -1147,5 +1149,99 @@ router.get('/insights', async (req, res) => {
       res.status(500).send('Server Error');
   }
 });
+
+
+// Render the Add Specialty page
+router.get('/specialty/new', isAdmin, async (req, res) => {
+  try {
+      const specialties = await Specialty.find().lean();
+      res.render('adminNewSpecialty', { specialties, activePage: 'specialties' });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+
+// Handle Add Specialty form submission
+router.post('/specialty', isAdmin, async (req, res) => {
+  try {
+      const { name } = req.body;
+
+      if (!name) {
+          req.flash('error_msg', 'Specialty name is required.');
+          return res.redirect('/admin/specialty/new');
+      }
+
+      const newSpecialty = new Specialty({ name });
+      await newSpecialty.save();
+
+      req.flash('success_msg', 'Specialty added successfully.');
+      res.redirect('/admin/specialty/new');
+  } catch (err) {
+      console.error(err);
+      req.flash('error_msg', 'Server error. Could not add specialty.');
+      res.redirect('/admin/specialty/new');
+  }
+});
+
+// Delete a specialty
+router.post('/specialty/:id/delete', isAdmin, async (req, res) => {
+  try {
+      await Specialty.findByIdAndDelete(req.params.id);
+      req.flash('success_msg', 'Specialty deleted successfully.');
+      res.redirect('/admin/specialty/new');
+  } catch (err) {
+      console.error(err);
+      req.flash('error_msg', 'Server error. Could not delete specialty.');
+      res.redirect('/admin/specialty/new');
+  }
+});
+
+// Render the Add Condition page
+router.get('/condition/new', isAdmin, async (req, res) => {
+  try {
+      const conditions = await Condition.find().lean();
+      res.render('adminNewCondition', { conditions, activePage: 'conditions' });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+
+// Handle Add Condition form submission
+router.post('/condition', isAdmin, async (req, res) => {
+  try {
+      const { name } = req.body;
+
+      if (!name) {
+          req.flash('error_msg', 'Condition name is required.');
+          return res.redirect('/admin/condition/new');
+      }
+
+      const newCondition = new Condition({ name });
+      await newCondition.save();
+
+      req.flash('success_msg', 'Condition added successfully.');
+      res.redirect('/admin/condition/new');
+  } catch (err) {
+      console.error(err);
+      req.flash('error_msg', 'Server error. Could not add condition.');
+      res.redirect('/admin/condition/new');
+  }
+});
+
+// Delete a condition
+router.post('/condition/:id/delete', isAdmin, async (req, res) => {
+  try {
+      await Condition.findByIdAndDelete(req.params.id);
+      req.flash('success_msg', 'Condition deleted successfully.');
+      res.redirect('/admin/condition/new');
+  } catch (err) {
+      console.error(err);
+      req.flash('error_msg', 'Server error. Could not delete condition.');
+      res.redirect('/admin/condition/new');
+  }
+});
+
 
 module.exports = router;

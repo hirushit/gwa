@@ -15,8 +15,6 @@ const Chat = require('../models/Chat');
 const Patient = require('../models/Patient');
 const Prescription = require('../models/Prescription');
 const Notification = require('../models/Notification');
-const Specialty = require('../models/Specialty');
-const Condition = require('../models/Condition');
 const mongoose = require('mongoose');
 
 require('dotenv').config();

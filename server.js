@@ -11,11 +11,13 @@ const cors = require('cors');
 const Blog = require('./models/Blog');
 const Patient = require('./models/Patient');
 const Leads = require('./models/Leads'); 
+const compression = require('compression');
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
+app.use(compression({ threshold: 0 })); 
 require('./cronJobs'); 
 require('./slotsDelete');
 

@@ -12,6 +12,7 @@ const Blog = require('./models/Blog');
 const Patient = require('./models/Patient');
 const Leads = require('./models/Leads'); 
 const compression = require('compression');
+const Subscriptions = require('./models/Subscriptions');
 
 dotenv.config();
 
@@ -371,6 +372,18 @@ app.post('/submit-lead', async (req, res) => {
     res.status(500).json({ message: 'Error saving lead', error });
   }
 });
+
+app.post('/submit-email', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const subscription = new Subscriptions({ email });
+    await subscription.save();
+    res.status(200).json({ message: 'Details saved successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error saving lead', error });
+  }
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

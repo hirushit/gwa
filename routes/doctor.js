@@ -16,6 +16,8 @@ const Patient = require('../models/Patient');
 const Prescription = require('../models/Prescription');
 const Notification = require('../models/Notification');
 const mongoose = require('mongoose');
+const Specialty = require('../models/Specialty');
+const Condition = require('../models/Condition');
 
 require('dotenv').config();
 
@@ -115,24 +117,33 @@ router.get('/profile', isLoggedIn, async (req, res) => {
   
 router.get('/edit', isLoggedIn, async (req, res) => {
     try {
-      const doctorEmail = req.session.user.email;
-      const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
-      const allInsurances = await Insurance.find({}).select('_id name');
-  
-      if (!doctor.hospitals) {
-        doctor.hospitals = [];
-      }
-  
-      if (!doctor.insurances) {
-        doctor.insurances = [];
-      }
-  
-      res.render('editDoctorProfile', { doctor, allInsurances });
+        const doctorEmail = req.session.user.email;
+        const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
+        const allInsurances = await Insurance.find({}).select('_id name');
+        const allSpecialties = await Specialty.find({}).select('_id name');
+        const allConditions = await Condition.find({}).select('_id name'); // Ensure this is fetched
+
+        if (!doctor.hospitals) {
+            doctor.hospitals = [];
+        }
+
+        if (!doctor.insurances) {
+            doctor.insurances = [];
+        }
+
+        // Pass allConditions to the template
+        res.render('editDoctorProfile', {
+            doctor,
+            allInsurances,
+            allSpecialties,
+            allConditions // Pass this to EJS
+        });
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
+        console.error(err.message);
+        res.status(500).send('Server Error');
     }
-  });
+});
+
   
   router.post('/profile/update', upload.fields([
     { name: 'profilePicture' },

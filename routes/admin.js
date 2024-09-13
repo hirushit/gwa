@@ -422,6 +422,76 @@ router.post('/delete-patient/:id', isLoggedIn, async (req, res) => {
   }
 });
 
+router.post('/change-to-patient/:doctorId', isLoggedIn, async (req, res) => {
+  try {
+    const doctor = await Doctor.findById(req.params.doctorId);
+    if (!doctor) {
+      return res.status(404).send('Doctor not found');
+    }
+
+    console.log('Doctor data:', doctor);
+
+    const existingPatient = await Patient.findOne({ email: doctor.email });
+    if (existingPatient) {
+      return res.status(400).send('A patient with this email already exists');
+    }
+
+    const newPatient = new Patient({
+      name: doctor.name,
+      email: doctor.email,
+      password: doctor.password, 
+      isVerified: true, 
+      role: 'patient'
+    });
+
+    console.log('New Patient data before saving:', newPatient);
+
+    try {
+      await newPatient.save();
+      console.log('New patient saved successfully');
+    } catch (saveError) {
+      console.error('Error saving the new patient:', saveError);
+      return res.status(500).send('Error saving the new patient');
+    }
+
+    await Doctor.findByIdAndDelete(req.params.doctorId);
+    res.redirect('/admin/view-patients'); 
+
+  } catch (error) {
+    console.error('Error in changing doctor to patient:', error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+
+
+router.post('/change-to-doctor/:patientId', isLoggedIn, async (req, res) => {
+  try {
+    const patient = await Patient.findById(req.params.patientId);
+
+    if (!patient) {
+      return res.status(404).send('Patient not found');
+    }
+
+    const newDoctor = new Doctor({
+      name: patient.name,
+      email: patient.email,
+      password: patient.password,
+      isVerified: true  
+    });
+
+    await newDoctor.save(); 
+    await Patient.findByIdAndDelete(req.params.patientId);
+
+    res.redirect('/admin/view-doctors'); 
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
 router.get('/subscriptions', isAdmin, async (req, res) => {
   try {
     const doctors = await Doctor.find({}, 'name subscriptionType subscriptionVerification documents').lean(); 

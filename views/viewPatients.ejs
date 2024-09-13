@@ -190,6 +190,11 @@
                   <form action="/admin/delete-patient/<%= patient._id %>" method="POST" style="display: inline;">
                     <button type="submit">Delete</button>
                   </form>
+
+                  <form action="/admin/change-to-doctor/<%= patient._id %>" method="POST" style="display: inline;">
+                    <button type="submit">Change to Doctor</button>
+                  </form>
+                  
                 </div>
               </li>
             <% }) %>

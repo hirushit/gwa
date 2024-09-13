@@ -205,6 +205,7 @@
                   <a class="edit" href="/admin/edit-doctor/<%= doctor._id %>">Edit</a>
                   <form action="/admin/delete-doctor/<%= doctor._id %>" method="POST" style="display: inline;">
                     <button type="submit">Delete</button>
+                  </form>
 
                     <form action="/admin/change-to-patient/<%= doctor._id %>" method="POST" style="display: inline;">
                       <button type="submit">Change to Patient</button>

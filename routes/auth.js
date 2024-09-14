@@ -64,32 +64,44 @@ const sendVerificationEmail = async (name, email, token, role) => {
     to: email,
     subject: '🎉 Almost There! Verify Your Email to Complete Your Sign-Up 🎉',
     html: `
-      <p>Hi ${name},</p>
-
-      <p>Thank you for signing up with us! We’re thrilled to have you on board and can’t wait for you to explore everything we have in store.</p>
-
-      <p>Before you dive in, we just need one small thing from you: to confirm your email address. This helps us ensure that we’ve got the right contact details for you and keeps your account secure.</p>
-
-      <p>Here’s What You Need to Do:</p>
-
-      <p>Click the Verification Button: Simply click the button below to verify your email address.</p>
-
-      <div style="text-align: center;">
-        <a href="${verificationLink}" style="padding: 10px 20px; color: white; background-color: #007bff; text-decoration: none;">Verify Your Email Address</a>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="text-align: center;">
+          <span style="color: #272848;">Welcome to</span> 
+          <span style="color: #FF7F50;">MedXBay!</span>
+        </h2>
+        
+        <p style="font-size: 16px;">Hi <strong>${name}</strong>,</p>
+  
+        <p style="font-size: 16px;">Thank you for signing up with us! We’re thrilled to have you on board and can’t wait for you to explore everything we have in store.</p>
+  
+        <p style="font-size: 16px;">Before you dive in, we just need one small thing from you: to confirm your email address. This helps us ensure that we’ve got the right contact details for you and keeps your account secure.</p>
+  
+        <h3 style="color: #272848;">Here’s What You Need to Do:</h3>
+  
+        <p style="font-size: 16px;">Click the button below to verify your email address:</p>
+  
+        <div style="text-align: center; margin: 20px 0;">
+          <a href="${verificationLink}" style="padding: 14px 24px; color: white; background-color: #FF7F50; text-decoration: none; border-radius: 5px; font-size: 16px;">Verify Your Email Address</a>
+        </div>
+  
+        <p style="font-size: 16px;">Or, copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; font-size: 16px;"><a href="${verificationLink}" style="color: #272848;">${verificationLink}</a></p>
+  
+        <p style="font-size: 16px;">Once you’ve verified your email, you’ll be all set to access your new account and start exploring. If you have any questions or need assistance, feel free to reach out to our support team—we’re here to help!</p>
+  
+        <p style="font-size: 16px; text-align: center;"><strong>Welcome aboard, and get ready for an amazing experience with MedXBay!</strong></p>
+  
+        <p style="font-size: 16px;">Best regards,</p>
+        <p style="font-size: 16px;"><strong>The <span style="color: #FF7F50;">MedXBay</span> Team</strong></p>
+  
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        
+        <p style="font-size: 14px; color: #777;">P.S. If you didn’t sign up for an account, please disregard this email. No worries—nothing will change if you ignore it.</p>
       </div>
-      <p>Or, Copy and Paste This Link: If the button doesn’t work, copy and paste the following URL into your browser:</p>
-      <p><a href="${verificationLink}">${verificationLink}</a></p>
-
-      <p>Once you’ve verified your email, you’ll be all set to access your new account and start exploring. If you have any questions or need assistance, feel free to reach out to our support team—we’re here to help!</p>
-
-      <p>Welcome aboard, and get ready for an amazing experience with MedXBay!</p>
-
-      <p>Best regards,</p>
-      <p>The MedXBay Team</p>
-
-      <p>P.S. If you didn’t sign up for an account, please disregard this email. No worries—nothing will change if you ignore it.</p>
     `
   };
+  
+  
 
   await transporter.sendMail(mailOptions);
 };

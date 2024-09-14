@@ -559,10 +559,18 @@ function closeMapModal() {
     <label>Doctor Fee:</label>
     <input type="number" name="doctorFee" value="<%= doctor.doctorFee %>" required>
   </div> 
-    
+
+
+      
     <div>
       <button type="submit">Update Profile</button>
     </div>
   </form>
+  
+
+  <form action="/doctor/profile/deleteProfilePicture?_method=DELETE" method="POST">
+    <button type="submit">Delete Profile Picture</button>
+</form>
+
 </body>
 </html>

@@ -131,12 +131,12 @@ router.get('/edit', isLoggedIn, async (req, res) => {
             doctor.insurances = [];
         }
 
-        // Pass allConditions to the template
+        // Pass allConditions and doctor (with profilePicture) to the template
         res.render('editDoctorProfile', {
             doctor,
             allInsurances,
             allSpecialties,
-            allConditions // Pass this to EJS
+            allConditions,
         });
     } catch (err) {
         console.error(err.message);
@@ -144,8 +144,7 @@ router.get('/edit', isLoggedIn, async (req, res) => {
     }
 });
 
-  
-  router.post('/profile/update', upload.fields([
+router.post('/profile/update', upload.fields([
     { name: 'profilePicture' },
     { name: 'licenseProof' },
     { name: 'certificationProof' },
@@ -230,6 +229,7 @@ router.get('/edit', isLoggedIn, async (req, res) => {
             contentType: req.files['businessProof'][0].mimetype
         } : doctor.documents.businessProof;
 
+        // Update profile picture
         if (req.files['profilePicture'] && req.files['profilePicture'][0]) {
             updateData.profilePicture = {
                 data: req.files['profilePicture'][0].buffer,
@@ -240,6 +240,26 @@ router.get('/edit', isLoggedIn, async (req, res) => {
         }
 
         doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });
+
+        await doctor.save();
+
+        res.redirect('/doctor/profile');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+router.delete('/profile/deleteProfilePicture', isLoggedIn, async (req, res) => {
+    try {
+        const doctorEmail = req.session.user.email;
+        const doctor = await Doctor.findOne({ email: doctorEmail });
+
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        doctor.profilePicture = null;
 
         await doctor.save();
 

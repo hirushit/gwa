@@ -29,6 +29,7 @@ const doctorSchema = new mongoose.Schema({
   bloodGroup: String,
   languages: [String],
   doctorFee:{type: Number, default: 85},
+  doctorFeeCurrency:{type: String, enum: ['usd', 'inr', 'gbp', 'aed']},
   hospitals: [{
       name: { type: String, required: true },
       street: { type: String, required: true },
@@ -83,6 +84,7 @@ const doctorSchema = new mongoose.Schema({
     certificationProof: { data: Buffer, contentType: String },
     businessProof: { data: Buffer, contentType: String }
   },
+  licenseNumber: { type: String },
   trialEndDate: Date,
   maxTimeSlots: {
     type: Number,

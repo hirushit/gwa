@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Insurance</title>
+    <link rel="stylesheet" href="/path/to/your/styles.css"> <!-- Add your custom styles -->
+</head>
+<body>
+
+    <div class="container">
+        <h1>Edit Insurance</h1>
+
+        <!-- Form to update insurance details -->
+        <form action="/admin/insurances/edit/<%= insurance._id %>" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Insurance Name:</label>
+                <input type="text" id="name" name="name" value="<%= insurance.name %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="logo">Current Logo:</label>
+                <!-- Display current insurance logo -->
+                <% if (insurance.logo && insurance.logo.data) { %>
+                    <img src="data:<%= insurance.logo.contentType %>;base64,<%= insurance.logo.data.toString('base64') %>" alt="Insurance Logo" style="max-width: 150px;">
+                <% } else { %>
+                    <p>No logo available</p>
+                <% } %>
+            </div>
+
+            <div class="form-group">
+                <label for="logo">Upload New Insurance Logo (optional):</label>
+                <input type="file" id="logo" name="logo" accept="image/png, image/jpeg">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Update Insurance</button>
+            <a href="/admin/insurances" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+
+</body>
+</html>

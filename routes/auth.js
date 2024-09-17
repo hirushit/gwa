@@ -100,7 +100,7 @@ const sendVerificationEmail = async (name, email, token, role) => {
     `
   };
   
-  
+
 
   await transporter.sendMail(mailOptions);
 };
@@ -191,7 +191,7 @@ const sendWelcomeEmail = async (name, email, role) => {
       }
   });
 
-  const mailOptions = {
+const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
     subject: '🎉 Welcome to MedxBay! 🎉',
@@ -478,7 +478,7 @@ router.post('/forgot-password', async (req, res) => {
     await user.save();
 
     const resetUrl = `http://localhost:3000/auth/reset-password?token=${resetToken}`;
-    await sendResetPasswordEmail(user.name, user.email, resetUrl);
+    await sendResetPasswordEmail(user.email, resetUrl);
 
     req.flash('success_msg', 'A password reset link has been sent to your email.');
     return res.redirect('/auth/forgot-password');
@@ -493,7 +493,7 @@ const generateResetToken = () => {
   return crypto.randomBytes(20).toString('hex');
 };
 
-const sendResetPasswordEmail = async (name, email, resetUrl) => {
+const sendResetPasswordEmail = async (email, resetUrl) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {

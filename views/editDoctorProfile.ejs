@@ -11,7 +11,7 @@
       z-index: 1;
       left: 0;
       top: 0;
-      width: 100%;
+      width: 100%;z
       height: 100%;
       overflow: auto;
       background-color: rgb(0,0,0);
@@ -429,7 +429,11 @@ function closeMapModal() {
         <option value="Both" <%= doctor.consultation === 'Both' ? 'selected' : '' %>>Both</option>
       </select>
     </div>
-
+    <div class="form-group">
+      <label for="licenseNumber">License Number</label>
+      <input type="text" class="form-control" id="licenseNumber" name="licenseNumber" value="<%= doctor.licenseNumber %>" required>
+  </div>
+  
     <div>
       <label>Specialities:</label>
       <div id="speciality-container">
@@ -559,18 +563,20 @@ function closeMapModal() {
     <label>Doctor Fee:</label>
     <input type="number" name="doctorFee" value="<%= doctor.doctorFee %>" required>
   </div> 
+  <div>
+    <label for="doctorFeeCurrency">Consultation Fee Currency:</label>
+    <select id="doctorFeeCurrency" name="doctorFeeCurrency" required>
+        <option value="usd">USD</option>
+        <option value="inr">INR</option>
+        <option value="gbp">GBP</option>
+        <option value="aed">AED</option>
+    </select>
+  </div>
 
-
-      
+    
     <div>
       <button type="submit">Update Profile</button>
     </div>
   </form>
-  
-
-  <form action="/doctor/profile/deleteProfilePicture?_method=DELETE" method="POST">
-    <button type="submit">Delete Profile Picture</button>
-</form>
-
 </body>
 </html>

@@ -26,6 +26,55 @@ console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD);
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+const https = require('https');
+
+const fetchConversionRates = () => {
+    return new Promise((resolve, reject) => {
+        const options = {
+            method: 'GET',
+            hostname: 'currency-conversion-and-exchange-rates.p.rapidapi.com',
+            path: '/latest?from=USD&to=INR,GBP,AED',
+            headers: {
+                'x-rapidapi-key': '96f2128666msh6c2a99315734957p152189jsn585b9f07df21', // Add your RapidAPI key here
+                'x-rapidapi-host': 'currency-conversion-and-exchange-rates.p.rapidapi.com'
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let chunks = [];
+
+            res.on('data', (chunk) => {
+                chunks.push(chunk);
+            });
+
+            res.on('end', () => {
+                const body = Buffer.concat(chunks);
+                try {
+                    const data = JSON.parse(body.toString());
+
+                    // Log the API response to check what data is returned
+                    console.log('API response:', data);
+
+                    // Check if rates exist and resolve only valid rates
+                    if (data && data.rates) {
+                        resolve(data.rates);
+                    } else {
+                        reject(new Error('Invalid API response or missing rates'));
+                    }
+                } catch (err) {
+                    reject(new Error('Error parsing API response'));
+                }
+            });
+        });
+
+        req.on('error', (e) => {
+            reject(e);
+        });
+
+        req.end();
+    });
+};
+
 
 router.use(methodOverride('_method'));
 
@@ -131,12 +180,12 @@ router.get('/edit', isLoggedIn, async (req, res) => {
             doctor.insurances = [];
         }
 
-        // Pass allConditions and doctor (with profilePicture) to the template
+        // Pass allConditions to the template
         res.render('editDoctorProfile', {
             doctor,
             allInsurances,
             allSpecialties,
-            allConditions,
+            allConditions // Pass this to EJS
         });
     } catch (err) {
         console.error(err.message);
@@ -144,6 +193,7 @@ router.get('/edit', isLoggedIn, async (req, res) => {
     }
 });
 
+  
 router.post('/profile/update', upload.fields([
     { name: 'profilePicture' },
     { name: 'licenseProof' },
@@ -207,7 +257,9 @@ router.post('/profile/update', upload.fields([
             awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
             faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
             hospitals: hospitals,
-            doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : 85 
+            doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : 85,
+            doctorFeeCurrency: req.body.doctorFeeCurrency || doctor.doctorFeeCurrency,
+            licenseNumber: req.body.licenseNumber || doctor.licenseNumber // Update license number
         };
 
         if (!updateData.documents) {
@@ -229,7 +281,6 @@ router.post('/profile/update', upload.fields([
             contentType: req.files['businessProof'][0].mimetype
         } : doctor.documents.businessProof;
 
-        // Update profile picture
         if (req.files['profilePicture'] && req.files['profilePicture'][0]) {
             updateData.profilePicture = {
                 data: req.files['profilePicture'][0].buffer,
@@ -249,27 +300,6 @@ router.post('/profile/update', upload.fields([
         res.status(500).send('Server Error');
     }
 });
-
-router.delete('/profile/deleteProfilePicture', isLoggedIn, async (req, res) => {
-    try {
-        const doctorEmail = req.session.user.email;
-        const doctor = await Doctor.findOne({ email: doctorEmail });
-
-        if (!doctor) {
-            return res.status(404).send('Doctor not found');
-        }
-
-        doctor.profilePicture = null;
-
-        await doctor.save();
-
-        res.redirect('/doctor/profile');
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
-
     
 router.get('/insights', isLoggedIn, async (req, res) => {
     try {
@@ -427,6 +457,8 @@ router.get('/bookings', isLoggedIn, checkSubscription, async (req, res) => {
     }
 });
 
+
+
 router.post('/bookings/:id', isLoggedIn, async (req, res) => {
     try {
         const { status } = req.body;
@@ -441,18 +473,21 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
         }
 
         const currentStatus = booking.status;
+
         const now = moment();
+
         const bookingDate = moment(booking.date);
-        const [bookingTimeStart, bookingTimeEnd] = booking.time.split(' - ').map(time => moment(time, 'HH:mm'));
+        const bookingTimeStart = moment(booking.time.split(' - ')[0], 'HH:mm');
+        const bookingTimeEnd = moment(booking.time.split(' - ')[1], 'HH:mm');
 
         const bookingStartDateTime = moment(bookingDate).set({
-            hour: bookingTimeStart.hour(),
-            minute: bookingTimeStart.minute()
+            hour: bookingTimeStart.get('hour'),
+            minute: bookingTimeStart.get('minute')
         });
 
         const bookingEndDateTime = moment(bookingDate).set({
-            hour: bookingTimeEnd.hour(),
-            minute: bookingTimeEnd.minute()
+            hour: bookingTimeEnd.get('hour'),
+            minute: bookingTimeEnd.get('minute')
         });
 
         if (now.isAfter(bookingEndDateTime)) {
@@ -583,8 +618,6 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
         res.status(500).send('Server error');
     }
 });
-
-
 
 router.get('/completed-bookings', isLoggedIn, checkSubscription, async (req, res) => {
     try {
@@ -1029,7 +1062,7 @@ router.get('/subscribe', isLoggedIn, async (req, res) => {
 
 router.post('/subscribe', isLoggedIn, async (req, res) => {
     try {
-        const { subscriptionType, subscriptionDuration } = req.body; 
+        const { subscriptionType, subscriptionDuration, currency } = req.body; 
         const paymentDetails = req.body.paymentDetails;
         const doctorId = req.session.user._id; 
 
@@ -1048,16 +1081,33 @@ router.post('/subscribe', isLoggedIn, async (req, res) => {
         if (doctor.subscriptionType !== 'Free') {
             return res.status(403).send('You already have an active subscription. You cannot subscribe again until the current plan ends.');
         }
+        const conversionRates = await fetchConversionRates();
 
+       
+        const inrRate = conversionRates.INR || 82.5;  
+        const gbpRate = conversionRates.GBP || 0.73;  
+        const aedRate = conversionRates.AED || 3.67;  
+
+        let paymentMethods = [];
+        if (currency === 'inr') {
+            paymentMethods = ['card'];
+        } else if (currency === 'aed' || currency === 'gbp') {
+            paymentMethods = ['card'];  
+        } else if (currency === 'usd') {
+            paymentMethods = ['card', 'amazon_pay'];  
+        }
+
+
+        // Create a Stripe session with dynamic payment methods
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
+            payment_method_types: paymentMethods,
             line_items: [{
                 price_data: {
-                    currency: 'usd',
+                    currency: currency, 
                     product_data: {
                         name: `${subscriptionType} Subscription`,
                     },
-                    unit_amount: amount, 
+                    unit_amount: amount,  
                 },
                 quantity: 1,
             }],
@@ -1066,13 +1116,26 @@ router.post('/subscribe', isLoggedIn, async (req, res) => {
             cancel_url: `${req.protocol}://${req.get('host')}/doctor/subscription-failure`,
         });
 
+
+        
+
+        // // Convert amount to USD
+        // let amountInUSD = amount;   Default if the currency is already USD
+        // if (currency === 'inr') {
+        //     amountInUSD = (amount / inrRate).toFixed(2);
+        // } else if (currency === 'gbp') {
+        //     amountInUSD = (amount / gbpRate).toFixed(2);
+        // } else if (currency === 'aed') {
+        //     amountInUSD = (amount / aedRate).toFixed(2);
+        // }
+
         req.session.subscriptionInfo = {
             doctorId,
             subscriptionType,
             subscriptionDuration,  
             paymentDetails: {
                 amount: amount,
-                currency: 'usd'
+                currency: currency // Store selected currency in session
             }
         };
 
@@ -1083,7 +1146,6 @@ router.post('/subscribe', isLoggedIn, async (req, res) => {
     }
 });
 
-// Route to handle subscription success
 router.get('/subscription-success', async (req, res) => {
     try {
         const session = await stripe.checkout.sessions.retrieve(req.query.session_id);

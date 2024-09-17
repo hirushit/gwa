@@ -895,6 +895,47 @@ router.get('/insurances', isAdmin, async (req, res) => {
   }
 });
 
+router.get('/insurances/edit/:id', isAdmin, async (req, res) => {
+  try {
+    const insurance = await Insurance.findById(req.params.id).lean();
+    if (!insurance) {
+      return res.status(404).send('Insurance not found');
+    }
+    res.render('editInsurance', { insurance, activePage: 'insurance' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.post('/insurances/edit/:id', isAdmin, upload.single('logo'), async (req, res) => {
+  try {
+    const { name } = req.body;
+    const insurance = await Insurance.findById(req.params.id);
+
+    if (!insurance) {
+      return res.status(404).send('Insurance not found');
+    }
+
+    // Update the insurance name
+    insurance.name = name;
+
+    // Update the logo if a new file is uploaded
+    if (req.file) {
+      insurance.logo.data = req.file.buffer;
+      insurance.logo.contentType = req.file.mimetype;
+    }
+
+    // Save the updated insurance
+    await insurance.save();
+
+    res.redirect('/admin/insurances'); // Redirect back to the insurance list
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
 router.get('/insurance/:id', isAdmin, async (req, res) => {
   try {
     const insuranceId = req.params.id;

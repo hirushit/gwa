@@ -98,14 +98,39 @@
                             <input type="hidden" name="date" value="<%= slot.date.toISOString() %>">
                             <input type="hidden" name="startTime" value="<%= slot.startTime %>">
                             
+                            
                             <label for="consultationType"><strong>Consultation Type:</strong></label>
                             <select id="consultationType" name="consultationType">
                                 <option value="In-person">In-person</option>
                                 <option value="Video call">Video call</option>
                             </select>
-                            
+                        
+                            <!-- Currency dropdown -->
+                            <div id="currencyWrapper">
+                                <label for="currency">Select Currency:</label>
+                                <select id="currency" name="currency" required>
+                                    <option value="usd" <%= doctor.doctorFeeCurrency === 'usd' ? 'selected' : '' %>>USD</option>
+                                    <option value="inr" <%= doctor.doctorFeeCurrency === 'inr' ? 'selected' : '' %>>INR</option>
+                                    <option value="gbp" <%= doctor.doctorFeeCurrency === 'gbp' ? 'selected' : '' %>>GBP</option>
+                                    <option value="aed" <%= doctor.doctorFeeCurrency === 'aed' ? 'selected' : '' %>>AED</option>
+                                </select>
+                            </div>
+                        
+                            <!-- Consultation fee details -->
+                            <div id="feeDetails" class="doctor-fee">
+                                <p>Consultation Fee: 
+                                    <strong><%= feesInAllCurrencies[doctor.doctorFeeCurrency || 'usd'] %> <%= (doctor.doctorFeeCurrency || 'usd').toUpperCase() %></strong> 
+                                    <strong>(Converted: 
+                                    USD: <%= feesInAllCurrencies.usd %>, 
+                                    INR: <%= feesInAllCurrencies.inr %>, 
+                                    GBP: <%= feesInAllCurrencies.gbp %>, 
+                                    AED: <%= feesInAllCurrencies.aed %>)</strong>
+                                </p>
+                            </div>
+                        
                             <button type="submit">Book Slot</button>
                         </form>
+                        
                     <% } else { %>
                         <p><strong>Status:</strong> <%= slot.status %></p>
                     <% } %>
@@ -153,8 +178,24 @@
     </form>
 
     <a href="/patient/doctors">Back to Doctors List</a>
-
     <script>
+        const consultationType = document.getElementById('consultationType');
+        const currencyWrapper = document.getElementById('currencyWrapper');
+    
+        consultationType.addEventListener('change', function() {
+            if (this.value === 'In-person') {
+                currencyWrapper.style.display = 'none'; // Hide the currency selection
+            } else {
+                currencyWrapper.style.display = 'block'; // Show the currency selection
+            }
+        });
+    
+        // Initially hide currency if In-person is already selected
+        if (consultationType.value === 'In-person') {
+            currencyWrapper.style.display = 'none';
+        }
+    </script>
+    <!-- <script>
         document.getElementById('bookingForm').addEventListener('submit', function(event) {
             //event.preventDefault(); // Prevent the default form submission
 
@@ -177,6 +218,28 @@
             // .then(result => console.log('Server Response:', result))
             // .catch(error => console.error('Error:', error));
         });
+        
+    </script> -->
+    <script>
+        document.getElementById('consultationType').addEventListener('change', function() {
+            const selectedType = this.value;
+            const currencyWrapper = document.getElementById('currencyWrapper');
+            const feeDetails = document.getElementById('feeDetails');
+    
+            if (selectedType === 'In-person') {
+                // Hide currency and fee details if In-person is selected
+                currencyWrapper.style.display = 'none';
+                feeDetails.style.display = 'none';
+            } else {
+                // Show currency and fee details if Video call is selected
+                currencyWrapper.style.display = 'block';
+                feeDetails.style.display = 'block';
+            }
+        });
+    
+        // Trigger the change event on page load to set initial visibility
+        document.getElementById('consultationType').dispatchEvent(new Event('change'));
     </script>
+        
 </body>
 </html>

@@ -59,8 +59,10 @@
                                 <% } %>
                             </td>
                             <td>
-                                <% if (booking.status === 'completed') { %>
+                                <% if (booking.status === 'completed' && booking.doctor) { %>
                                     <a href="/patient/review/<%= booking.doctor._id %>/<%= booking._id %>">Add a Review</a>
+                                <% } else { %>
+                                    N/A
                                 <% } %>
                             </td>
                         </tr>

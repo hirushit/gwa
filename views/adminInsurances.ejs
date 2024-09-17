@@ -167,6 +167,23 @@
             color: white;
         }
 
+        .edit-button {
+            color: #007BFF;
+            border: 1px solid #007BFF;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            display: inline-block;
+            margin-top: 10px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .edit-button:hover {
+            background-color: #007BFF;
+            color: white;
+        }
+
         img {
             max-width: 150px;
             height: auto;
@@ -185,16 +202,14 @@
             <ul class="sidebar-menu">
                 <li class="sidebar-menu-item"><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View Admin Blogs</a></li>
                 <li class="sidebar-menu-item"><a href="/admin/blog" <% if (activePage === 'blog-upload') { %> class="active" <% } %>>Upload Admin Blog</a></li>
-                <!-- <li class="sidebar-menu-item"><a href="/admin/admin-home" <% if (activePage === 'admin-home') { %> class="active" <% } %>>Home</a></li> -->
                 <li class="sidebar-menu-item"><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
                 <li class="sidebar-menu-item"><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
                 <li class="sidebar-menu-item"><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
-                <!-- <li class="sidebar-menu-item"><a href="/admin/blogs-all" <% if (activePage === 'blogs-all') { %> class="active" <% } %>>Search Blogs</a></li> -->
                 <li class="sidebar-menu-item"><a href="/admin/view-appointments" <% if (activePage === 'view-appointments') { %> class="active" <% } %>>View Appointments</a></li>
                 <li class="sidebar-menu-item"><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
                 <li class="sidebar-menu-item"><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
                 <li class="sidebar-menu-item"><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
-              </ul>
+            </ul>
         </div>
 
         <div class="main-content">
@@ -206,11 +221,12 @@
                         <li class="insurance-item">
                             <h2><%= insurance.name %></h2>
                             <div class="insurance-details">
-                                <% if (insurance.logo && insurance.logo.data && insurance.logo.contentType === 'image/png') { %>
-                                    <img src="data:<%= insurance.logo.contentType %>;base64,<%= insurance.logo.data.toString('base64') %>" alt="<%= insurance.name %> logo">
+                                <% if (insurance.logo && insurance.logo.data && (insurance.logo.contentType === 'image/png' || insurance.logo.contentType === 'image/jpeg')) { %>
+                                    <img src="data:<%= insurance.logo.contentType %>;base64,<%= insurance.logo.data.toString('base64') %>" alt="Insurance Logo" />
                                 <% } else { %>
                                     <p>No valid logo available</p>
                                 <% } %>
+                                <a href="/admin/insurances/edit/<%= insurance._id %>" class="edit-button">Edit</a>
                                 <form action="/admin/insurance/delete/<%= insurance._id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this insurance?');">
                                     <button type="submit" class="delete-button">Delete</button>
                                 </form>

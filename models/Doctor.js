@@ -1,12 +1,6 @@
 const mongoose = require('mongoose');
 
-// Define the FAQ schema
-const faqSchema = new mongoose.Schema({
-  question: { type: String, required: true },
-  answer: { type: String, required: true }
-});
 
-// Define the review schema
 const reviewSchema = new mongoose.Schema({
   patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
   rating: { type: Number, min: 1, max: 5, required: true },
@@ -14,7 +8,6 @@ const reviewSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-// Define the doctor schema
 const doctorSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -44,14 +37,13 @@ const doctorSchema = new mongoose.Schema({
       state: { type: String, required: true },
       country: { type: String, required: true },
       zip: { type: String, required: true },
-      lat: { type: Number }, 
-      lng: { type: Number }  
+    lat: { type: Number }, 
+    lng: { type: Number }  
   }],
   insurances: [{ type: String}],
   consultation: { type: String, enum: ['In-person', 'Video call', 'Both'], default: 'In-person' },
   awards: [String],
-  // Updated FAQ field
-  faqs: [faqSchema],  // Array of question-answer pairs
+  faqs: [String],
   website: String,
   socialHandles: {
     twitter: String,

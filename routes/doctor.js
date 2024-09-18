@@ -204,6 +204,7 @@ router.post('/profile/update', upload.fields([
         const doctorEmail = req.session.user.email;
         let doctor = await Doctor.findOne({ email: doctorEmail });
 
+        // Handling hospitals
         let hospitals = [];
         if (Array.isArray(req.body.hospitals)) {
             hospitals = req.body.hospitals.map((hospital) => {
@@ -245,9 +246,25 @@ router.post('/profile/update', upload.fields([
             hospitals = [hospitalData];
         }
 
+        // Handling insurances
         const insuranceIds = (Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances])
             .map(id => id.toString());
 
+        // Handling FAQs
+        let faqs = [];
+        if (Array.isArray(req.body.faqs)) {
+            faqs = req.body.faqs.map((faq) => ({
+                question: faq.question,
+                answer: faq.answer
+            }));
+        } else if (req.body.faqs && req.body.faqs.question) {
+            faqs = [{
+                question: req.body.faqs.question,
+                answer: req.body.faqs.answer
+            }];
+        }
+
+        // Construct update data
         const updateData = {
             ...req.body,
             aboutMe: req.body.aboutMe || doctor.aboutMe,
@@ -255,13 +272,14 @@ router.post('/profile/update', upload.fields([
             languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
             insurances: insuranceIds,
             awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
-            faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
+            faqs: faqs,
             hospitals: hospitals,
-            doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : 85,
+            doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : doctor.doctorFee || 85,
             doctorFeeCurrency: req.body.doctorFeeCurrency || doctor.doctorFeeCurrency,
-            licenseNumber: req.body.licenseNumber || doctor.licenseNumber // Update license number
+            licenseNumber: req.body.licenseNumber || doctor.licenseNumber
         };
 
+        // Handling document updates
         if (!updateData.documents) {
             updateData.documents = {};
         }
@@ -281,6 +299,7 @@ router.post('/profile/update', upload.fields([
             contentType: req.files['businessProof'][0].mimetype
         } : doctor.documents.businessProof;
 
+        // Handling profile picture update
         if (req.files['profilePicture'] && req.files['profilePicture'][0]) {
             updateData.profilePicture = {
                 data: req.files['profilePicture'][0].buffer,
@@ -290,17 +309,20 @@ router.post('/profile/update', upload.fields([
             updateData.profilePicture = doctor.profilePicture;
         }
 
+        // Update doctor profile in the database
         doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });
 
+        // Save the updated doctor profile
         await doctor.save();
 
+        // Redirect to the updated profile page
         res.redirect('/doctor/profile');
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
-    
+
 router.get('/insights', isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;

@@ -142,14 +142,18 @@
 
     <h3>FAQs</h3>
     <% if (doctor.faqs && doctor.faqs.length > 0) { %>
-    <ul>
-        <% doctor.faqs.forEach(faq => { %>
-        <li><%= faq %></li>
-        <% }) %>
-    </ul>
+        <ul>
+            <% doctor.faqs.forEach(faq => { %>
+                <li>
+                    <strong>Q: <%= faq.question %></strong><br>
+                    <em>A: <%= faq.answer %></em>
+                </li>
+            <% }) %>
+        </ul>
     <% } else { %>
-    <p>No FAQs listed.</p>
+        <p>No FAQs listed.</p>
     <% } %>
+    
 
     <h3>Time Slots</h3>
     <ul>

@@ -23,30 +23,43 @@
                 console.error('There was a problem with the fetch operation:', error);
             }
         }
-
+    
         function displayBookings(bookings) {
             console.log('Displaying bookings:', bookings);
             const bookingsList = document.getElementById('bookings-list');
             bookingsList.innerHTML = '';
+    
             bookings.forEach(booking => {
                 const listItem = document.createElement('li');
+                
+                const patientName = booking.patient?.name || 'N/A';  // Handle null patient name
+                const patientEmail = booking.patient?.email || 'N/A';  // Handle null patient email
+                const patientId = booking.patientId || 'N/A';  // Handle null patient ID
+                const bookingDate = booking.date ? new Date(booking.date).toDateString() : 'N/A';  // Handle null date
+                const bookingTime = booking.time || 'N/A';  // Handle null time
+                const consultationType = booking.consultationType || 'N/A';  // Handle null consultation type
+    
+                const bookingId = booking._id || '#';  // Handle missing booking ID
+    
                 listItem.innerHTML = `
-                    <strong>Patient Name:</strong> ${booking.patient.name}<br>
-                    <strong>Patient Email:</strong> ${booking.patient.email}<br>
-                    <strong>Patient ID:</strong> ${booking.patientId}<br> <!-- Display Patient ID -->
-                    <strong>Date:</strong> ${new Date(booking.date).toDateString()}<br>
-                    <strong>Time:</strong> ${booking.time}<br>
-                    <strong>Consultation Type:</strong> ${booking.consultationType}<br>
-                    <a href="/doctor/bookings/${booking._id}/prescription">Add Prescription</a>
-                    <a href="/doctor/doctor-view/${booking.patientId}/prescriptions">View Prescription</a> 
+                    <strong>Patient Name:</strong> ${patientName}<br>
+                    <strong>Patient Email:</strong> ${patientEmail}<br>
+                    <strong>Patient ID:</strong> ${patientId}<br>
+                    <strong>Date:</strong> ${bookingDate}<br>
+                    <strong>Time:</strong> ${bookingTime}<br>
+                    <strong>Consultation Type:</strong> ${consultationType}<br>
+                    <a href="/doctor/bookings/${bookingId}/prescription">Add Prescription</a>
+                    <a href="/doctor/doctor-view/${patientId}/prescriptions">View Prescription</a> 
                 `;
+                
                 bookingsList.appendChild(listItem);
                 bookingsList.appendChild(document.createElement('hr'));
             });
         }
-
+    
         window.onload = fetchBookings;
     </script>
+        
 </head>
 <body>
     <h1>Doctor Dashboard - Completed Bookings</h1>

@@ -18,6 +18,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const nodemailer = require('nodemailer');
 const https = require('https');
+const { title } = require('process');
 
 const fetchConversionRates = () => {
     return new Promise((resolve, reject) => {
@@ -1198,30 +1199,34 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
       const watermarkX = (doc.page.width - 225) / 2;
       const watermarkY = (doc.page.height - 115) / 2;
 
-      doc.opacity(0.08).image('logo.png', watermarkX, watermarkY, { width: 220 }).opacity(1);
+      // doc.opacity(0.08).image('logo.png', watermarkX, watermarkY, { width: 220 }).opacity(1);
 
-      doc.image('logo.png', logoX, headerY, { width: 115 })
-        .font('Matter-Medium')
-        .fontSize(18)
-        .fillColor(textColor)
-        .text('E-Prescription', titleX, headerY, { align: 'center' })
-        .fontSize(10)
-        .font('Matter-Regular')
-        .text('MedxBay', titleX, headerY + 19, { align: 'center' })
-        .font('Matter-Italic')
-        .fontSize(10)
-        .text('Your Trusted Health Partner', titleX, headerY + 31, { align: 'center' })
-        .moveDown(1.5);
-
+      // doc.image('logo.png', logoX, headerY, { width: 115 })
       doc.font('Matter-SemiBold').fontSize(12).fillColor(textColor)
-        .text(` ${doctor.name}`, doctorInfoX, headerY, { align: 'right' })
-        .font('Matter-Regular')
-        .text(`${doctor.speciality.join(', ')}`, doctorInfoX, headerY + 15, { align: 'right' })
-        .font('Matter-Italic')
-        .text(`${prescription.doctorEmail}`, doctorInfoX, headerY + 30, { align: 'right' })
-        .moveDown(2);
+        .font('Matter-Medium')
+        .fontSize(20)
+        .fillColor(textColor)
+        .text('E-Prescription', titleX, headerY + 3, { align: 'left' })
+        // .fontSize(10)
+        // .font('Matter-Regular')
+        // .text('MedxBay', titleX, headerY + 19, { align: 'center' })
+        // .font('Matter-Italic')
+        // .fontSize(10)
+        // .text('Your Trusted Health Partner', titleX, headerY + 31, { align: 'center' })
+        // .moveDown(1.5);
 
-        doc.fillColor(lineColor).moveTo(40, headerY + 60).lineTo(570, headerY + 60).stroke(lineColor);
+      doc.font('Matter-SemiBold').fontSize(18).fillColor(textColor)
+        .text(` ${doctor.name}`, titleX, headerY - 3, { align: 'center' })
+        .font('Matter-Regular')
+        .fontSize(14)
+        .text(`${doctor.speciality.join(', ')}`, titleX, headerY + 21, { align: 'center' })
+        .font('Matter-Italic')
+        .fontSize(12)
+        .text(`${prescription.doctorEmail}`, doctorInfoX, headerY, { align: 'right' })
+        .text(`License No: ${prescription.doctorId.licenseNumber}`, doctorInfoX, headerY + 17, { align: 'right' })
+        .moveDown(2.5);
+
+        doc.fillColor(lineColor).moveTo(40, headerY + 50).lineTo(570, headerY + 50).stroke(lineColor);
     };
 
     addHeaderFooter();
@@ -1278,19 +1283,20 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
       .font('Matter-Italic')
       .text(doctor.name, { fontSize: 14 }); 
 
-      const footerY = doc.page.height - 90; 
+      const footerY = doc.page.height - 85; 
 
       doc.moveTo(40, footerY).lineTo(570, footerY).stroke();
 
-    doc.y = footerY + 10;
-    doc.moveDown(0.5).font('Matter-Medium').fontSize(12).fillColor(textColor)
+    doc.y = footerY + 8;
+    doc.moveDown(0.10).font('Matter-Medium').fontSize(12).fillColor(textColor)
       .text(hospital.name, { align: 'center' })
       .moveDown(0.4)
-      .font('Matter-Italic').fontSize(10)
-      .text(
-        `${hospital.location.street}, ${hospital.location.city}, ${hospital.location.state}, ${hospital.location.country} - ${hospital.location.zip}`,
-        { align: 'center' }
-      );
+      .font('Matter-Italic').fontSize(12)
+      .text("Powered By MedxBay", { align: 'center' })
+      // .text(
+      //   `${hospital.location.street}, ${hospital.location.city}, ${hospital.location.state}, ${hospital.location.country} - ${hospital.location.zip}`,
+      //   { align: 'center' }
+      // );
 
     doc.pipe(fs.createWriteStream(filePath)).on('finish', () => {
       res.setHeader('Content-disposition', 'attachment; filename=' + fileName);

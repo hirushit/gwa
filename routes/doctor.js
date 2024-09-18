@@ -621,16 +621,17 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
 
 router.get('/completed-bookings', isLoggedIn, checkSubscription, async (req, res) => {
     try {
-        const doctorId = req.session.user._id; 
+        const doctorId = req.session.user._id;
         const completedBookings = await Booking.find({ doctor: doctorId, status: 'completed' })
                                                .populate('patient')
                                                .sort({ date: 'desc' });
 
+        const bookingsWithPatientIds = completedBookings.map(booking => ({
+            ...booking.toObject(),
+            patientId: booking.patient ? booking.patient._id : null  // Check if patient exists
+        }));
+
         if (req.headers.accept && req.headers.accept.includes('application/json')) {
-            const bookingsWithPatientIds = completedBookings.map(booking => ({
-                ...booking.toObject(),
-                patientId: booking.patient._id
-            }));
             res.json({ bookings: bookingsWithPatientIds });
         } else {
             res.render('completed-bookings', { bookings: completedBookings });
@@ -640,6 +641,7 @@ router.get('/completed-bookings', isLoggedIn, checkSubscription, async (req, res
         res.status(500).send('Server Error');
     }
 });
+
 
 
 router.get('/reviews/:doctorId', isLoggedIn, async (req, res) => {

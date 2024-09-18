@@ -387,6 +387,10 @@ function addFAQ() {
       <input type="text" name="city" value="<%= doctor.city %>" required>
     </div>
     <div>
+      <label>Zipcode:</label>
+      <input type="text" name="zip" value="<%= doctor.zip %>" required>
+    </div>
+    <div>
       <label>Availability:</label>
       <select name="availability">
         <option value="true" <%= doctor.availability === 'true' ? 'selected' : '' %>>Available</option>

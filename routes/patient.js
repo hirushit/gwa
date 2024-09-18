@@ -381,11 +381,13 @@ router.post('/book', isLoggedIn, async (req, res) => {
     const { doctorId, date, startTime, consultationType, currency } = req.body;
     const patientId = req.session.user._id;
 
+    // Validate date and time format
     const parsedDate = new Date(date);
     if (isNaN(parsedDate.getTime()) || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(startTime)) {
       return res.status(400).send('Invalid date or start time format');
     }
 
+    // Fetch doctor and patient
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
       return res.status(404).send('Doctor not found');
@@ -395,18 +397,20 @@ router.post('/book', isLoggedIn, async (req, res) => {
       return res.status(404).send('Patient not found');
     }
 
+    // Check availability of the requested time slot
     const slotIndex = doctor.timeSlots.findIndex(slot =>
       slot.date.toISOString() === new Date(date).toISOString() && slot.startTime === startTime
     );
-    if (slotIndex === -1) { // Fixed the condition to check index correctly
+    if (slotIndex === -1) {
       return res.status(400).send('Time slot not found');
     }
 
     if (consultationType === 'In-person') {
+      // Create and save booking for in-person consultation
       const booking = new Booking({
         patient: patientId,
         doctor: doctorId,
-        date: new Date(date), 
+        date: new Date(date),
         time: `${doctor.timeSlots[slotIndex].startTime} - ${doctor.timeSlots[slotIndex].endTime}`,
         consultationType: consultationType,
         status: 'waiting',
@@ -418,72 +422,43 @@ router.post('/book', isLoggedIn, async (req, res) => {
 
       await booking.save();
 
+      // Update the doctor's time slot status to booked
       doctor.timeSlots[slotIndex].status = 'booked';
       await doctor.save();
 
+      // Send email notifications
       await sendPatientEmail(patient.email, booking);
       await sendDoctorEmail(doctor.email, booking);
 
-      return res.redirect('/patient/bookings'); // Redirect to /patient/bookings for in-person bookings
+      // Redirect to patient's bookings page
+      return res.redirect('/patient/bookings');
     } else if (consultationType === 'Video call') {
-
-      const doctorFeeCurrency = doctor.doctorFeeCurrency || 'usd';
-
-      let totalFee = doctor.doctorFee;
-      let serviceCharge = 0;
-
+      // Fetch conversion rates
       const conversionRates = await fetchConversionRates();
 
-      if (doctorFeeCurrency === 'inr') {
-        totalFee = totalFee / conversionRates.INR * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'usd') {
-        totalFee = totalFee / conversionRates.USD * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'gbp') {
-        totalFee = totalFee / conversionRates.GBP * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'aed') {
-        totalFee = totalFee / conversionRates.AED * conversionRates[currency.toUpperCase()];
-      }
-      if (doctorFeeCurrency === 'usd') {
-        totalFee = totalFee / conversionRates.INR * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'inr') {
-        totalFee = totalFee / conversionRates.USD * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'gbp') {
-        totalFee = totalFee / conversionRates.GBP * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'aed') {
-        totalFee = totalFee / conversionRates.AED * conversionRates[currency.toUpperCase()];
-      }
-      if (doctorFeeCurrency === 'gbp') {
-        totalFee = totalFee / conversionRates.INR * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'usd') {
-        totalFee = totalFee / conversionRates.USD * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'inr') {
-        totalFee = totalFee / conversionRates.GBP * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'aed') {
-        totalFee = totalFee / conversionRates.AED * conversionRates[currency.toUpperCase()];
-      }
-      if (doctorFeeCurrency === 'aed') {
-        totalFee = totalFee / conversionRates.INR * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'usd') {
-        totalFee = totalFee / conversionRates.USD * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'gbp') {
-        totalFee = totalFee / conversionRates.GBP * conversionRates[currency.toUpperCase()];
-      } else if (doctorFeeCurrency === 'inr') {
-        totalFee = totalFee / conversionRates.AED * conversionRates[currency.toUpperCase()];
-      }
-      
-      if (!(currency in conversionRates)) {
-        return res.status(400).send('Invalid currency selected');
+      // Determine the fee and handle currency conversion
+      const doctorFeeCurrency = doctor.doctorFeeCurrency || 'usd';
+      let totalFee = doctor.doctorFee;
+
+      if (doctorFeeCurrency !== currency.toLowerCase()) {
+        if (!(currency.toUpperCase() in conversionRates)) {
+          return res.status(400).send('Invalid currency selected');
+        }
+
+        // Adjust fee based on conversion rates
+        totalFee = totalFee / conversionRates[doctorFeeCurrency.toUpperCase()] * conversionRates[currency.toUpperCase()];
       }
 
+      // Create a Stripe checkout session for video consultation payment
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [{
           price_data: {
-            currency: currency,  
+            currency: currency.toLowerCase(),
             product_data: {
               name: `Appointment Booking for Dr. ${doctor.name}: ${consultationType} on ${parsedDate.toLocaleDateString()} at ${startTime}`,
             },
-            unit_amount: Math.round(totalFee * 100),  
+            unit_amount: Math.round(totalFee * 100),
           },
           quantity: 1,
         }],
@@ -493,7 +468,6 @@ router.post('/book', isLoggedIn, async (req, res) => {
           date: date,
           startTime: startTime,
           consultationType: consultationType,
-          serviceCharge: serviceCharge.toFixed(2),
           totalFee: totalFee.toFixed(2),
           doctorFeeCurrency: doctorFeeCurrency  
         },
@@ -501,10 +475,11 @@ router.post('/book', isLoggedIn, async (req, res) => {
         cancel_url: `${req.protocol}://${req.get('host')}/patient/book/payment-failure`,
       });
 
-      return res.redirect(303, session.url); 
+      // Redirect to Stripe checkout
+      return res.redirect(303, session.url);
     }
   } catch (error) {
-    console.error('Error creating Stripe session:', error.message);
+    console.error('Error creating Stripe session or booking:', error.message);
     res.status(500).send('Server Error');
   }
 });

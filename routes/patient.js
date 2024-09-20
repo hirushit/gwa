@@ -377,6 +377,9 @@ router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
 });
 
 router.post('/book', isLoggedIn, async (req, res) => {
+
+  console.log('Request body:', req.body);
+
   try {
     const { doctorId, date, startTime, consultationType, currency } = req.body;
     const patientId = req.session.user._id;
@@ -1158,14 +1161,17 @@ const fontPaths = {
 router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
   try {
     const prescription = await Prescription.findById(req.params.id)
-      .populate('doctorId', 'name speciality')
+      .populate('doctorId', 'name title speciality licenseNumber')
       .exec();
 
     if (!prescription) {
       return res.status(404).send('Prescription not found');
     }
 
+
     const doctor = prescription.doctorId;
+    console.log('Doctor Details:', doctor);
+
     const booking = await Booking.findOne({
       patient: prescription.patientId,
       doctor: prescription.doctorId
@@ -1227,10 +1233,10 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
         // .moveDown(1.5);
 
       doc.font('Matter-SemiBold').fontSize(18).fillColor(textColor)
-        .text(` ${doctor.name}`, titleX, headerY - 3, { align: 'center' })
+        .text(`Dr. ${doctor.name}`, titleX, headerY - 3, { align: 'center' })
         .font('Matter-Regular')
         .fontSize(14)
-        .text(`${doctor.speciality.join(', ')}`, titleX, headerY + 21, { align: 'center' })
+        .text(`${doctor.title}`, titleX, headerY + 21, { align: 'center' })
         .font('Matter-Italic')
         .fontSize(12)
         .text(`${prescription.doctorEmail}`, doctorInfoX, headerY, { align: 'right' })

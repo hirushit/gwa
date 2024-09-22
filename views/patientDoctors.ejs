@@ -229,7 +229,8 @@
                                 <div class="custom-info-window">
                                     <strong>Doctor:</strong> ${location.doctorName},  ${location.doctorTitle} <br>
                                     <strong>Hospital:</strong> ${location.hospitalName}<br>
-                                    <strong>Distance:</strong> ${distance.toFixed(2)} km away
+                                    <strong>Distance:</strong> ${distance.toFixed(2)} km away <br>
+                                    <a href="https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}" target="_blank">View Directions</a>
                                 </div>
                             `
                         });

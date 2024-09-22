@@ -272,6 +272,13 @@ router.get('/doctors', async (req, res) => {
     const locationSet = new Map();
 
     doctors.forEach(doctor => {
+      let profilePictureBase64;
+      if (doctor.profilePicture && doctor.profilePicture.data) {
+        profilePictureBase64 = `data:${doctor.profilePicture.contentType};base64,${doctor.profilePicture.data.toString('base64')}`;
+      } else {
+        profilePictureBase64 = '/path/to/default/profile/pic.png';
+      }
+
       doctor.timeSlots.forEach(slot => {
         if (slot.status === 'free' && slot.lat && slot.lng) {
           const key = `${slot.lat},${slot.lng}`;
@@ -280,7 +287,9 @@ router.get('/doctors', async (req, res) => {
               lat: slot.lat,
               lng: slot.lng,
               hospitalName: slot.hospital,
-              doctorName: doctor.name
+              doctorName: doctor.name,
+              doctorTitle: doctor.title,
+              doctorProfilePic: profilePictureBase64 
             });
           }
         }
@@ -1161,17 +1170,14 @@ const fontPaths = {
 router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
   try {
     const prescription = await Prescription.findById(req.params.id)
-      .populate('doctorId', 'name title speciality licenseNumber')
+      .populate('doctorId', 'name speciality')
       .exec();
 
     if (!prescription) {
       return res.status(404).send('Prescription not found');
     }
 
-
     const doctor = prescription.doctorId;
-    console.log('Doctor Details:', doctor);
-
     const booking = await Booking.findOne({
       patient: prescription.patientId,
       doctor: prescription.doctorId
@@ -1233,10 +1239,10 @@ router.get('/prescriptions/:id/download', isLoggedIn, async (req, res) => {
         // .moveDown(1.5);
 
       doc.font('Matter-SemiBold').fontSize(18).fillColor(textColor)
-        .text(`Dr. ${doctor.name}`, titleX, headerY - 3, { align: 'center' })
+        .text(` ${doctor.name}`, titleX, headerY - 3, { align: 'center' })
         .font('Matter-Regular')
         .fontSize(14)
-        .text(`${doctor.title}`, titleX, headerY + 21, { align: 'center' })
+        .text(`${doctor.speciality.join(', ')}`, titleX, headerY + 21, { align: 'center' })
         .font('Matter-Italic')
         .fontSize(12)
         .text(`${prescription.doctorEmail}`, doctorInfoX, headerY, { align: 'right' })

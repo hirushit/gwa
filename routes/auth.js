@@ -478,7 +478,7 @@ router.post('/forgot-password', async (req, res) => {
     await user.save();
 
     const resetUrl = `http://localhost:3000/auth/reset-password?token=${resetToken}`;
-    await sendResetPasswordEmail(user.email, resetUrl);
+    await sendResetPasswordEmail(user.email, user.name,resetUrl);
 
     req.flash('success_msg', 'A password reset link has been sent to your email.');
     return res.redirect('/auth/forgot-password');
@@ -493,7 +493,7 @@ const generateResetToken = () => {
   return crypto.randomBytes(20).toString('hex');
 };
 
-const sendResetPasswordEmail = async (email, resetUrl) => {
+const sendResetPasswordEmail = async (email, name, resetUrl) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {

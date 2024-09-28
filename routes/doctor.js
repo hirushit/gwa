@@ -850,7 +850,7 @@ router.delete('/manage-time-slots/:id', isLoggedIn, checkSubscription, async (re
 router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
-        const { date, startTime, endTime, hospital, endDate } = req.body;
+        const { date, startTime, endTime, hospital, consultationType, endDate } = req.body;
 
         const doctor = await Doctor.findOne({ email: doctorEmail });
         if (!doctor) {
@@ -859,11 +859,6 @@ router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) =>
 
         if (doctor.subscriptionType === 'Free' && doctor.maxTimeSlots <= 0) {
             return res.json({ error: 'You have reached the limit of time slots for the free trial. Please subscribe to add more.' });
-        }
-
-        const selectedHospital = doctor.hospitals.find(h => h.name === hospital);
-        if (!selectedHospital) {
-            return res.status(404).send('Hospital not found');
         }
 
         const start = new Date(date);
@@ -886,19 +881,28 @@ router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) =>
                 startTime,
                 endTime,
                 status: 'free',
-                hospital: hospital,
-                hospitalLocation: {
+                consultation: consultationType
+            };
+
+            if (consultationType !== 'Video call') {
+                const selectedHospital = doctor.hospitals.find(h => h.name === hospital);
+                if (!selectedHospital) {
+                    return res.status(404).send('Hospital not found');
+                }
+
+                newTimeSlot.hospital = hospital;
+                newTimeSlot.hospitalLocation = {
                     street: selectedHospital.street,
                     city: selectedHospital.city,
                     state: selectedHospital.state,
                     country: selectedHospital.country,
                     zip: selectedHospital.zip
-                }
-            };
+                };
 
-            if (selectedHospital.lat && selectedHospital.lng) {
-                newTimeSlot.lat = selectedHospital.lat;
-                newTimeSlot.lng = selectedHospital.lng;
+                if (selectedHospital.lat && selectedHospital.lng) {
+                    newTimeSlot.lat = selectedHospital.lat;
+                    newTimeSlot.lng = selectedHospital.lng;
+                }
             }
 
             newTimeSlots.push(newTimeSlot);
@@ -916,7 +920,6 @@ router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) =>
         }
 
         await doctor.save();
-        // res.json({ success: 'Time slots added successfully.' });
         res.redirect('/doctor/manage-time-slots');
     } catch (error) {
         console.error(error.message);

@@ -6,7 +6,7 @@
     <title>Manage Time Slots</title>
     <style>
         .container {
-            max-width: 1000px; 
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -18,16 +18,16 @@
         }
         .day {
             border: 1px solid #ccc;
-            padding: 10px; 
+            padding: 10px;
             position: relative;
         }
         .confirmed {
-            background-color: #90EE90; 
-            padding: 5px; 
+            background-color: #90EE90;
+            padding: 5px;
         }
         .booked {
-            background-color: #D3D3D3; 
-            padding: 5px; 
+            background-color: #D3D3D3;
+            padding: 5px;
         }
         .calendar-header {
             text-align: center;
@@ -57,7 +57,7 @@
                                 <th>Date</th>
                                 <th>Start Time</th>
                                 <th>End Time</th>
-                                <th>Hospital</th>
+                                <th>Hospital/Consultation Type</th>
                                 <th>Location</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -69,7 +69,7 @@
                                     <td><%= slot.date.toDateString() %></td>
                                     <td><%= slot.startTime %></td>
                                     <td><%= slot.endTime %></td>
-                                    <td><%= slot.hospital %></td>
+                                    <td><%= slot.hospital ? slot.hospital : 'Video Call' %></td>
                                     <td><%= slot.hospitalLocation ? `${slot.hospitalLocation.street}, ${slot.hospitalLocation.city}, ${slot.hospitalLocation.state}, ${slot.hospitalLocation.country}, ${slot.hospitalLocation.zip}` : 'N/A' %></td>
                                     <td><%= slot.status.charAt(0).toUpperCase() + slot.status.slice(1) %></td>
                                     <td>
@@ -77,8 +77,6 @@
                                             <button type="submit" class="btn btn-danger">Delete</button>
                                         </form>
                                     </td>
-                                    
-                                    
                                 </tr>
                             <% }); %>
                         </tbody>
@@ -101,6 +99,13 @@
                         <input type="radio" id="multiple" name="slotType" value="multiple"> Multiple
                     </div>
                     <div class="form-group">
+                        <label for="consultationType">Consultation Type:</label>
+                        <select id="consultationType" name="consultationType" class="form-control" required>
+                            <option value="In-person">In-person</option>
+                            <option value="Video call">Video call</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="date">Start Date:</label>
                         <input type="date" id="date" name="date" class="form-control" required>
                     </div>
@@ -116,7 +121,7 @@
                         <label for="endTime">End Time:</label>
                         <input type="time" id="endTime" name="endTime" class="form-control" required>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="hospitalGroup">
                         <label for="hospital">Select Hospital:</label>
                         <select id="hospital" name="hospital" class="form-control">
                             <% doctor.hospitals.forEach(hospital => { %>
@@ -129,13 +134,13 @@
             </div>
         </div>
 
-        <div class="container">    
+        <div class="container">
             <div class="navigation">
                 <a href="/doctor/manage-time-slots?month=<%= currentMonth - 1 %>&year=<%= currentYear %>">Previous Month</a>
                 <span><%= months[currentMonth] %> <%= currentYear %></span>
                 <a href="/doctor/manage-time-slots?month=<%= currentMonth + 1 %>&year=<%= currentYear %>">Next Month</a>
             </div>
-    
+
             <div class="calendar">
                 <div class="calendar-header"><%= months[currentMonth] %> <%= currentYear %></div>
                 <% for (let i = 1; i <= daysInMonth; i++) { %>
@@ -147,7 +152,7 @@
                         });
                         %>
                         <% daySlots.forEach(slot => { %>
-                            <p class="confirmed"><%= slot.startTime %> - <%= slot.endTime %> - <%= slot.hospital %></p>
+                            <p class="confirmed"><%= slot.startTime %> - <%= slot.endTime %> - <%= slot.hospital ? slot.hospital : 'Video Call' %></p>
                         <% }); %>
                         <% const dayBookings = bookings.filter(booking => {
                             const bookingDate = new Date(booking.date);
@@ -161,9 +166,10 @@
                 <% } %>
             </div>
 
-        <a href="/doctor/profile" class="btn btn-secondary">Back to Profile</a>
+            <a href="/doctor/profile" class="btn btn-secondary">Back to Profile</a>
+        </div>
     </div>
-    
+
     <script>
         document.getElementById('multiple').addEventListener('click', function () {
             document.getElementById('endDateGroup').style.display = 'block';
@@ -173,6 +179,15 @@
         document.getElementById('single').addEventListener('click', function () {
             document.getElementById('endDateGroup').style.display = 'none';
             document.getElementById('endDate').required = false;
+        });
+
+        document.getElementById('consultationType').addEventListener('change', function () {
+            const consultationType = document.getElementById('consultationType').value;
+            if (consultationType === 'Video call') {
+                document.getElementById('hospitalGroup').style.display = 'none';
+            } else {
+                document.getElementById('hospitalGroup').style.display = 'block';
+            }
         });
     </script>
 </body>

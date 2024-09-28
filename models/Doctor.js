@@ -62,16 +62,17 @@ const doctorSchema = new mongoose.Schema({
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
     status: { type: String, enum: ['free', 'booked'], default: 'free' },
-    hospital: { type: String, required: true },
+    hospital: { type: String, required: function() { return this.consultation !== 'Video call'; } },
     hospitalLocation: {
-      street: { type: String, required: true },
-      city: { type: String, required: true },
-      state: { type: String, required: true },
-      country: { type: String, required: true },
-      zip: { type: String, required: true }
+      street: { type: String, required: function() { return this.consultation !== 'Video call'; } },
+      city: { type: String, required: function() { return this.consultation !== 'Video call'; } },
+      state: { type: String, required: function() { return this.consultation !== 'Video call'; } },
+      country: { type: String, required: function() { return this.consultation !== 'Video call'; } },
+      zip: { type: String, required: function() { return this.consultation !== 'Video call'; } }
     },
     lat: { type: Number },
-    lng: { type: Number }
+    lng: { type: Number },
+    consultation: { type: String, enum: ['In-person', 'Video call', 'Both'], default: 'In-person' }
   }],
   rating: { type: Number, default: 5 },
   consultationsCompleted: { type: Number, default: 0 },

@@ -170,7 +170,7 @@ router.get('/edit', isLoggedIn, async (req, res) => {
         const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
         const allInsurances = await Insurance.find({}).select('_id name');
         const allSpecialties = await Specialty.find({}).select('_id name');
-        const allConditions = await Condition.find({}).select('_id name'); // Ensure this is fetched
+        const allConditions = await Condition.find({}).select('_id name');
 
         if (!doctor.hospitals) {
             doctor.hospitals = [];
@@ -180,12 +180,11 @@ router.get('/edit', isLoggedIn, async (req, res) => {
             doctor.insurances = [];
         }
 
-        // Pass allConditions to the template
         res.render('editDoctorProfile', {
             doctor,
             allInsurances,
             allSpecialties,
-            allConditions // Pass this to EJS
+            allConditions 
         });
     } catch (err) {
         console.error(err.message);
@@ -248,6 +247,19 @@ router.post('/profile/update', upload.fields([
         const insuranceIds = (Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances])
             .map(id => id.toString());
 
+        let faqs = [];
+        if (Array.isArray(req.body.faqs)) {
+            faqs = req.body.faqs.map((faq) => ({
+                question: faq.question,
+                answer: faq.answer
+            }));
+        } else if (req.body.faqs && req.body.faqs.question) {
+            faqs = [{
+                question: req.body.faqs.question,
+                answer: req.body.faqs.answer
+            }];
+        }
+
         const updateData = {
             ...req.body,
             aboutMe: req.body.aboutMe || doctor.aboutMe,
@@ -255,12 +267,11 @@ router.post('/profile/update', upload.fields([
             languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
             insurances: insuranceIds,
             awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
-            faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
+            faqs: faqs,
             hospitals: hospitals,
-            doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : 85,
+            doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : doctor.doctorFee || 85,
             doctorFeeCurrency: req.body.doctorFeeCurrency || doctor.doctorFeeCurrency,
-            licenseNumber: req.body.licenseNumber || doctor.licenseNumber,
-            experience: req.body.experience
+            licenseNumber: req.body.licenseNumber || doctor.licenseNumber
         };
 
         if (!updateData.documents) {
@@ -301,7 +312,7 @@ router.post('/profile/update', upload.fields([
         res.status(500).send('Server Error');
     }
 });
-    
+
 router.get('/insights', isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;

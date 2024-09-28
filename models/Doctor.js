@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 
+const faqSchema = new mongoose.Schema({
+  question: { type: String }, 
+  answer: { type: String }   
+});
 
 const reviewSchema = new mongoose.Schema({
   patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
@@ -14,7 +18,6 @@ const doctorSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['doctor'], default: 'doctor' },
   phoneNumber: String,
-  experience: Number,
   verificationToken: String,
   isVerified: { type: Boolean, default: false },
   title: String,
@@ -23,6 +26,7 @@ const doctorSchema = new mongoose.Schema({
   country: String,
   state: String,
   city: String,
+  zip: String,
   location: String,
   gender: String,
   availability: String,
@@ -32,19 +36,19 @@ const doctorSchema = new mongoose.Schema({
   doctorFee:{type: Number, default: 85},
   doctorFeeCurrency:{type: String, enum: ['usd', 'inr', 'gbp', 'aed']},
   hospitals: [{
-      name: { type: String, required: true },
-      street: { type: String, required: true },
-      city: { type: String, required: true },
-      state: { type: String, required: true },
-      country: { type: String, required: true },
-      zip: { type: String, required: true },
-    lat: { type: Number }, 
-    lng: { type: Number }  
+      name: { type: String },
+      street: { type: String},
+      city: { type: String },
+      state: { type: String },
+      country: { type: String },
+      zip: { type: String },
+      lat: { type: Number }, 
+      lng: { type: Number }  
   }],
   insurances: [{ type: String}],
   consultation: { type: String, enum: ['In-person', 'Video call', 'Both'], default: 'In-person' },
   awards: [String],
-  faqs: [String],
+  faqs: [faqSchema],  
   website: String,
   socialHandles: {
     twitter: String,
@@ -62,17 +66,16 @@ const doctorSchema = new mongoose.Schema({
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
     status: { type: String, enum: ['free', 'booked'], default: 'free' },
-    hospital: { type: String, required: function() { return this.consultation !== 'Video call'; } },
+    hospital: { type: String, required: true },
     hospitalLocation: {
-      street: { type: String, required: function() { return this.consultation !== 'Video call'; } },
-      city: { type: String, required: function() { return this.consultation !== 'Video call'; } },
-      state: { type: String, required: function() { return this.consultation !== 'Video call'; } },
-      country: { type: String, required: function() { return this.consultation !== 'Video call'; } },
-      zip: { type: String, required: function() { return this.consultation !== 'Video call'; } }
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      country: { type: String, required: true },
+      zip: { type: String, required: true }
     },
     lat: { type: Number },
-    lng: { type: Number },
-    consultation: { type: String, enum: ['In-person', 'Video call', 'Both'], default: 'In-person' }
+    lng: { type: Number }
   }],
   rating: { type: Number, default: 5 },
   consultationsCompleted: { type: Number, default: 0 },

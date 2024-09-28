@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Condition</title>
+</head>
+<body>
+    <h1>Select a Condition</h1>
+
+    <!-- Search Input -->
+    <input type="text" id="searchInput" placeholder="Search conditions..." onkeyup="searchConditions()">
+
+    <!-- Condition List -->
+    <ul id="conditionsList">
+        <% conditions.forEach(condition => { %>
+            <li>
+                <a href="/doctor/blogs/conditions/<%= condition %>">
+                    <%= condition %> (<%= categoryCountMapObj[condition] || 0 %>) <!-- Show count next to each condition -->
+                </a>
+            </li>
+        <% }) %>
+    </ul>
+
+    <!-- JavaScript for Search Functionality -->
+    <script>
+        async function searchConditions() {
+            const query = document.getElementById('searchInput').value;
+            const response = await fetch(`/doctor/blogs/conditions?search=${query}`);
+            const conditions = await response.text();
+
+            // Update the condition list dynamically
+            document.getElementById('conditionsList').innerHTML = conditions;
+        }
+    </script>
+</body>
+</html>

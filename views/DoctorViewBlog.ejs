@@ -79,8 +79,7 @@
             <!-- Render the HTML content with decoration -->
             <div><%- blog.description %></div>
             
-            <h2>Summary</h2>
-            <div><%- blog.summary %></div>
+           
 
             <h2>Categories</h2>
             <ul>
@@ -89,12 +88,8 @@
                 <% }); %>
             </ul>
 
-            <h2>Sub Categories</h2>
-            <ul>
-                <% blog.subcategories.forEach(subcategory => { %>
-                    <li><%= subcategory %></li>
-                <% }); %>
-            </ul>
+            <h2>Conditions</h2>
+            <div><%= blog.conditions %></div>
 
             <h2>Hashtags</h2>
             <ul>

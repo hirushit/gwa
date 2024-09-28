@@ -105,16 +105,16 @@
                                 <option value="Video call">Video call</option>
                             </select>
                         
-                        <div id="currencyWrapper">
-                            <label for="currency">Select Currency:</label>
-                            <select id="currency" name="currency" required>
-                            <option value="usd" <%= doctor.doctorFeeCurrency === 'usd' ? 'selected' : '' %>>USD</option>
-                            <option value="inr" <%= doctor.doctorFeeCurrency === 'inr' ? 'selected' : '' %>>INR</option>
-                            <option value="gbp" <%= doctor.doctorFeeCurrency === 'gbp' ? 'selected' : '' %>>GBP</option>
-                            <option value="aed" <%= doctor.doctorFeeCurrency === 'aed' ? 'selected' : '' %>>AED</option>
-                            </select>
-                        </div>
-  
+                            <!-- Currency dropdown -->
+                            <div id="currencyWrapper">
+                                <label for="currency">Select Currency:</label>
+                                <select id="currency" name="currency" required>
+                                    <option value="usd" <%= doctor.doctorFeeCurrency === 'usd' ? 'selected' : '' %>>USD</option>
+                                    <option value="inr" <%= doctor.doctorFeeCurrency === 'inr' ? 'selected' : '' %>>INR</option>
+                                    <option value="gbp" <%= doctor.doctorFeeCurrency === 'gbp' ? 'selected' : '' %>>GBP</option>
+                                    <option value="aed" <%= doctor.doctorFeeCurrency === 'aed' ? 'selected' : '' %>>AED</option>
+                                </select>
+                            </div>
                         
                             <!-- Consultation fee details -->
                             <div id="feeDetails" class="doctor-fee">

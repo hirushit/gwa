@@ -13,6 +13,8 @@ const Patient = require('./models/Patient');
 const Leads = require('./models/Leads'); 
 const compression = require('compression');
 const Subscriptions = require('./models/Subscriptions');
+const ContactUs = require('./models/ContactUs');
+
 
 dotenv.config();
 
@@ -384,6 +386,16 @@ app.post('/submit-email', async (req, res) => {
   }
 });
 
+app.post('/contact-us', async (req, res) => {
+  const { firstName, lastName, email, phoneNumber, message } = req.body;
+  try {
+    const contact = new ContactUs({ firstName, lastName, email, phoneNumber, message });
+    await contact.save();
+    res.status(200).json({ message: 'Contact details saved successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error saving contact details', error });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

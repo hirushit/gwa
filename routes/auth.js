@@ -66,7 +66,7 @@ const sendVerificationEmail = async (name, email, token, role) => {
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h2 style="text-align: center;">
-          <span style="color: #FF7F50;">Welcome to MedxBay!</span> 
+          <span style="color: #272848;">Welcome to MedxBay!</span> 
         </h2>
         
         <p style="font-size: 16px;">Hi <strong>${name}</strong>,</p>
@@ -197,7 +197,7 @@ const mailOptions = {
     subject: '🎉 Welcome to MedxBay! 🎉',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-        <h2 style="color: #FF7F50; text-align: center;">🎉 Welcome to MedxBay! 🎉</h2>
+        <h2 style="color: #272848; text-align: center;">🎉 Welcome to MedxBay! 🎉</h2>
         
         <p style="font-size: 16px;">Hi <strong>${name}</strong>,</p>
   
@@ -478,7 +478,7 @@ router.post('/forgot-password', async (req, res) => {
     await user.save();
 
     const resetUrl = `http://localhost:3000/auth/reset-password?token=${resetToken}`;
-    await sendResetPasswordEmail(user.email, user.name,resetUrl);
+    await sendResetPasswordEmail(user.email, resetUrl);
 
     req.flash('success_msg', 'A password reset link has been sent to your email.');
     return res.redirect('/auth/forgot-password');
@@ -493,7 +493,7 @@ const generateResetToken = () => {
   return crypto.randomBytes(20).toString('hex');
 };
 
-const sendResetPasswordEmail = async (email, name, resetUrl) => {
+const sendResetPasswordEmail = async (email, resetUrl) => {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {

@@ -12,9 +12,6 @@ const blogSchema = new Schema({
     },
     categories: {
         type: [String]
-    }, 
-    subcategories: {
-        type: [String]
     },
     hashtags: {
         type: [String]
@@ -32,7 +29,8 @@ const blogSchema = new Schema({
         }
     ],
     authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    readCount: {type: Number} 
+    readCount: {type: Number} ,
+    conditions: { type: [String]}
 });
 
 const Blog = mongoose.model('Blog', blogSchema);

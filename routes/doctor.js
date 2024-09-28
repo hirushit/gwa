@@ -248,19 +248,6 @@ router.post('/profile/update', upload.fields([
         const insuranceIds = (Array.isArray(req.body.insurances) ? req.body.insurances : [req.body.insurances])
             .map(id => id.toString());
 
-        let faqs = [];
-        if (Array.isArray(req.body.faqs)) {
-            faqs = req.body.faqs.map((faq) => ({
-                question: faq.question,
-                answer: faq.answer
-            }));
-        } else if (req.body.faqs && req.body.faqs.question) {
-            faqs = [{
-                question: req.body.faqs.question,
-                answer: req.body.faqs.answer
-            }];
-        }
-
         const updateData = {
             ...req.body,
             aboutMe: req.body.aboutMe || doctor.aboutMe,
@@ -268,12 +255,12 @@ router.post('/profile/update', upload.fields([
             languages: Array.isArray(req.body.languages) ? req.body.languages : [req.body.languages],
             insurances: insuranceIds,
             awards: Array.isArray(req.body.awards) ? req.body.awards : [req.body.awards],
-            faqs: faqs,
+            faqs: Array.isArray(req.body.faqs) ? req.body.faqs : [req.body.faqs],
             hospitals: hospitals,
-            doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : doctor.doctorFee || 85,
+            doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : 85,
             doctorFeeCurrency: req.body.doctorFeeCurrency || doctor.doctorFeeCurrency,
             licenseNumber: req.body.licenseNumber || doctor.licenseNumber,
-            zip: req.body.zip || doctor.zip 
+            experience: req.body.experience
         };
 
         if (!updateData.documents) {
@@ -314,7 +301,7 @@ router.post('/profile/update', upload.fields([
         res.status(500).send('Server Error');
     }
 });
-
+    
 router.get('/insights', isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
@@ -471,6 +458,8 @@ router.get('/bookings', isLoggedIn, checkSubscription, async (req, res) => {
     }
 });
 
+
+
 router.post('/bookings/:id', isLoggedIn, async (req, res) => {
     try {
         const { status } = req.body;
@@ -536,116 +525,91 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
 
             await doctor.save();
 
-            let emailSubject, emailContent, chatMessage;
+            if (status === 'accepted' || status === 'rejected') {
+                let emailSubject, emailContent;
 
-            if (status === 'accepted') {
-                if (booking.consultationType === 'Video call') {
-                    emailSubject = 'Appointment Confirmation';
+                if (status === 'accepted') {
+                    if (booking.consultationType === 'Video call') {
+                        emailSubject = 'Appointment Confirmation';
+                        emailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                                            <h2 style="color: #272848; text-align: center;">Appointment Confirmation</h2>
+                                            <p style="font-size: 16px;">Hi <strong>${booking.patient.name}</strong>,</p>
+                                            <p style="font-size: 16px;">Your appointment with <strong>Dr. ${doctor.name}</strong> has been confirmed. Here are the details:</p>
+                                            <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
+                                            <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
+                                            <p style="font-size: 16px;"><strong>Consultation Type:</strong> Video call</p>
+                                            <p style="font-size: 16px;"><strong>Meeting Link:</strong></p>
+                                            <div style="text-align: center; margin: 20px 0;">
+                                                <a href="${booking.meetingLink}" style="padding: 14px 24px; color: white; background-color: #FF7F50; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">${booking.meetingLink}</a>
+                                            </div>
+                                            <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
+                                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                                        </div>`;
+                        await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
+
+                        const acceptanceEmailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                                                            <h2 style="color: #272848; text-align: center;">Appointment Confirmation</h2>
+                                                            <p style="font-size: 16px;">Hi <strong>Dr. ${doctor.name}</strong>,</p>
+                                                            <p style="font-size: 16px;">The appointment with <strong>${booking.patient.name}</strong> has been confirmed. Here are the details:</p>
+                                                            <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
+                                                            <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
+                                                            <p style="font-size: 16px;"><strong>Consultation Type:</strong> Video call</p>
+                                                            <p style="font-size: 16px;"><strong>Meeting Link:</strong></p>
+                                                            <div style="text-align: center; margin: 20px 0;">
+                                                                <a href="${booking.meetingLink}" style="padding: 14px 24px; color: white; background-color: #FF7F50; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">${booking.meetingLink}</a>
+                                                            </div>
+                                                            <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
+                                                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                                                        </div>`;
+                        await sendAppointmentEmail(doctor.email, doctor.name, 'Appointment Confirmation Notification', acceptanceEmailContent);
+
+                        let chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Join the meeting using the following link: ${booking.meetingLink}`;
+                        await Chat.findOneAndUpdate(
+                            { doctorId: booking.doctor, patientId: booking.patient },
+                            { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
+                            { upsert: true, new: true }
+                        );
+                    } else if (booking.consultationType === 'In-person') {
+                        emailSubject = 'Appointment Confirmation';
+                        emailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                                            <h2 style="color: #272848; text-align: center;">Appointment Confirmation</h2>
+                                            <p style="font-size: 16px;">Hi <strong>${booking.patient.name}</strong>,</p>
+                                            <p style="font-size: 16px;">Your appointment with <strong>Dr. ${doctor.name}</strong> has been confirmed. Here are the details:</p>
+                                            <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
+                                            <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
+                                            <p style="font-size: 16px;"><strong>Consultation Type:</strong> In-person</p>
+                                            <p style="font-size: 16px;"><strong>Place:</strong></p>
+                                            <p style="font-size: 16px;">${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}</p>
+                                            <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
+                                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                                        </div>`;
+                        await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
+
+                        let chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Please visit the hospital at ${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}`;
+                        await Chat.findOneAndUpdate(
+                            { doctorId: booking.doctor, patientId: booking.patient },
+                            { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
+                            { upsert: true, new: true }
+                        );
+                    }
+                } else if (status === 'rejected') {
+                    emailSubject = 'Appointment Rejection';
                     emailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-                                        <h2 style="color: #FF7F50; text-align: center;">Appointment Confirmation</h2>
+                                        <h2 style="color: #272848; text-align: center;">Appointment Rejection</h2>
                                         <p style="font-size: 16px;">Hi <strong>${booking.patient.name}</strong>,</p>
-                                        <p style="font-size: 16px;">Your appointment with <strong>Dr. ${doctor.name}</strong> has been confirmed. Here are the details:</p>
-                                        <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
-                                        <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
-                                        <p style="font-size: 16px;"><strong>Consultation Type:</strong> Video call</p>
-                                        <p style="font-size: 16px;"><strong>Meeting Link:</strong></p>
-                                        <div style="text-align: center; margin: 20px 0;">
-                                            <a href="${booking.meetingLink}" style="padding: 14px 24px; color: white; background-color: #FF7F50; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">${booking.meetingLink}</a>
-                                        </div>
+                                        <p style="font-size: 16px;">We regret to inform you that your appointment with <strong>Dr. ${doctor.name}</strong> on <strong>${booking.date.toDateString()}</strong> at <strong>${booking.time}</strong> has been rejected.</p>
                                         <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
                                         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
                                     </div>`;
                     await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
 
-                    const acceptanceEmailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-                                                        <h2 style="color: #FF7F50; text-align: center;">Appointment Confirmation</h2>
-                                                        <p style="font-size: 16px;">Hi <strong>Dr. ${doctor.name}</strong>,</p>
-                                                        <p style="font-size: 16px;">The appointment with <strong>${booking.patient.name}</strong> has been confirmed. Here are the details:</p>
-                                                        <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
-                                                        <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
-                                                        <p style="font-size: 16px;"><strong>Consultation Type:</strong> Video call</p>
-                                                        <p style="font-size: 16px;"><strong>Meeting Link:</strong></p>
-                                                        <div style="text-align: center; margin: 20px 0;">
-                                                            <a href="${booking.meetingLink}" style="padding: 14px 24px; color: white; background-color: #FF7F50; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">${booking.meetingLink}</a>
-                                                        </div>
-                                                        <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
-                                                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                                                    </div>`;
-                    await sendAppointmentEmail(doctor.email, doctor.name, 'Appointment Confirmation Notification', acceptanceEmailContent);
-
-                    chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Join the meeting using the following link: ${booking.meetingLink}`;
-                } else if (booking.consultationType === 'In-person') {
-                    emailSubject = 'Appointment Confirmation';
-                    emailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-                                        <h2 style="color: #FF7F50; text-align: center;">Appointment Confirmation</h2>
-                                        <p style="font-size: 16px;">Hi <strong>${booking.patient.name}</strong>,</p>
-                                        <p style="font-size: 16px;">Your appointment with <strong>Dr. ${doctor.name}</strong> has been confirmed. Here are the details:</p>
-                                        <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
-                                        <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
-                                        <p style="font-size: 16px;"><strong>Consultation Type:</strong> In-person</p>
-                                        <p style="font-size: 16px;"><strong>Place:</strong></p>
-                                        <p style="font-size: 16px;">${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}</p>
-                                        <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
-                                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                                    </div>`;
-                    await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
-
-                    chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Please visit the hospital at ${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}`;
+                    let chatMessage = `We regret to inform you that your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been rejected.`;
+                    await Chat.findOneAndUpdate(
+                        { doctorId: booking.doctor, patientId: booking.patient },
+                        { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
+                        { upsert: true, new: true }
+                    );
                 }
-
-                // Create notifications
-                await Notification.create({
-                    userId: booking.patient._id,
-                    message: chatMessage,
-                    type: 'appointment',
-                    chatId: await Chat.findOne({ doctorId: booking.doctor, patientId: booking.patient }).select('_id')
-                });
-
-                await Notification.create({
-                    userId: booking.doctor._id,
-                    message: chatMessage,
-                    type: 'appointment',
-                    chatId: await Chat.findOne({ doctorId: booking.doctor, patientId: booking.patient }).select('_id')
-                });
-
-                await Chat.findOneAndUpdate(
-                    { doctorId: booking.doctor, patientId: booking.patient },
-                    { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
-                    { upsert: true, new: true }
-                );
-            } else if (status === 'rejected') {
-                emailSubject = 'Appointment Rejection';
-                emailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-                                    <h2 style="color: #FF7F50; text-align: center;">Appointment Rejection</h2>
-                                    <p style="font-size: 16px;">Hi <strong>${booking.patient.name}</strong>,</p>
-                                    <p style="font-size: 16px;">We regret to inform you that your appointment with <strong>Dr. ${doctor.name}</strong> on <strong>${booking.date.toDateString()}</strong> at <strong>${booking.time}</strong> has been rejected.</p>
-                                    <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
-                                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                                </div>`;
-                await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
-
-                chatMessage = `We regret to inform you that your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been rejected.`;
-
-                // Create notifications
-                await Notification.create({
-                    userId: booking.patient._id,
-                    message: chatMessage,
-                    type: 'appointment',
-                    chatId: await Chat.findOne({ doctorId: booking.doctor, patientId: booking.patient }).select('_id')
-                });
-
-                await Notification.create({
-                    userId: booking.doctor._id,
-                    message: chatMessage,
-                    type: 'appointment',
-                    chatId: await Chat.findOne({ doctorId: booking.doctor, patientId: booking.patient }).select('_id')
-                });
-
-                await Chat.findOneAndUpdate(
-                    { doctorId: booking.doctor, patientId: booking.patient },
-                    { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
-                    { upsert: true, new: true }
-                );
             }
         }
 
@@ -1223,14 +1187,22 @@ router.get('/subscription-failure', (req, res) => {
 });
 
 
-router.get('/blog', (req, res) => {
-    res.render('blog-upload-form'); 
+router.get('/blog', async (req, res) => {
+    try {
+        // Fetch all conditions from the database
+        const conditions = await Condition.find(); // Assuming the collection is named "Condition"
+        
+        res.render('blog-upload-form', { conditions }); // Pass conditions to the view
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
 });
 
 router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
     try {
         const authorEmail = req.session.user.email;
-        const { title, author, description, categories, subcategories, hashtags, priority } = req.body;
+        const { title, author, description, categories, hashtags, priority, selectedConditions } = req.body;
 
         const doctor = await Doctor.findOne({ email: authorEmail });
 
@@ -1244,11 +1216,11 @@ router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), asyn
             author,
             description,
             authorEmail,
-            authorId, 
+            authorId,
             categories: categories,
-            subcategories: subcategories, 
-            hashtags: hashtags, 
+            hashtags: hashtags,
             priority,
+            conditions: selectedConditions, 
             image: {
                 data: req.file.buffer,
                 contentType: req.file.mimetype
@@ -1265,6 +1237,190 @@ router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), asyn
     }
 });
 
+router.get('/blogs/conditions', isLoggedIn, isDoctor,async (req, res) => {
+    try {
+        const { query } = req;
+        let conditions;
+
+        const categories = await Blog.distinct('conditions');
+
+        const categoryCountMap = await Blog.aggregate([
+            { $match: { verificationStatus: 'Verified' } },
+            { $unwind: '$conditions' },
+            { $group: { _id: '$conditions', count: { $sum: 1 } } },
+            { $project: { _id: 1, count: 1 } }
+        ]).exec();
+
+        const categoryCountMapObj = categoryCountMap.reduce((acc, curr) => {
+            acc[curr._id] = curr.count;
+            return acc;
+        }, {});
+
+        if (query.search) {
+            const searchQuery = new RegExp(query.search, 'i');
+            conditions = categories.filter(condition => searchQuery.test(condition));
+        } else {
+            conditions = categories; 
+        }
+
+        if (req.xhr) {
+            let htmlContent = '';
+            conditions.forEach(condition => {
+                htmlContent += `
+                    <li>
+                        <a href="/doctor/blogs/conditions/${condition}">
+                            ${condition} (${categoryCountMapObj[condition] || 0})
+                        </a>
+                    </li>
+                `;
+            });
+            return res.send(htmlContent); 
+        }
+
+        res.render('conditions-list', { conditions, categoryCountMapObj });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+
+
+router.get('/blogs/conditions/:condition', isLoggedIn,  isDoctor,async (req, res) => {
+    try {
+        const { condition } = req.params;
+  
+        const topPriorityBlogs = await Blog.find({ conditions: condition })
+            .sort({ priority: -1 }) 
+            .limit(5);
+  
+        const recentBlogs = await Blog.find({ conditions: condition })
+            .sort({ createdAt: -1 })
+            .limit(5);
+  
+        const mostReadBlogs = await Blog.find({ conditions: condition })
+            .sort({ readCount: -1 }) 
+            .limit(5);
+  
+        const blogsByCategory = await Blog.aggregate([
+            { $match: { conditions: condition } },
+            {
+                $group: {
+                    _id: "$categories",
+                    blogs: { $push: "$$ROOT" }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    blogs: { $slice: ["$blogs", 6] }
+                }
+            }
+        ]);
+  
+        const hashtags = await Blog.aggregate([
+            { $match: { conditions: condition } },
+            { $unwind: "$hashtags" },
+            { $group: { _id: "$hashtags", count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+        ]);
+        console.log(hashtags);
+        
+  
+        res.render('condition-blogs', {
+            condition,
+            topPriorityBlogs,
+            recentBlogs,
+            mostReadBlogs,
+            blogsByCategory,
+            hashtags
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+  });
+
+  router.get('/blogs/conditions/:condition/hashtag/:hashtag', isLoggedIn, isDoctor,async (req, res) => {
+    try {
+        const { condition, hashtag } = req.params;
+        console.log(hashtag);
+        const tag = `#${hashtag}`; 
+        console.log(tag);
+
+        const blogs = await Blog.find({ 
+            conditions: condition,
+            hashtags: tag
+        }).sort({ createdAt: -1 });
+
+        const topPriorityBlogs = await Blog.find({ 
+            conditions: condition,
+            hashtags: tag 
+        })
+            .sort({ priority: -1 }) 
+            .limit(5);
+        console.log(topPriorityBlogs);
+
+        const recentBlogs = await Blog.find({ 
+            conditions: condition,
+            hashtags: tag  
+        })
+            .sort({ createdAt: -1 })
+            .limit(5);
+  
+        const mostReadBlogs = await Blog.find({ 
+            conditions: condition,
+            hashtags: tag  
+        })
+            .sort({ readCount: -1 }) 
+            .limit(5);
+  
+        const blogsByCategory = await Blog.aggregate([
+            { $match: { 
+                conditions: condition,
+                hashtags: tag  
+            }},
+            {
+                $group: {
+                    _id: "$categories",
+                    blogs: { $push: "$$ROOT" }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    blogs: { $slice: ["$blogs", 6] }
+                }
+            }
+        ]);
+
+
+        const hashtags = await Blog.aggregate([
+            { $match: { conditions: condition } },
+            { $unwind: "$hashtags" },
+            { $group: { _id: "$hashtags", count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+        ]);
+
+        res.render('condition-blogs', {
+            condition,
+            hashtag,
+            blogs,
+            topPriorityBlogs,
+            recentBlogs,
+            mostReadBlogs,
+            blogsByCategory,
+            hashtags
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+  
 
 router.get('/blogs/category/:category', isDoctor, isLoggedIn, async (req, res) => {
     try {
@@ -1343,98 +1499,98 @@ router.get('/blogs/category/:category', isDoctor, isLoggedIn, async (req, res) =
 
 
 
-router.get('/blogs/hashtag/:hashtag', isDoctor, isLoggedIn, async (req, res) => {
-    try {
-        // Retrieve hashtag from URL and format it
-        let hashtagParam = req.params.hashtag;
-        const hashtag = hashtagParam.startsWith('#') ? hashtagParam : `#${hashtagParam}`;
+// router.get('/blogs/hashtag/:hashtag', isDoctor, isLoggedIn, async (req, res) => {
+//     try {
+//         // Retrieve hashtag from URL and format it
+//         let hashtagParam = req.params.hashtag;
+//         const hashtag = hashtagParam.startsWith('#') ? hashtagParam : `#${hashtagParam}`;
 
-        // Fetch blogs by hashtag
-        const blogs = await Blog.find({ 
-            hashtags: { $in: [hashtag] }, 
-            verificationStatus: 'Verified' 
-        }).lean();
+//         // Fetch blogs by hashtag
+//         const blogs = await Blog.find({ 
+//             hashtags: { $in: [hashtag] }, 
+//             verificationStatus: 'Verified' 
+//         }).lean();
 
-        // Fetch most read blogs
-        const mostReadBlogs = await Blog.find({ verificationStatus: 'Verified' })
-            .sort({ readCount: -1 })
-            .limit(5)
-            .lean();
+//         // Fetch most read blogs
+//         const mostReadBlogs = await Blog.find({ verificationStatus: 'Verified' })
+//             .sort({ readCount: -1 })
+//             .limit(5)
+//             .lean();
 
-        // Fetch related posts by the same hashtag
-        const relatedPostsByHashtag = await Blog.find({
-            verificationStatus: 'Verified',
-            hashtags: { $in: [hashtag] }
-        })
-        .limit(5)
-        .lean();
+//         // Fetch related posts by the same hashtag
+//         const relatedPostsByHashtag = await Blog.find({
+//             verificationStatus: 'Verified',
+//             hashtags: { $in: [hashtag] }
+//         })
+//         .limit(5)
+//         .lean();
 
-        // Fetch categories of the blogs that match the hashtag
-        const relatedCategories = await Blog.find({ 
-            hashtags: { $in: [hashtag] }, 
-            verificationStatus: 'Verified' 
-        }).distinct('categories');
+//         // Fetch categories of the blogs that match the hashtag
+//         const relatedCategories = await Blog.find({ 
+//             hashtags: { $in: [hashtag] }, 
+//             verificationStatus: 'Verified' 
+//         }).distinct('categories');
 
-        // Fetch most read blogs within these categories
-        const mostReadBlogsByCategory = await Blog.find({
-            categories: { $in: relatedCategories },
-            verificationStatus: 'Verified'
-        })
-        .sort({ readCount: -1 })
-        .limit(5)
-        .lean();
+//         // Fetch most read blogs within these categories
+//         const mostReadBlogsByCategory = await Blog.find({
+//             categories: { $in: relatedCategories },
+//             verificationStatus: 'Verified'
+//         })
+//         .sort({ readCount: -1 })
+//         .limit(5)
+//         .lean();
 
-        // Fetch all hashtags
-        const hashtags = await Blog.distinct('hashtags');
+//         // Fetch all hashtags
+//         const hashtags = await Blog.distinct('hashtags');
 
-        // Count the number of blogs in each hashtag
-        const hashtagCountMap = await Blog.aggregate([
-            { $match: { verificationStatus: 'Verified' } },
-            { $unwind: '$hashtags' },
-            { $group: { _id: '$hashtags', count: { $sum: 1 } } },
-            { $project: { _id: 1, count: 1 } }
-        ]).exec();
+//         // Count the number of blogs in each hashtag
+//         const hashtagCountMap = await Blog.aggregate([
+//             { $match: { verificationStatus: 'Verified' } },
+//             { $unwind: '$hashtags' },
+//             { $group: { _id: '$hashtags', count: { $sum: 1 } } },
+//             { $project: { _id: 1, count: 1 } }
+//         ]).exec();
 
-        const hashtagCountMapObj = hashtagCountMap.reduce((acc, curr) => {
-            acc[curr._id] = curr.count;
-            return acc;
-        }, {});
+//         const hashtagCountMapObj = hashtagCountMap.reduce((acc, curr) => {
+//             acc[curr._id] = curr.count;
+//             return acc;
+//         }, {});
 
-        // Fetch all categories
-        const categories = await Blog.distinct('categories');
+//         // Fetch all categories
+//         const categories = await Blog.distinct('categories');
 
-        // Count the number of blogs in each category
-        const categoryCountMap = await Blog.aggregate([
-            { $match: { verificationStatus: 'Verified' } },
-            { $unwind: '$categories' },
-            { $group: { _id: '$categories', count: { $sum: 1 } } },
-            { $project: { _id: 1, count: 1 } }
-        ]).exec();
+//         // Count the number of blogs in each category
+//         const categoryCountMap = await Blog.aggregate([
+//             { $match: { verificationStatus: 'Verified' } },
+//             { $unwind: '$categories' },
+//             { $group: { _id: '$categories', count: { $sum: 1 } } },
+//             { $project: { _id: 1, count: 1 } }
+//         ]).exec();
 
-        const categoryCountMapObj = categoryCountMap.reduce((acc, curr) => {
-            acc[curr._id] = curr.count;
-            return acc;
-        }, {});
+//         const categoryCountMapObj = categoryCountMap.reduce((acc, curr) => {
+//             acc[curr._id] = curr.count;
+//             return acc;
+//         }, {});
 
-        res.render('DoctorBlogs', {
-            blogs,
-            filterType: 'Hashtag',
-            filterValue: hashtagParam,
-            searchQuery: req.query.search || '',
-            user: req.session.user,
-            mostReadBlogs,
-            relatedPosts: relatedPostsByHashtag,
-            mostReadBlogsByCategory,
-            categories,
-            hashtags,
-            categoryCountMap: categoryCountMapObj,
-            hashtagCountMap: hashtagCountMapObj
-        });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
+//         res.render('DoctorBlogs', {
+//             blogs,
+//             filterType: 'Hashtag',
+//             filterValue: hashtagParam,
+//             searchQuery: req.query.search || '',
+//             user: req.session.user,
+//             mostReadBlogs,
+//             relatedPosts: relatedPostsByHashtag,
+//             mostReadBlogsByCategory,
+//             categories,
+//             hashtags,
+//             categoryCountMap: categoryCountMapObj,
+//             hashtagCountMap: hashtagCountMapObj
+//         });
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send('Server Error');
+//     }
+// });
 
 
 

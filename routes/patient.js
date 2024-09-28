@@ -19,6 +19,7 @@ const upload = multer({ storage: storage });
 const nodemailer = require('nodemailer');
 const https = require('https');
 const { title } = require('process');
+const Condition = require('../models/Condition');
 
 const fetchConversionRates = () => {
     return new Promise((resolve, reject) => {
@@ -27,7 +28,7 @@ const fetchConversionRates = () => {
             hostname: 'currency-conversion-and-exchange-rates.p.rapidapi.com',
             path: '/latest?from=USD&to=INR,GBP,AED',
             headers: {
-                'x-rapidapi-key': '96f2128666msh6c2a99315734957p152189jsn585b9f07df21', 
+                'x-rapidapi-key': 'f764b34d82msha7af632826efbe3p196f7fjsn1563da1fe8f8', // Add your RapidAPI key here
                 'x-rapidapi-host': 'currency-conversion-and-exchange-rates.p.rapidapi.com'
             }
         };
@@ -44,8 +45,10 @@ const fetchConversionRates = () => {
                 try {
                     const data = JSON.parse(body.toString());
 
+                    // Log the API response to check what data is returned
                     console.log('API response:', data);
 
+                    // Check if rates exist and resolve only valid rates
                     if (data && data.rates) {
                         resolve(data.rates);
                     } else {
@@ -66,7 +69,7 @@ const fetchConversionRates = () => {
 };
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail', 
+  service: 'gmail', // Example with Gmail
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
@@ -84,26 +87,8 @@ const sendPatientEmail = async (patientEmail, booking) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: patientEmail,
-      subject: '📅 Your Appointment is Booked!',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #F4F7FC;">
-          <h2 style="text-align: center; color: #FF7F50;">Appointment Successfully Booked!</h2>
-          <p style="font-size: 16px; color: #272848;">Dear <strong>${patient.name}</strong>,</p>
-          <p style="font-size: 16px; color: #272848;">Your appointment with <strong>Dr. ${doctor.name}</strong> on <strong>${booking.date.toDateString()}</strong> at <strong>${booking.time}</strong> has been successfully booked.</p>
-          
-          <p style="font-size: 16px; color: #272848;">You will receive a confirmation once Dr. ${doctor.name} confirms the appointment. We will notify you with further updates soon.</p>
-          
-          <p style="font-size: 16px; color: #272848;">If you have any questions or need to reschedule, feel free to contact us.</p>
-          
-          <p style="font-size: 16px; color: #272848;">Thank you for choosing MedxBay!</p>
-          
-          <p style="font-size: 16px; color: #272848;"><strong>Best regards,</strong></p>
-          <p style="font-size: 16px; color: #272848;"><strong>The MedxBay Team</strong></p>
-          
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 14px; color: #777;">P.S. If you didn’t schedule this appointment, please contact us immediately.</p>
-        </div>
-      `
+      subject: 'Your Appointment is Booked!',
+      text: `Dear ${patient.name}, your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been successfully booked. You will be notified shortly with further updates. Thank you!`
     };
 
     await transporter.sendMail(mailOptions);
@@ -124,30 +109,8 @@ const sendDoctorEmail = async (doctorEmail, booking) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: doctorEmail,
-      subject: '📅 New Appointment Booked with a Patient',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #F4F7FC;">
-          <h2 style="text-align: center; color: #FF7F50;">New Appointment Notification</h2>
-          <p style="font-size: 16px; color: #272848;">Dear Dr. <strong>${doctor.name}</strong>,</p>
-          <p style="font-size: 16px; color: #272848;">You have a new appointment with the following details:</p>
-          
-          <ul style="font-size: 16px; color: #272848; list-style-type: none; padding: 0;">
-            <li><strong>Patient Name:</strong> ${patient.name}</li>
-            <li><strong>Date:</strong> ${booking.date.toDateString()}</li>
-            <li><strong>Time:</strong> ${booking.time}</li>
-          </ul>
-          
-          <p style="font-size: 16px; color: #272848;">Kindly update the status of the booking at your earliest convenience.</p>
-          
-          <p style="font-size: 16px; color: #272848;">Thank you for using MedxBay!</p>
-          
-          <p style="font-size: 16px; color: #272848;"><strong>Best regards,</strong></p>
-          <p style="font-size: 16px; color: #272848;"><strong>The MedxBay Team</strong></p>
-          
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 14px; color: #777;">P.S. If you have not scheduled this appointment, please contact support immediately.</p>
-        </div>
-      `
+      subject: 'New Appointment Booked',
+      text: `Dear Dr. ${doctor.name}, you have a new appointment with a patient (${patient.name}) on ${booking.date.toDateString()} at ${booking.time}. Kindly update the status of the booking as soon as possible. Thank you!`
     };
     await transporter.sendMail(mailOptions);
     console.log('Email sent to doctor:', doctorEmail);
@@ -272,13 +235,6 @@ router.get('/doctors', async (req, res) => {
     const locationSet = new Map();
 
     doctors.forEach(doctor => {
-      let profilePictureBase64;
-      if (doctor.profilePicture && doctor.profilePicture.data) {
-        profilePictureBase64 = `data:${doctor.profilePicture.contentType};base64,${doctor.profilePicture.data.toString('base64')}`;
-      } else {
-        profilePictureBase64 = '/path/to/default/profile/pic.png';
-      }
-
       doctor.timeSlots.forEach(slot => {
         if (slot.status === 'free' && slot.lat && slot.lng) {
           const key = `${slot.lat},${slot.lng}`;
@@ -287,9 +243,7 @@ router.get('/doctors', async (req, res) => {
               lat: slot.lat,
               lng: slot.lng,
               hospitalName: slot.hospital,
-              doctorName: doctor.name,
-              doctorTitle: doctor.title,
-              doctorProfilePic: profilePictureBase64 
+              doctorName: doctor.name
             });
           }
         }
@@ -386,20 +340,15 @@ router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
 });
 
 router.post('/book', isLoggedIn, async (req, res) => {
-
-  console.log('Request body:', req.body);
-
   try {
     const { doctorId, date, startTime, consultationType, currency } = req.body;
     const patientId = req.session.user._id;
 
-    // Validate date and time format
     const parsedDate = new Date(date);
     if (isNaN(parsedDate.getTime()) || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(startTime)) {
       return res.status(400).send('Invalid date or start time format');
     }
 
-    // Fetch doctor and patient
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
       return res.status(404).send('Doctor not found');
@@ -409,20 +358,18 @@ router.post('/book', isLoggedIn, async (req, res) => {
       return res.status(404).send('Patient not found');
     }
 
-    // Check availability of the requested time slot
     const slotIndex = doctor.timeSlots.findIndex(slot =>
       slot.date.toISOString() === new Date(date).toISOString() && slot.startTime === startTime
     );
-    if (slotIndex === -1) {
+    if (slotIndex === -1) { // Fixed the condition to check index correctly
       return res.status(400).send('Time slot not found');
     }
 
     if (consultationType === 'In-person') {
-      // Create and save booking for in-person consultation
       const booking = new Booking({
         patient: patientId,
         doctor: doctorId,
-        date: new Date(date),
+        date: new Date(date), 
         time: `${doctor.timeSlots[slotIndex].startTime} - ${doctor.timeSlots[slotIndex].endTime}`,
         consultationType: consultationType,
         status: 'waiting',
@@ -434,43 +381,73 @@ router.post('/book', isLoggedIn, async (req, res) => {
 
       await booking.save();
 
-      // Update the doctor's time slot status to booked
       doctor.timeSlots[slotIndex].status = 'booked';
       await doctor.save();
 
-      // Send email notifications
       await sendPatientEmail(patient.email, booking);
       await sendDoctorEmail(doctor.email, booking);
 
-      // Redirect to patient's bookings page
-      return res.redirect('/patient/bookings');
+      return res.redirect('/patient/bookings'); // Redirect to /patient/bookings for in-person bookings
     } else if (consultationType === 'Video call') {
-      // Fetch conversion rates
+
+      const doctorFeeCurrency = doctor.doctorFeeCurrency || 'usd';
+
+      let totalFee = doctor.doctorFee;
+      let serviceCharge = 0;
+
       const conversionRates = await fetchConversionRates();
 
-      // Determine the fee and handle currency conversion
-      const doctorFeeCurrency = doctor.doctorFeeCurrency || 'usd';
-      let totalFee = doctor.doctorFee;
-
-      if (doctorFeeCurrency !== currency.toLowerCase()) {
-        if (!(currency.toUpperCase() in conversionRates)) {
-          return res.status(400).send('Invalid currency selected');
-        }
-
-        // Adjust fee based on conversion rates
-        totalFee = totalFee / conversionRates[doctorFeeCurrency.toUpperCase()] * conversionRates[currency.toUpperCase()];
+      if (doctorFeeCurrency === 'inr') {
+        totalFee = totalFee / conversionRates.INR * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'usd') {
+        totalFee = totalFee / conversionRates.USD * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'gbp') {
+        totalFee = totalFee / conversionRates.GBP * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'aed') {
+        totalFee = totalFee / conversionRates.AED * conversionRates[currency.toUpperCase()];
+      }
+      if (doctorFeeCurrency === 'usd') {
+        totalFee = totalFee / conversionRates.INR * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'inr') {
+        totalFee = totalFee / conversionRates.USD * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'gbp') {
+        totalFee = totalFee / conversionRates.GBP * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'aed') {
+        totalFee = totalFee / conversionRates.AED * conversionRates[currency.toUpperCase()];
+      }
+      if (doctorFeeCurrency === 'gbp') {
+        totalFee = totalFee / conversionRates.INR * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'usd') {
+        totalFee = totalFee / conversionRates.USD * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'inr') {
+        totalFee = totalFee / conversionRates.GBP * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'aed') {
+        totalFee = totalFee / conversionRates.AED * conversionRates[currency.toUpperCase()];
+      }
+      if (doctorFeeCurrency === 'aed') {
+        totalFee = totalFee / conversionRates.INR * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'usd') {
+        totalFee = totalFee / conversionRates.USD * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'gbp') {
+        totalFee = totalFee / conversionRates.GBP * conversionRates[currency.toUpperCase()];
+      } else if (doctorFeeCurrency === 'inr') {
+        totalFee = totalFee / conversionRates.AED * conversionRates[currency.toUpperCase()];
+      }
+      console.log(currency)
+      
+      if (!(currency.toUpperCase() in conversionRates)) {
+        return res.status(400).send('Invalid currency selected');
       }
 
-      // Create a Stripe checkout session for video consultation payment
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [{
           price_data: {
-            currency: currency.toLowerCase(),
+            currency: currency,  
             product_data: {
               name: `Appointment Booking for Dr. ${doctor.name}: ${consultationType} on ${parsedDate.toLocaleDateString()} at ${startTime}`,
             },
-            unit_amount: Math.round(totalFee * 100),
+            unit_amount: Math.round(totalFee * 100),  
           },
           quantity: 1,
         }],
@@ -480,18 +457,19 @@ router.post('/book', isLoggedIn, async (req, res) => {
           date: date,
           startTime: startTime,
           consultationType: consultationType,
+          serviceCharge: serviceCharge.toFixed(2),
           totalFee: totalFee.toFixed(2),
           doctorFeeCurrency: doctorFeeCurrency  
         },
         success_url: `${req.protocol}://${req.get('host')}/patient/book/payment-success?doctorId=${doctorId}&date=${encodeURIComponent(date)}&startTime=${encodeURIComponent(startTime)}&consultationType=${consultationType}&currency=${currency}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.protocol}://${req.get('host')}/patient/book/payment-failure`,
       });
+      console.log(session)
 
-      // Redirect to Stripe checkout
-      return res.redirect(303, session.url);
+      return res.redirect(303, session.url); 
     }
   } catch (error) {
-    console.error('Error creating Stripe session or booking:', error.message);
+    console.error('Error creating Stripe session:', error.message);
     res.status(500).send('Server Error');
   }
 });
@@ -790,7 +768,7 @@ router.get('/priority-blogs', async (req, res) => {
     }
   });
 
-  router.get('/blogs', async (req, res) => {
+router.get('/blogs', async (req, res) => {
     try {
         const { search } = req.query;
         let filter = { verificationStatus: 'Verified' };
@@ -876,7 +854,191 @@ router.get('/priority-blogs', async (req, res) => {
     }
 });
 
+router.get('/blogs/conditions', isLoggedIn, async (req, res) => {
+  try {
+      const { query } = req;
+      let conditions;
 
+      const categories = await Blog.distinct('conditions');
+
+      const categoryCountMap = await Blog.aggregate([
+          { $match: { verificationStatus: 'Verified' } },
+          { $unwind: '$conditions' },
+          { $group: { _id: '$conditions', count: { $sum: 1 } } },
+          { $project: { _id: 1, count: 1 } }
+      ]).exec();
+
+      const categoryCountMapObj = categoryCountMap.reduce((acc, curr) => {
+          acc[curr._id] = curr.count;
+          return acc;
+      }, {});
+
+      if (query.search) {
+          const searchQuery = new RegExp(query.search, 'i');
+          conditions = categories.filter(condition => searchQuery.test(condition));
+      } else {
+          conditions = categories; 
+      }
+
+      if (req.xhr) {
+          let htmlContent = '';
+          conditions.forEach(condition => {
+              htmlContent += `
+                  <li>
+                      <a href="/patient/blogs/conditions/${condition}">
+                          ${condition} (${categoryCountMapObj[condition] || 0})
+                      </a>
+                  </li>
+              `;
+          });
+          return res.send(htmlContent); 
+      }
+
+      res.render('patient-conditions-list', { conditions, categoryCountMapObj });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.get('/blogs/conditions/:condition', isLoggedIn, async (req, res) => {
+  try {
+      const { condition } = req.params;
+
+      const topPriorityBlogs = await Blog.find({ conditions: condition })
+          .sort({ priority: -1 }) 
+          .limit(5);
+
+    
+      const recentBlogs = await Blog.find({ conditions: condition })
+          .sort({ createdAt: -1 })
+          .limit(5);
+
+      const mostReadBlogs = await Blog.find({ conditions: condition })
+          .sort({ readCount: -1 }) 
+          .limit(5);
+
+      const blogsByCategory = await Blog.aggregate([
+          { $match: { conditions: condition } },
+          {
+              $group: {
+                  _id: "$categories",
+                  blogs: { $push: "$$ROOT" }
+              }
+          },
+          {
+              $project: {
+                  _id: 1,
+                  blogs: { $slice: ["$blogs", 6] }
+              }
+          }
+      ]);
+
+      const hashtags = await Blog.aggregate([
+          { $match: { conditions: condition } },
+          { $unwind: "$hashtags" },
+          { $group: { _id: "$hashtags", count: { $sum: 1 } } },
+          { $sort: { count: -1 } }
+      ]);
+
+      const topRatedDoctors = await Doctor.find({ conditions: condition })
+          .sort({ rating: -1 }) 
+          .limit(3);
+
+      res.render('patient-condition-blogs', {
+          condition,
+          topPriorityBlogs,
+          blogsByCategory,
+          topRatedDoctors,
+          recentBlogs,
+          hashtags,
+          mostReadBlogs
+      });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+router.get('/blogs/conditions/:condition/hashtag/:hashtag', async (req, res) => {
+  try {
+      const { condition, hashtag } = req.params;
+      console.log(hashtag);
+      const tag = `#${hashtag}`; 
+      console.log(tag);
+
+      const blogs = await Blog.find({ 
+          conditions: condition,
+          hashtags: tag 
+      }).sort({ createdAt: -1 });
+
+      const topPriorityBlogs = await Blog.find({ 
+          conditions: condition,
+          hashtags: tag  
+      })
+          .sort({ priority: -1 }) 
+          .limit(5);
+      console.log(topPriorityBlogs);
+
+      const recentBlogs = await Blog.find({ 
+          conditions: condition,
+          hashtags: tag  
+      })
+          .sort({ createdAt: -1 })
+          .limit(5);
+
+      const mostReadBlogs = await Blog.find({ 
+          conditions: condition,
+          hashtags: tag  
+      })
+          .sort({ readCount: -1 }) 
+          .limit(5);
+
+      const blogsByCategory = await Blog.aggregate([
+          { $match: { 
+              conditions: condition,
+              hashtags: tag  
+          }},
+          {
+              $group: {
+                  _id: "$categories",
+                  blogs: { $push: "$$ROOT" }
+              }
+          },
+          {
+              $project: {
+                  _id: 1,
+                  blogs: { $slice: ["$blogs", 6] }
+              }
+          }
+      ]);
+      const topRatedDoctors = await Doctor.find({ conditions: condition })
+          .sort({ rating: -1 }) 
+          .limit(3);
+
+
+      const hashtags = await Blog.aggregate([
+          { $match: { conditions: condition } },
+          { $unwind: "$hashtags" },
+          { $group: { _id: "$hashtags", count: { $sum: 1 } } },
+          { $sort: { count: -1 } }
+      ]);
+
+      res.render('patient-condition-blogs', {
+          condition,
+          hashtag,
+          blogs,
+          topPriorityBlogs,
+          recentBlogs,
+          mostReadBlogs,
+          blogsByCategory,
+          topRatedDoctors,
+          hashtags
+      });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
 router.get('/blogs/category/:category', async (req, res) => {
   try {
       const { category } = req.params;

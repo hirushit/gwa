@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blogs for <%= condition %></title>
+    <style>
+        .blog-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .blog-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1><%= condition %></h1>
+
+    <h2>Featured Blogs</h2>
+    <ul>
+        <% if (topPriorityBlogs.length > 0) { %>
+            <% topPriorityBlogs.forEach(blog => { %>
+                <li class="blog-card">
+                    <% if (blog.image && blog.image.data) { %>
+                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                    <% } %>
+                    <h3><%= blog.title %></h3>
+                    <p><%= blog.content %></p>
+                    <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                </li>
+            <% }) %>
+        <% } else { %>
+            <p>No high-priority blogs found for this condition.</p>
+        <% } %>
+    </ul>
+
+    <% if (blogsByCategory.length > 0) { %>
+        <% blogsByCategory.forEach(categoryGroup => { %>
+            <h3>Category: <%= categoryGroup._id %></h3>
+            <ul>
+                <% categoryGroup.blogs.forEach(blog => { %>
+                    <li class="blog-card">
+                        <% if (blog.image && blog.image.data) { %>
+                            <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                        <% } %>
+                        <h3><%= blog.title %></h3>
+                        <p><%= blog.content %></p>
+                        <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                    </li>
+                <% }) %>
+            </ul>
+        <% }) %>
+    <% } else { %>
+        <p>No blogs found for this condition.</p>
+    <% } %>
+    <h2>Most Read Blogs</h2>
+    <ul>
+        <% if (mostReadBlogs.length > 0) { %>
+            <% mostReadBlogs.forEach(blog => { %>
+                <li class="blog-card">
+                    <% if (blog.image && blog.image.data) { %>
+                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                    <% } %>
+                    <h3><%= blog.title || 'Untitled Blog' %></h3>
+                    <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                </li>
+            <% }) %>
+        <% } else { %>
+            <p>No most read blogs found for this condition.</p>
+        <% } %>
+    </ul>
+    <h2>Recent Blogs</h2>
+    <ul>
+        <% if (recentBlogs.length > 0) { %>
+            <% recentBlogs.forEach(blog => { %>
+                <li class="blog-card">
+                    <% if (blog.image && blog.image.data) { %>
+                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                    <% } %>
+                    <h3><%= blog.title || 'Untitled Blog' %></h3>
+                    
+                    <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                </li>
+            <% }) %>
+        <% } else { %>
+            <p>No recent blogs found for this condition.</p>
+        <% } %>
+    </ul>
+    <div class="hashtags">
+        <h2>Hashtags</h2>
+        <ul>
+            <% hashtags.forEach(hashtag => { %>
+                <li>
+                    <a href="/patient/blogs/conditions/<%= condition %>/hashtag/<%= hashtag._id.substring(1) %>"> 
+                        <%= hashtag._id %>
+                    </a>
+                    <span>(<%= hashtag.count %> posts)</span> <!-- Show the count of posts for each hashtag -->
+                </li>
+            <% }) %>
+        </ul>
+    </div>
+    
+    
+</body>
+</html>

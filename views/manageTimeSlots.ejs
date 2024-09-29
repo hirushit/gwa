@@ -57,7 +57,8 @@
                                 <th>Date</th>
                                 <th>Start Time</th>
                                 <th>End Time</th>
-                                <th>Hospital/Consultation Type</th>
+                                <th>Consultation Type</th>
+                                <th>Hospital</th>
                                 <th>Location</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -69,8 +70,17 @@
                                     <td><%= slot.date.toDateString() %></td>
                                     <td><%= slot.startTime %></td>
                                     <td><%= slot.endTime %></td>
-                                    <td><%= slot.hospital ? slot.hospital : 'Video Call' %></td>
-                                    <td><%= slot.hospitalLocation ? `${slot.hospitalLocation.street}, ${slot.hospitalLocation.city}, ${slot.hospitalLocation.state}, ${slot.hospitalLocation.country}, ${slot.hospitalLocation.zip}` : 'N/A' %></td>
+                                    <td><%= slot.consultation %></td>
+                                    <td><%= slot.hospital ? slot.hospital : '-' %></td>
+                                    <td>
+                                        <% if (slot.consultation === 'Video call') { %>
+                                            -
+                                        <% } else if (slot.hospitalLocation) { %>
+                                            <%= `${slot.hospitalLocation.street}, ${slot.hospitalLocation.city}, ${slot.hospitalLocation.state}, ${slot.hospitalLocation.country}, ${slot.hospitalLocation.zip}` %>
+                                        <% } else { %>
+                                            N/A
+                                        <% } %>
+                                    </td>
                                     <td><%= slot.status.charAt(0).toUpperCase() + slot.status.slice(1) %></td>
                                     <td>
                                         <form action="/doctor/manage-time-slots/<%= slot._id %>?_method=DELETE" method="POST">
@@ -146,7 +156,7 @@
                 <% for (let i = 1; i <= daysInMonth; i++) { %>
                     <div class="day">
                         <strong><%= i %></strong><br>
-                        <% const daySlots = timeSlots.filter(slot => {
+                        <% const daySlots = doctor.timeSlots.filter(slot => {
                             const slotDate = new Date(slot.date);
                             return slotDate.getDate() === i && slotDate.getMonth() === currentMonth && slotDate.getFullYear() === currentYear;
                         });

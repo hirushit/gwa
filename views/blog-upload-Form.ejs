@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,81 +12,54 @@
             border: 1px solid #007bff;
             color: white;
         }
-
         #editor {
             height: 200px;
             margin-bottom: 20px;
         }
     </style>
 </head>
-
 <body>
     <h1>Doctor Blog Upload Form</h1>
     <form id="blogForm" action="/doctor/blog" method="POST" enctype="multipart/form-data">
         <label for="title">Title:</label><br>
         <input type="text" id="title" name="title" required><br><br>
-
+        
         <label for="author">Author Name:</label><br>
         <input type="text" id="author" name="author" required><br><br>
-
+        
         <label for="description">Description:</label><br>
         <div id="editor"></div>
         <input type="hidden" name="description" id="description"><br><br>
-
-        <div class="form-group">
-            <label for="conditions">Conditions:</label>
-            <!-- Single condition selection (removed multiple="multiple") -->
-            <select id="conditions" name="selectedConditions" class="form-control" required>
-                <% conditions.forEach(condition => { %>
-                <option value="<%= condition.name %>"><%= condition.name %></option>
-                <% }) %>
-            </select>
-        </div>
-
+        
         <label for="image">Upload Image:</label><br>
         <input type="file" id="image" name="image" accept="image/*"><br><br>
-
-        <label for="categories">Category:</label><br>
+        
+        <label for="categories">Categories:</label><br>
         <select id="categories" name="categories" style="width: 100%;" required>
-            <option value="Signs & Symptoms">Signs & Symptoms</option>
-            <option value="Causes & Risks">Causes & Risks</option>
-            <option value="Testing & Diagnosis">Testing & Diagnosis</option>
-            <option value="Treatment">Treatment</option>
-            <option value="Living with [condition]">Living with [condition]</option>
+            <option value="">Select Category</option>
+            <option value="Doctor">Doctor</option>
+            <option value="Travel">Travel</option>
+            <option value="Lifestyle">Lifestyle</option>
+            <option value="Medical">Medical</option>
+            <option value="Politics">Politics</option>
+            <option value="Sports">Sports</option>
+            <option value="Music">Music</option>
+            <option value="Fashion">Fashion</option>
+            <option value="Fitness">Fitness</option>
         </select><br><br>
-
+        
+        <label for="subcategories">Subcategories:</label><br>
+        <select id="subcategories" name="subcategories" multiple="multiple" style="width: 100%;" required>
+            <!-- Subcategories will be populated based on the selected category -->
+        </select><br><br>
+        
         <label for="hashtags">Hashtags:</label><br>
         <select id="hashtags" name="hashtags" multiple="multiple" style="width: 100%;">
-            <option value="#diabetes">#diabetes</option>
-            <option value="#type1diabetes">#type1diabetes</option>
-            <option value="#type2diabetes">#type2diabetes</option>
-            <option value="#gestationaldiabetes">#gestationaldiabetes</option>
-            <option value="#diabetesawareness">#diabetesawareness</option>
-            <option value="#diabeticlife">#diabeticlife</option>
-            <option value="#diabetesmanagement">#diabetesmanagement</option>
-            <option value="#insulin">#insulin</option>
-            <option value="#bloodsugar">#bloodsugar</option>
-            <option value="#diabetescommunity">#diabetescommunity</option>
-            <option value="#diabeteswarrior">#diabeteswarrior</option>
-            <option value="#diabeteseducation">#diabeteseducation</option>
-            <option value="#diabetesdiet">#diabetesdiet</option>
-            <option value="#diabetesresearch">#diabetesresearch</option>
-            <option value="#diabeteslife">#diabeteslife</option>
-
-            <option value="#asthma">#asthma</option>
-            <option value="#asthmaawareness">#asthmaawareness</option>
-            <option value="#asthmaattack">#asthmaattack</option>
-            <option value="#asthmawarrior">#asthmawarrior</option>
-            <option value="#asthmatreatment">#asthmatreatment</option>
-            <option value="#asthmaeducation">#asthmaeducation</option>
-            <option value="#asthmafriendly">#asthmafriendly</option>
-            <option value="#asthmaattack">#asthmaattack</option>
-            <option value="#asthmalife">#asthmalife</option>
-            <option value="#asthmarelief">#asthmarelief</option>
-            <option value="#asthmaresearch">#asthmaresearch</option>
-            <option value="#asthmaawarenessmonth">#asthmaawarenessmonth</option>
-            <option value="#asthmajourney">#asthmajourney</option>
-            <option value="#asthmamanagement">#asthmamanagement</option>
+            <option value="#blogger">#blogger</option>
+            <option value="#medfluencer">#medfluencer</option>
+            <option value="#wms">#wms</option>
+            <option value="#mbchb">#mbchb</option>
+            <!-- Other hashtags omitted for brevity -->
             <option value="#doctorsofinstagram">#doctorsofinstagram</option>
         </select><br><br>
 
@@ -96,7 +68,7 @@
             <option value="high">High</option>
             <option value="low">Low</option>
         </select><br><br>
-
+        
         <button type="submit">Upload Blog</button>
     </form>
 
@@ -104,7 +76,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
-        $(document).ready(function () {
+        $(document).ready(function() {
             $('#categories').select2({
                 placeholder: "Select category",
                 allowClear: true
@@ -113,47 +85,55 @@
                 placeholder: "Select hashtags",
                 allowClear: true
             });
-            $('#conditions').select2({
-                placeholder: "Search for conditions",
+            $('#subcategories').select2({
+                placeholder: "Select subcategories",
                 allowClear: true
             });
 
-            const quill = new Quill('#editor', {
+            const subcategoriesData = {
+                "Doctor": ["General Surgery", "Oriental Medicine", "Latest Medical Research", "Common Medical Condition", "Mental Health", "Conventional Medicine", "Medical Education", "Psychology"],
+                "Travel": ["Adventure", "Cultural", "Luxury", "Backpacking", "Budget Travel"],
+                "Lifestyle": ["Healthy Living", "Home Decor", "Relationships", "Self-Care"],
+                "Medical": ["Neurology", "Cardiology", "Dermatology", "Oncology", "Pediatrics"],
+                "Politics": ["International", "Domestic", "Elections", "Policy"],
+                "Sports": ["Football", "Basketball", "Cricket", "Tennis", "Athletics"],
+                "Music": ["Classical", "Rock", "Pop", "Jazz", "Hip-Hop"],
+                "Fashion": ["Trends", "Designers", "Runway", "Street Style"],
+                "Fitness": ["Workouts", "Nutrition", "Yoga", "Mental Health"]
+            };
+
+            $('#categories').change(function() {
+                const selectedCategory = $(this).val();
+                const subcategories = subcategoriesData[selectedCategory] || [];
+                
+                $('#subcategories').empty().trigger('change');
+                subcategories.forEach(subcategory => {
+                    const newOption = new Option(subcategory, subcategory, false, false);
+                    $('#subcategories').append(newOption).trigger('change');
+                });
+            });
+
+            // Initialize Quill editor
+            var quill = new Quill('#editor', {
                 theme: 'snow',
                 modules: {
                     toolbar: [
                         [{ 'header': [1, 2, false] }],
                         ['bold', 'italic', 'underline'],
                         ['image', 'blockquote', 'code-block'],
-                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                         [{ 'align': [] }],
                         ['clean']
                     ]
                 }
             });
 
-            $('#categories').change(function () {
-                const selectedCondition = $('#conditions').val();
-                const livingWithOption = $('#categories option[value="Living with [condition]"]');
-
-                if (selectedCondition) {
-                    livingWithOption.text(`Living with ${selectedCondition}`);
-                } else {
-                    livingWithOption.text("Living with [condition]");
-                }
-            });
-
-            $('#conditions').on('change', function () {
-                $('#categories').trigger('change');
-            });
-
             // Handle form submission
-            $('#blogForm').on('submit', function (e) {
+            $('#blogForm').on('submit', function(e) {
                 var description = document.querySelector('input[name=description]');
                 description.value = quill.root.innerHTML;
             });
         });
     </script>
 </body>
-
 </html>

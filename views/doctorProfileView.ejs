@@ -70,76 +70,77 @@
                     <% } else { %>
                         <p><strong>Date:</strong> N/A</p>
                     <% } %>
-
+    
                     <% if (slot.startTime) { %>
                         <p><strong>Time:</strong> <%= slot.startTime %></p>
                     <% } else { %>
                         <p><strong>Time:</strong> N/A</p>
                     <% } %>
-
-                    <% if (slot.hospital) { %>
-                        <p><strong>Hospital:</strong> <%= slot.hospital %></p>
-                    <% } else { %>
-                        <p><strong>Hospital:</strong> N/A</p>
-                    <% } %>
-
-                    <% if (slot.hospitalLocation) { %>
-                        <p><strong>Location:</strong> <%= slot.hospitalLocation.street %>, <%= slot.hospitalLocation.city %>, <%= slot.hospitalLocation.state %>, <%= slot.hospitalLocation.country %>, <%= slot.hospitalLocation.zip %></p>
-                        <% if (slot.lat && slot.lng) { %>
-                            <a href="https://www.google.com/maps/dir/?api=1&destination=<%= slot.lat %>,<%= slot.lng %>" target="_blank">Get Directions</a>
+    
+                    <p><strong>Consultation Type:</strong> <%= slot.consultation %></p>
+    
+                    <% if (slot.consultation === 'In-person') { %>
+                        <% if (slot.hospital) { %>
+                            <p><strong>Hospital:</strong> <%= slot.hospital %></p>
+                        <% } else { %>
+                            <p><strong>Hospital:</strong> N/A</p>
                         <% } %>
-                    <% } else { %>
+    
+                        <% if (slot.hospitalLocation) { %>
+                            <p><strong>Location:</strong> <%= slot.hospitalLocation.street %>, <%= slot.hospitalLocation.city %>, <%= slot.hospitalLocation.state %>, <%= slot.hospitalLocation.country %>, <%= slot.hospitalLocation.zip %></p>
+                            <% if (slot.lat && slot.lng) { %>
+                                <a href="https://www.google.com/maps/dir/?api=1&destination=<%= slot.lat %>,<%= slot.lng %>" target="_blank">Get Directions</a>
+                            <% } %>
+                        <% } else { %>
+                            <p><strong>Location:</strong> N/A</p>
+                        <% } %>
+                    <% } else if (slot.consultation === 'Video call') { %>
+                        <p><strong>Hospital:</strong> N/A</p>
                         <p><strong>Location:</strong> N/A</p>
                     <% } %>
-
+    
                     <% if (slot.status === 'free') { %>
                         <form id="bookingForm" action="/patient/book" method="POST">
                             <input type="hidden" name="doctorId" value="<%= doctor._id %>">
                             <input type="hidden" name="date" value="<%= slot.date.toISOString() %>">
                             <input type="hidden" name="startTime" value="<%= slot.startTime %>">
-                            
-                            
-                            <label for="consultationType"><strong>Consultation Type:</strong></label>
-                            <select id="consultationType" name="consultationType">
-                                <option value="In-person">In-person</option>
-                                <option value="Video call">Video call</option>
-                            </select>
-                        
-                            <!-- Currency dropdown -->
-                            <div id="currencyWrapper">
-                                <label for="currency">Select Currency:</label>
-                                <select id="currency" name="currency" required>
-                                    <option value="usd" <%= doctor.doctorFeeCurrency === 'usd' ? 'selected' : '' %>>USD</option>
-                                    <option value="inr" <%= doctor.doctorFeeCurrency === 'inr' ? 'selected' : '' %>>INR</option>
-                                    <option value="gbp" <%= doctor.doctorFeeCurrency === 'gbp' ? 'selected' : '' %>>GBP</option>
-                                    <option value="aed" <%= doctor.doctorFeeCurrency === 'aed' ? 'selected' : '' %>>AED</option>
-                                </select>
-                            </div>
-                        
-                            <!-- Consultation fee details -->
-                            <div id="feeDetails" class="doctor-fee">
-                                <p>Consultation Fee: 
-                                    <strong><%= feesInAllCurrencies[doctor.doctorFeeCurrency || 'usd'] %> <%= (doctor.doctorFeeCurrency || 'usd').toUpperCase() %></strong> 
-                                    <strong>(Converted: 
-                                    USD: <%= feesInAllCurrencies.usd %>, 
-                                    INR: <%= feesInAllCurrencies.inr %>, 
-                                    GBP: <%= feesInAllCurrencies.gbp %>, 
-                                    AED: <%= feesInAllCurrencies.aed %>)</strong>
-                                </p>
-                            </div>
-                        
+                            <input type="hidden" name="consultationType" value="<%= slot.consultation %>">
+    
+                            <% if (slot.consultation === 'Video call') { %>
+                                <div id="currencyWrapper">
+                                    <label for="currency">Select Currency:</label>
+                                    <select id="currency" name="currency" required>
+                                        <option value="usd" <%= doctor.doctorFeeCurrency === 'usd' ? 'selected' : '' %>>USD</option>
+                                        <option value="inr" <%= doctor.doctorFeeCurrency === 'inr' ? 'selected' : '' %>>INR</option>
+                                        <option value="gbp" <%= doctor.doctorFeeCurrency === 'gbp' ? 'selected' : '' %>>GBP</option>
+                                        <option value="aed" <%= doctor.doctorFeeCurrency === 'aed' ? 'selected' : '' %>>AED</option>
+                                    </select>
+                                </div>
+    
+                                <div id="feeDetails" class="doctor-fee">
+                                    <p>Consultation Fee: 
+                                        <strong><%= feesInAllCurrencies[doctor.doctorFeeCurrency || 'usd'] %> <%= (doctor.doctorFeeCurrency || 'usd').toUpperCase() %></strong> 
+                                        <strong>(Converted: 
+                                        USD: <%= feesInAllCurrencies.usd %>, 
+                                        INR: <%= feesInAllCurrencies.inr %>, 
+                                        GBP: <%= feesInAllCurrencies.gbp %>, 
+                                        AED: <%= feesInAllCurrencies.aed %>)</strong>
+                                    </p>
+                                </div>
+                            <% } else { %>
+                                <input type="hidden" name="currency" value="null">
+                            <% } %>
+    
                             <button type="submit">Book Slot</button>
                         </form>
-                        
-                    <% } else { %>
-                        <p><strong>Status:</strong> <%= slot.status %></p>
                     <% } %>
                 </li>
-            <% }) %>
+            <% }); %>
         </ul>
     <% } else { %>
         <p>No available time slots.</p>
     <% } %>
+
     <h2>Reviews</h2>
     <% if (doctor.reviews && doctor.reviews.length > 0) { %>
         <ul>
@@ -177,69 +178,6 @@
         <button type="submit">Add to Favorites</button>
     </form>
 
-    <a href="/patient/doctors">Back to Doctors List</a>
-    <script>
-        const consultationType = document.getElementById('consultationType');
-        const currencyWrapper = document.getElementById('currencyWrapper');
-    
-        consultationType.addEventListener('change', function() {
-            if (this.value === 'In-person') {
-                currencyWrapper.style.display = 'none'; // Hide the currency selection
-            } else {
-                currencyWrapper.style.display = 'block'; // Show the currency selection
-            }
-        });
-    
-        // Initially hide currency if In-person is already selected
-        if (consultationType.value === 'In-person') {
-            currencyWrapper.style.display = 'none';
-        }
-    </script>
-    <!-- <script>
-        document.getElementById('bookingForm').addEventListener('submit', function(event) {
-            //event.preventDefault(); // Prevent the default form submission
-
-            // Collect form data
-            const formData = new FormData(this);
-            const data = {};
-            formData.forEach((value, key) => {
-                data[key] = value;
-            });
-
-            // Log data to the console
-            console.log('Form Data:', data);
-
-            // Optional: Submit the form using Fetch or another method
-            // fetch(this.action, {
-            //     method: 'POST',
-            //     body: formData
-            // })
-            // .then(response => response.json())
-            // .then(result => console.log('Server Response:', result))
-            // .catch(error => console.error('Error:', error));
-        });
-        
-    </script> -->
-    <script>
-        document.getElementById('consultationType').addEventListener('change', function() {
-            const selectedType = this.value;
-            const currencyWrapper = document.getElementById('currencyWrapper');
-            const feeDetails = document.getElementById('feeDetails');
-    
-            if (selectedType === 'In-person') {
-                // Hide currency and fee details if In-person is selected
-                currencyWrapper.style.display = 'none';
-                feeDetails.style.display = 'none';
-            } else {
-                // Show currency and fee details if Video call is selected
-                currencyWrapper.style.display = 'block';
-                feeDetails.style.display = 'block';
-            }
-        });
-    
-        // Trigger the change event on page load to set initial visibility
-        document.getElementById('consultationType').dispatchEvent(new Event('change'));
-    </script>
-        
+    <a href="/medx">Back to Search</a>
 </body>
 </html>

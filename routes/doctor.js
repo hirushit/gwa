@@ -170,7 +170,7 @@ router.get('/edit', isLoggedIn, async (req, res) => {
         const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
         const allInsurances = await Insurance.find({}).select('_id name');
         const allSpecialties = await Specialty.find({}).select('_id name');
-        const allConditions = await Condition.find({}).select('_id name');
+        const allConditions = await Condition.find({}).select('_id name'); // Ensure this is fetched
 
         if (!doctor.hospitals) {
             doctor.hospitals = [];
@@ -180,11 +180,12 @@ router.get('/edit', isLoggedIn, async (req, res) => {
             doctor.insurances = [];
         }
 
+        // Pass allConditions to the template
         res.render('editDoctorProfile', {
             doctor,
             allInsurances,
             allSpecialties,
-            allConditions 
+            allConditions // Pass this to EJS
         });
     } catch (err) {
         console.error(err.message);
@@ -271,7 +272,8 @@ router.post('/profile/update', upload.fields([
             hospitals: hospitals,
             doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : doctor.doctorFee || 85,
             doctorFeeCurrency: req.body.doctorFeeCurrency || doctor.doctorFeeCurrency,
-            licenseNumber: req.body.licenseNumber || doctor.licenseNumber
+            licenseNumber: req.body.licenseNumber || doctor.licenseNumber,
+            zip: req.body.zip || doctor.zip 
         };
 
         if (!updateData.documents) {
@@ -469,8 +471,6 @@ router.get('/bookings', isLoggedIn, checkSubscription, async (req, res) => {
     }
 });
 
-
-
 router.post('/bookings/:id', isLoggedIn, async (req, res) => {
     try {
         const { status } = req.body;
@@ -536,91 +536,116 @@ router.post('/bookings/:id', isLoggedIn, async (req, res) => {
 
             await doctor.save();
 
-            if (status === 'accepted' || status === 'rejected') {
-                let emailSubject, emailContent;
+            let emailSubject, emailContent, chatMessage;
 
-                if (status === 'accepted') {
-                    if (booking.consultationType === 'Video call') {
-                        emailSubject = 'Appointment Confirmation';
-                        emailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-                                            <h2 style="color: #272848; text-align: center;">Appointment Confirmation</h2>
-                                            <p style="font-size: 16px;">Hi <strong>${booking.patient.name}</strong>,</p>
-                                            <p style="font-size: 16px;">Your appointment with <strong>Dr. ${doctor.name}</strong> has been confirmed. Here are the details:</p>
-                                            <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
-                                            <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
-                                            <p style="font-size: 16px;"><strong>Consultation Type:</strong> Video call</p>
-                                            <p style="font-size: 16px;"><strong>Meeting Link:</strong></p>
-                                            <div style="text-align: center; margin: 20px 0;">
-                                                <a href="${booking.meetingLink}" style="padding: 14px 24px; color: white; background-color: #FF7F50; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">${booking.meetingLink}</a>
-                                            </div>
-                                            <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
-                                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                                        </div>`;
-                        await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
-
-                        const acceptanceEmailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-                                                            <h2 style="color: #272848; text-align: center;">Appointment Confirmation</h2>
-                                                            <p style="font-size: 16px;">Hi <strong>Dr. ${doctor.name}</strong>,</p>
-                                                            <p style="font-size: 16px;">The appointment with <strong>${booking.patient.name}</strong> has been confirmed. Here are the details:</p>
-                                                            <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
-                                                            <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
-                                                            <p style="font-size: 16px;"><strong>Consultation Type:</strong> Video call</p>
-                                                            <p style="font-size: 16px;"><strong>Meeting Link:</strong></p>
-                                                            <div style="text-align: center; margin: 20px 0;">
-                                                                <a href="${booking.meetingLink}" style="padding: 14px 24px; color: white; background-color: #FF7F50; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">${booking.meetingLink}</a>
-                                                            </div>
-                                                            <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
-                                                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                                                        </div>`;
-                        await sendAppointmentEmail(doctor.email, doctor.name, 'Appointment Confirmation Notification', acceptanceEmailContent);
-
-                        let chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Join the meeting using the following link: ${booking.meetingLink}`;
-                        await Chat.findOneAndUpdate(
-                            { doctorId: booking.doctor, patientId: booking.patient },
-                            { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
-                            { upsert: true, new: true }
-                        );
-                    } else if (booking.consultationType === 'In-person') {
-                        emailSubject = 'Appointment Confirmation';
-                        emailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-                                            <h2 style="color: #272848; text-align: center;">Appointment Confirmation</h2>
-                                            <p style="font-size: 16px;">Hi <strong>${booking.patient.name}</strong>,</p>
-                                            <p style="font-size: 16px;">Your appointment with <strong>Dr. ${doctor.name}</strong> has been confirmed. Here are the details:</p>
-                                            <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
-                                            <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
-                                            <p style="font-size: 16px;"><strong>Consultation Type:</strong> In-person</p>
-                                            <p style="font-size: 16px;"><strong>Place:</strong></p>
-                                            <p style="font-size: 16px;">${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}</p>
-                                            <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
-                                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                                        </div>`;
-                        await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
-
-                        let chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Please visit the hospital at ${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}`;
-                        await Chat.findOneAndUpdate(
-                            { doctorId: booking.doctor, patientId: booking.patient },
-                            { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
-                            { upsert: true, new: true }
-                        );
-                    }
-                } else if (status === 'rejected') {
-                    emailSubject = 'Appointment Rejection';
+            if (status === 'accepted') {
+                if (booking.consultationType === 'Video call') {
+                    emailSubject = 'Appointment Confirmation';
                     emailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-                                        <h2 style="color: #272848; text-align: center;">Appointment Rejection</h2>
+                                        <h2 style="color: #FF7F50; text-align: center;">Appointment Confirmation</h2>
                                         <p style="font-size: 16px;">Hi <strong>${booking.patient.name}</strong>,</p>
-                                        <p style="font-size: 16px;">We regret to inform you that your appointment with <strong>Dr. ${doctor.name}</strong> on <strong>${booking.date.toDateString()}</strong> at <strong>${booking.time}</strong> has been rejected.</p>
+                                        <p style="font-size: 16px;">Your appointment with <strong>Dr. ${doctor.name}</strong> has been confirmed. Here are the details:</p>
+                                        <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
+                                        <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
+                                        <p style="font-size: 16px;"><strong>Consultation Type:</strong> Video call</p>
+                                        <p style="font-size: 16px;"><strong>Meeting Link:</strong></p>
+                                        <div style="text-align: center; margin: 20px 0;">
+                                            <a href="${booking.meetingLink}" style="padding: 14px 24px; color: white; background-color: #FF7F50; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">${booking.meetingLink}</a>
+                                        </div>
                                         <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
                                         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
                                     </div>`;
                     await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
 
-                    let chatMessage = `We regret to inform you that your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been rejected.`;
-                    await Chat.findOneAndUpdate(
-                        { doctorId: booking.doctor, patientId: booking.patient },
-                        { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
-                        { upsert: true, new: true }
-                    );
+                    const acceptanceEmailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                                                        <h2 style="color: #FF7F50; text-align: center;">Appointment Confirmation</h2>
+                                                        <p style="font-size: 16px;">Hi <strong>Dr. ${doctor.name}</strong>,</p>
+                                                        <p style="font-size: 16px;">The appointment with <strong>${booking.patient.name}</strong> has been confirmed. Here are the details:</p>
+                                                        <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
+                                                        <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
+                                                        <p style="font-size: 16px;"><strong>Consultation Type:</strong> Video call</p>
+                                                        <p style="font-size: 16px;"><strong>Meeting Link:</strong></p>
+                                                        <div style="text-align: center; margin: 20px 0;">
+                                                            <a href="${booking.meetingLink}" style="padding: 14px 24px; color: white; background-color: #FF7F50; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">${booking.meetingLink}</a>
+                                                        </div>
+                                                        <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
+                                                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                                                    </div>`;
+                    await sendAppointmentEmail(doctor.email, doctor.name, 'Appointment Confirmation Notification', acceptanceEmailContent);
+
+                    chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Join the meeting using the following link: ${booking.meetingLink}`;
+                } else if (booking.consultationType === 'In-person') {
+                    emailSubject = 'Appointment Confirmation';
+                    emailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                                        <h2 style="color: #FF7F50; text-align: center;">Appointment Confirmation</h2>
+                                        <p style="font-size: 16px;">Hi <strong>${booking.patient.name}</strong>,</p>
+                                        <p style="font-size: 16px;">Your appointment with <strong>Dr. ${doctor.name}</strong> has been confirmed. Here are the details:</p>
+                                        <p style="font-size: 16px;"><strong>Date:</strong> ${booking.date.toDateString()}</p>
+                                        <p style="font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
+                                        <p style="font-size: 16px;"><strong>Consultation Type:</strong> In-person</p>
+                                        <p style="font-size: 16px;"><strong>Place:</strong></p>
+                                        <p style="font-size: 16px;">${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}</p>
+                                        <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
+                                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                                    </div>`;
+                    await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
+
+                    chatMessage = `Your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been confirmed. Please visit the hospital at ${booking.hospital.name}, ${booking.hospital.location.street}, ${booking.hospital.location.city}, ${booking.hospital.location.state}, ${booking.hospital.location.country}, ${booking.hospital.location.zip}`;
                 }
+
+                // Create notifications
+                await Notification.create({
+                    userId: booking.patient._id,
+                    message: chatMessage,
+                    type: 'appointment',
+                    chatId: await Chat.findOne({ doctorId: booking.doctor, patientId: booking.patient }).select('_id')
+                });
+
+                await Notification.create({
+                    userId: booking.doctor._id,
+                    message: chatMessage,
+                    type: 'appointment',
+                    chatId: await Chat.findOne({ doctorId: booking.doctor, patientId: booking.patient }).select('_id')
+                });
+
+                await Chat.findOneAndUpdate(
+                    { doctorId: booking.doctor, patientId: booking.patient },
+                    { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
+                    { upsert: true, new: true }
+                );
+            } else if (status === 'rejected') {
+                emailSubject = 'Appointment Rejection';
+                emailContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                                    <h2 style="color: #FF7F50; text-align: center;">Appointment Rejection</h2>
+                                    <p style="font-size: 16px;">Hi <strong>${booking.patient.name}</strong>,</p>
+                                    <p style="font-size: 16px;">We regret to inform you that your appointment with <strong>Dr. ${doctor.name}</strong> on <strong>${booking.date.toDateString()}</strong> at <strong>${booking.time}</strong> has been rejected.</p>
+                                    <p style="font-size: 16px;">Best regards,<br><strong>The MedxBay Team</strong></p>
+                                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                                </div>`;
+                await sendAppointmentEmail(booking.patient.email, booking.patient.name, emailSubject, emailContent);
+
+                chatMessage = `We regret to inform you that your appointment with Dr. ${doctor.name} on ${booking.date.toDateString()} at ${booking.time} has been rejected.`;
+
+                // Create notifications
+                await Notification.create({
+                    userId: booking.patient._id,
+                    message: chatMessage,
+                    type: 'appointment',
+                    chatId: await Chat.findOne({ doctorId: booking.doctor, patientId: booking.patient }).select('_id')
+                });
+
+                await Notification.create({
+                    userId: booking.doctor._id,
+                    message: chatMessage,
+                    type: 'appointment',
+                    chatId: await Chat.findOne({ doctorId: booking.doctor, patientId: booking.patient }).select('_id')
+                });
+
+                await Chat.findOneAndUpdate(
+                    { doctorId: booking.doctor, patientId: booking.patient },
+                    { $push: { messages: { senderId: booking.doctor, text: chatMessage, timestamp: new Date() } } },
+                    { upsert: true, new: true }
+                );
             }
         }
 
@@ -937,7 +962,6 @@ router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) =>
         res.status(500).send('Server Error');
     }
 });
-
 
 
 async function createGoogleMeetLink(booking) {
@@ -1687,6 +1711,7 @@ router.get('/profile/blogs', isLoggedIn, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
 
 router.get('/dashboard', isLoggedIn, checkSubscription, async (req, res) => {
     try {

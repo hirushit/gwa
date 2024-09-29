@@ -46,10 +46,39 @@
         }
 
         .custom-info-window {
-            max-width: 300px; 
-            padding: 10px;
-            font-size: 14px;
+    max-width: 300px; 
+    padding: 10px;
+    font-size: 14px;
+    background-color: #fff; /* White background */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
+    border: 1px solid #ccc; /* Light gray border */
+}
+
+.custom-info-window strong {
+    color: #333; /* Darker text for emphasis */
+}
+
+.custom-info-window a {
+    color: #007bff; /* Bootstrap primary color */
+    text-decoration: none; /* Remove underline */
+}
+
+.custom-info-window a:hover {
+    text-decoration: underline; /* Underline on hover */
+}
+
+        .custom-marker img {
+            width: 40px;  /* Adjust width */
+            height: 40px; /* Adjust height */
+            border-radius: 50%; /* Make it circular */
+            border: 2px solid #fff; /* Optional: white border */
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5); /* Optional: shadow effect */
         }
+
+
+        
+
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAPS_API_KEY %>&callback=initMap" async defer></script>
 </head>
@@ -174,11 +203,30 @@
                     lng: position.coords.longitude
                 };
 
+                map.setCenter(userLocation);
+                map.setZoom(14);
+
                 userMarker = new google.maps.Marker({
                     position: userLocation,
                     map: map,
                     title: 'Your Location',
-                    icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                    icon: {
+                        url: '/marker.png', // Path to your icon
+                        scaledSize: new google.maps.Size(30, 30) // Adjust size as needed
+                    }
+                });
+
+                // Create an InfoWindow for the user's location
+                const userInfoWindow = new google.maps.InfoWindow({
+                     content: `<div class="custom-info-window user-location-info"><strong>You are here</strong></div>`
+                });
+
+                // Open the InfoWindow immediately
+                userInfoWindow.open(map, userMarker);
+
+                // Add click listener to reopen the InfoWindow
+                userMarker.addListener('click', () => {
+                    userInfoWindow.open(map, userMarker);
                 });
 
                 bounds.extend(userLocation);
@@ -186,33 +234,48 @@
                 uniqueLocations.forEach(location => {
                     const position = { lat: location.lat, lng: location.lng };
 
-                    const marker = new google.maps.Marker({
-                        position: position,
-                        map: map,
-                        title: location.hospitalName
-                    });
+                    createCircularImage(location.doctorProfilePic, (circularImageUrl) => {
+                        const customMarker = {
+                            url: circularImageUrl, 
+                            scaledSize: new google.maps.Size(40, 40), 
+                            origin: new google.maps.Point(0, 0), 
+                            anchor: new google.maps.Point(20, 20), 
+                            shape: {
+                                coords: [20, 20, 20], 
+                                type: 'circle'
+                            }
+                        };
 
-                    const distance = computeDistance(userLocation, position);
-                    const infoWindow = new google.maps.InfoWindow({
-                        content: `
-                            <div class="custom-info-window">
-                                <strong>Doctor:</strong> ${location.doctorName}<br>
-                                <strong>Hospital:</strong> ${location.hospitalName}<br>
-                                <strong>Distance:</strong> ${distance.toFixed(2)} km away
-                            </div>
-                        `
-                    });
+                        const marker = new google.maps.Marker({
+                            position: position,
+                            map: map,
+                            icon: customMarker,
+                            title: `${location.doctorName} - ${location.hospitalName}`
+                        });
 
-                    marker.addListener('click', () => {
-                        infoWindow.open(map, marker);
-                    });
+                        const distance = computeDistance(userLocation, position);
+                        const infoWindow = new google.maps.InfoWindow({
+                                content: `
+                                    <div class="custom-info-window">
+                                        <strong>Doctor:</strong> ${location.doctorName}, ${location.doctorTitle} <br>
+                                        <strong>Hospital:</strong> ${location.hospitalName}<br>
+                                        <strong>Distance:</strong> ${distance.toFixed(2)} km away <br>
+                                        <a href="https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}" target="_blank">View Directions</a>
+                                    </div>
+                                `
+                            });
 
-                    bounds.extend(position);
+                        marker.addListener('click', () => {
+                            infoWindow.open(map, marker);
+                        });
+
+                        bounds.extend(position);
+                    });
                 });
 
                 map.fitBounds(bounds);
 
-                const maxZoomLevel = 10;
+                const maxZoomLevel = 14;
                 map.addListener('bounds_changed', () => {
                     if (map.getZoom() > maxZoomLevel) {
                         map.setZoom(maxZoomLevel);
@@ -228,6 +291,27 @@
     }
 }
 
+function createCircularImage(imageUrl, callback) {
+    const img = new Image();
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const size = Math.min(img.width, img.height);
+        
+        canvas.width = size;
+        canvas.height = size;
+
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        ctx.drawImage(img, 0, 0, size, size);
+
+        callback(canvas.toDataURL());
+    };
+    img.src = imageUrl;
+}
 
 
 function computeDistance(loc1, loc2) {

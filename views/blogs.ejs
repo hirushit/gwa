@@ -103,7 +103,6 @@
                     <% } %>
                     <h3><%= doctor.name %></h3>
                     <p>Rating: <%= doctor.rating %></p>
-                    <p>Year of Experience: <%= doctor.experience ? doctor.experience : "Null" %></p>
                     <a href="/patient/doctors/<%= doctor._id %>/slots">Book Appointment</a>
                 </li>
             <% }) %>

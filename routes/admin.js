@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const nodemailer = require('nodemailer');
 const Doctor = require('../models/Doctor');
 const Patient = require('../models/Patient');
 const Admin = require('../models/Admin'); 
@@ -26,6 +27,14 @@ function isAdmin(req, res, next) {
   }
   res.status(403).send('Access denied.');
 };
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // or any other email service you use
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+}
+});
 
 router.get('/admin-home', async (req, res) => {
   try {
@@ -86,8 +95,6 @@ router.get('/view/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-
-
 router.post('/verify/:id', isLoggedIn, async (req, res) => {
   try {
     const doctorId = req.params.id;
@@ -128,6 +135,7 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
       message = `Your profile has been rejected. Reason: ${reason}`;
     }
 
+    // Save notification to the database
     const notification = new Notification({
       userId: doctor._id, 
       message,
@@ -136,7 +144,27 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     });
     await notification.save();
 
-    req.flash('success_msg', 'Doctor verification status updated.');
+    // Send email notification
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: doctor.email, // Ensure doctor has an email field
+      subject: '🎉 Your Profile Status Has Been Updated 🎉',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #F4F7FC;">
+          <h2 style="text-align: center; color: #FF7F50;">Profile Verification Status</h2>
+          <p style="font-size: 16px; color: #272848;">Hi <strong>${doctor.name}</strong>,</p>
+          <p style="font-size: 16px; color: #272848;">${message}</p>
+          <p style="font-size: 16px; color: #272848;">Best regards,</p>
+          <p style="font-size: 16px; color: #272848;"><strong>The MedxBay Team</strong></p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="font-size: 14px; color: #777;">P.S. If you have not requested this update, please contact our support team immediately.</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    req.flash('success_msg', 'Doctor verification status updated and email sent.');
     res.redirect('/admin/doctor-profile-requests');
   } catch (err) {
     console.error(err.message);

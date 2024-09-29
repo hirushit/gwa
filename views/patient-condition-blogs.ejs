@@ -31,7 +31,7 @@
                     <% } %>
                     <h3><%= blog.title %></h3>
                     <p><%= blog.content %></p>
-                    <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                    <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
                 </li>
             <% }) %>
         <% } else { %>
@@ -50,7 +50,7 @@
                         <% } %>
                         <h3><%= blog.title %></h3>
                         <p><%= blog.content %></p>
-                        <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                        <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
                     </li>
                 <% }) %>
             </ul>
@@ -67,7 +67,7 @@
                         <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
                     <% } %>
                     <h3><%= blog.title || 'Untitled Blog' %></h3>
-                    <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                    <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
                 </li>
             <% }) %>
         <% } else { %>
@@ -84,7 +84,7 @@
                     <% } %>
                     <h3><%= blog.title || 'Untitled Blog' %></h3>
                     
-                    <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                    <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
                 </li>
             <% }) %>
         <% } else { %>

@@ -5,124 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Blog</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
-        .select2-container--default .select2-selection--multiple .select2-selection__choice {
-            background-color: #007bff;
-            border: 1px solid #007bff;
-            color: white;
+        #editor {
+            height: 200px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>Edit Blog</h1>
-    <form id="blogForm" action="/doctor/blogs/edit/<%= blog._id %>" method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-            <label for="title">Title</label>
-            <input type="text" id="title" name="title" value="<%= blog.title %>" required>
-        </div>
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea id="description" name="description" rows="5" required><%= blog.description %></textarea>
-        </div>
-        <div class="form-group">
-            <label for="summary">Summary</label>
-            <textarea id="summary" name="summary" rows="3" required><%= blog.summary %></textarea>
-        </div>
-        <div class="form-group">
-            <label for="categories">Categories</label>
-            <select id="categories" name="categories[]" multiple="multiple" style="width: 100%;" required>
-                <% const categories = ['Travel', 'Lifestyle', 'Medical', 'Politics', 'Sports', 'Music', 'Fashion', 'Fitness']; %>
-                <% categories.forEach(category => { %>
-                    <option value="<%= category %>" <% if (blog.categories.includes(category)) { %>selected<% } %>><%= category %></option>
-                <% }); %>
-            </select>
-        </div>
-        
-        <div class="form-group" id="subcategories-container">
-            <label for="subcategories">Subcategories</label>
-            <select id="subcategories" name="subcategories[]" multiple="multiple" style="width: 100%;">
-                <!-- Subcategories will be dynamically populated -->
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="hashtags">Hashtags (comma separated)</label>
-            <select id="hashtags" name="hashtags[]" multiple="multiple" style="width: 100%;">
-                <% const hashtags = ['#blogger', '#medfluencer', '#wms', '#mbchb', '#doctorsofinstagram']; %>
-                <% hashtags.forEach(hashtag => { %>
-                    <option value="<%= hashtag %>" <% if (blog.hashtags.includes(hashtag)) { %>selected<% } %>><%= hashtag %></option>
-                <% }); %>
-            </select><br><br>
-        </div>
-        
-        <div class="form-group">
-            <label for="image">Upload Image</label>
-            <input type="file" id="image" name="image">
-        </div>
-        <div class="form-group">
-            <button type="submit">Update Blog</button>
-        </div>
+    <h1>Edit Blog Post</h1>
+    <form id="editBlogForm" action="/doctor/blogs/edit/<%= blog._id %>" method="POST" enctype="multipart/form-data">
+        <label for="title">Title:</label><br>
+        <input type="text" id="title" name="title" value="<%= blog.title %>" required><br><br>
+
+        <label for="description">Description:</label><br>
+        <div id="editor"></div>
+        <input type="hidden" name="description" id="description"><br><br>
+
+        <label for="conditions">Conditions:</label><br>
+        <select id="conditions" name="selectedConditions" class="form-control" required>
+            <% conditions.forEach(condition => { %>
+            <option value="<%= condition.name %>" <% if (blog.conditions.includes(condition.name)) { %> selected <% } %>> 
+                <%= condition.name %>
+            </option>
+            <% }) %>
+        </select><br><br>
+
+        <label for="image">Current Image:</label><br>
+        <% if (blog.image) { %>
+        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image" width="150px"><br><br>
+        <% } %>
+        <label for="image">Change Image:</label><br>
+        <input type="file" id="image" name="image" accept="image/*"><br><br>
+
+        <label for="categories">Category:</label><br>
+        <select id="categories" name="categories" style="width: 100%;" required>
+            <option value="Signs & Symptoms" <% if (categories.includes("Signs & Symptoms")) { %> selected <% } %>>Signs & Symptoms</option>
+            <option value="Causes & Risks" <% if (categories.includes("Causes & Risks")) { %> selected <% } %>>Causes & Risks</option>
+            <option value="Testing & Diagnosis" <% if (categories.includes("Testing & Diagnosis")) { %> selected <% } %>>Testing & Diagnosis</option>
+            <option value="Treatment" <% if (categories.includes("Treatment")) { %> selected <% } %>>Treatment</option>
+            <option value="Living with [condition]" <% if (categories.includes(`Living with ${blog.conditions}`)) { %> selected <% } %>>Living with <%= blog.conditions %></option>
+        </select><br><br>
+
+        <label for="hashtags">Hashtags:</label><br>
+        <select id="hashtags" name="hashtags" multiple="multiple" style="width: 100%;">
+            <% hashtags.forEach(hashtag => { %>
+            <option value="<%= hashtag %>" <% if (blog.hashtags.includes(hashtag)) { %> selected <% } %>> 
+                <%= hashtag %>
+            </option>
+            <% }) %>
+        </select><br><br>
+
+        <button type="submit">Update Blog</button>
     </form>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
-        $(document).ready(function() {
-            // Initialize select2
+        $(document).ready(function () {
             $('#categories').select2({
-                placeholder: "Select categories",
-                allowClear: true
-            });
-            $('#subcategories').select2({
-                placeholder: "Select subcategories",
+                placeholder: "Select category",
                 allowClear: true
             });
             $('#hashtags').select2({
                 placeholder: "Select hashtags",
-                allowClear: true
+                allowClear: true,
+                tags: true 
             });
 
-            // Predefined subcategories based on categories
-            const subcategoriesMap = {
-                "Travel": ["Adventure", "Beach", "Cultural", "Road Trip"],
-                "Lifestyle": ["Wellness", "Parenting", "Home Decor", "Minimalism"],
-                "Medical": ["General Surgery", "Mental Health", "Nutrition", "Pediatrics"],
-                "Politics": ["Elections", "Policy", "International Relations", "Economy"],
-                "Sports": ["Football", "Basketball", "Tennis", "Cricket","Athletics"],
-                "Music": ["Rock", "Pop", "Classical", "Jazz"],
-                "Fashion": ["Trends", "Designers", "Street Style", "Accessories"],
-                "Fitness": ["Workouts", "Nutrition", "Yoga", "Bodybuilding"]
-            };
-
-            // Populate subcategories based on selected categories
-            $('#categories').on('change', function() {
-                const selectedCategories = $(this).val();
-                const $subcategories = $('#subcategories');
-                
-                // Clear previous subcategories
-                $subcategories.empty();
-                
-                // Populate subcategories based on selected categories
-                if (selectedCategories.length > 0) {
-                    selectedCategories.forEach(category => {
-                        if (subcategoriesMap[category]) {
-                            subcategoriesMap[category].forEach(subcategory => {
-                                $subcategories.append(`<option value="${subcategory}">${subcategory}</option>`);
-                            });
-                        }
-                    });
-                    $('#subcategories-container').show();
-                } else {
-                    $('#subcategories-container').hide();
+            const quill = new Quill('#editor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, false] }],
+                        ['bold', 'italic', 'underline'],
+                        ['image', 'blockquote', 'code-block'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['clean']
+                    ]
                 }
-
-                // Pre-select options based on existing selected subcategories
-                const selectedSubcategories = <%- JSON.stringify(blog.subcategories || []) %>;
-                $subcategories.val(selectedSubcategories).trigger('change');
             });
 
-            // Trigger change event on page load to populate subcategories if needed
-            $('#categories').trigger('change');
+            quill.root.innerHTML = `<%= blog.description %>`;
+
+            $('#editBlogForm').on('submit', function (e) {
+                var description = document.querySelector('input[name=description]');
+                description.value = quill.root.innerHTML;
+            });
         });
     </script>
 </body>

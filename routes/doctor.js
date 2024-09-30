@@ -273,7 +273,8 @@ router.post('/profile/update', upload.fields([
             doctorFee: req.body.doctorFee ? parseFloat(req.body.doctorFee) : doctor.doctorFee || 85,
             doctorFeeCurrency: req.body.doctorFeeCurrency || doctor.doctorFeeCurrency,
             licenseNumber: req.body.licenseNumber || doctor.licenseNumber,
-            zip: req.body.zip || doctor.zip 
+            zip: req.body.zip || doctor.zip,
+            experience: req.body.experience || doctor.experience,
         };
 
         if (!updateData.documents) {
@@ -1647,38 +1648,32 @@ router.get('/profile/blogs', isLoggedIn, async (req, res) => {
 
   router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
     try {
-      const blog = await Blog.findById(req.params.id);
-  
-      if (!blog) {
-        console.error('Blog not found');
-        return res.status(404).send('Blog not found');
-      }
-  
-      if (!req.session.user || !req.session.user._id) {
-        console.error('Unauthorized: No user session found');
-        return res.status(403).send('Unauthorized');
-      }
-  
-      if (!blog.authorId) {
-        console.error('Blog author ID is not defined');
-        return res.status(403).send('Unauthorized');
-      }
-  
-      if (blog.authorId.toString() !== req.session.user._id.toString()) {
-        return res.status(403).send('Unauthorized');
-      }
-  
-      res.render('edit-blog', { blog });
+        const blog = await Blog.findById(req.params.id);
+        const conditions = await Condition.find(); 
+
+        if (!blog) {
+            console.error('Blog not found');
+            return res.status(404).send('Blog not found');
+        }
+
+        if (blog.authorId.toString() !== req.session.user._id.toString()) {
+            return res.status(403).send('Unauthorized');
+        }
+
+        const hashtags = Array.isArray(blog.hashtags) ? blog.hashtags : blog.hashtags.split(',');
+        const categories = Array.isArray(blog.categories) ? blog.categories : blog.categories.split(',');
+
+        res.render('edit-blog', { blog, conditions, hashtags, categories });
     } catch (err) {
-      console.error(err);
-      res.status(500).send('Server Error');
+        console.error(err);
+        res.status(500).send('Server Error');
     }
-  });
-  
-  router.post('/blogs/edit/:id', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
+});
+
+router.post('/blogs/edit/:id', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
     try {
         const blog = await Blog.findById(req.params.id);
-
+        
         if (!blog) {
             return res.status(404).send('Blog not found');
         }
@@ -1687,16 +1682,15 @@ router.get('/profile/blogs', isLoggedIn, async (req, res) => {
             return res.status(403).send('Unauthorized');
         }
 
-        const { title, description, summary, categories, subcategories, hashtags } = req.body;
+        const { title, description, categories, hashtags, selectedConditions } = req.body;
 
         blog.title = title;
         blog.description = description;
-        blog.summary = summary;
         blog.categories = Array.isArray(categories) ? categories : categories.split(',');
-        blog.subcategories = Array.isArray(subcategories) ? subcategories : subcategories.split(',');
         blog.hashtags = Array.isArray(hashtags) ? hashtags : hashtags.split(',');
+        blog.conditions = selectedConditions;
 
-        blog.verificationStatus = 'pending';
+        blog.verificationStatus = 'Pending';
 
         if (req.file) {
             blog.image.data = req.file.buffer;
@@ -1705,12 +1699,13 @@ router.get('/profile/blogs', isLoggedIn, async (req, res) => {
 
         await blog.save();
 
-        res.redirect('/doctor/profile/blogs'); 
+        res.redirect('/doctor/profile/blogs');
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
     }
 });
+
 
 
 router.get('/dashboard', isLoggedIn, checkSubscription, async (req, res) => {
@@ -1952,11 +1947,9 @@ router.get('/blogs', isDoctor, isLoggedIn, async (req, res) => {
                 };
             }
     
-            // Retrieve distinct categories and hashtags
             const categories = await Blog.distinct('categories', { verificationStatus: 'Verified' });
             const hashtags = await Blog.distinct('hashtags', { verificationStatus: 'Verified' });
     
-            // Count the number of blogs in each category
             const categoryCountMap = await Blog.aggregate([
                 { $match: { verificationStatus: 'Verified' } },
                 { $unwind: '$categories' },
@@ -1969,7 +1962,6 @@ router.get('/blogs', isDoctor, isLoggedIn, async (req, res) => {
                 return acc;
             }, {});
     
-            // Count the number of blogs in each hashtag
             const hashtagCountMap = await Blog.aggregate([
                 { $match: { verificationStatus: 'Verified' } },
                 { $unwind: '$hashtags' },
@@ -1982,16 +1974,13 @@ router.get('/blogs', isDoctor, isLoggedIn, async (req, res) => {
                 return acc;
             }, {});
     
-            // Find blogs based on the filter
             const verifiedBlogs = await Blog.find(filter).lean();
     
-            // Fetch most read blogs
             const mostReadBlogs = await Blog.find({ verificationStatus: 'Verified' })
                 .sort({ readCount: -1 })
                 .limit(5)
                 .lean();
     
-            // Fetch related posts based on categories (exclude current category)
             const relatedPosts = await Blog.find({
                 verificationStatus: 'Verified',
                 categories: { $in: categories }
@@ -2004,12 +1993,12 @@ router.get('/blogs', isDoctor, isLoggedIn, async (req, res) => {
                 searchQuery: req.query.search,
                 categories,
                 hashtags,
-                categoryCountMap: categoryCountMapObj, // Pass category counts to template
-                hashtagCountMap: hashtagCountMapObj, // Pass hashtag counts to template
-                filterType: 'All', // Default filter type
-                filterValue: '', // Default filter value
-                mostReadBlogs, // Add most read blogs
-                relatedPosts // Add related posts
+                categoryCountMap: categoryCountMapObj, 
+                hashtagCountMap: hashtagCountMapObj,
+                filterType: 'All', 
+                filterValue: '', 
+                mostReadBlogs,
+                relatedPosts 
             });
         } catch (err) {
             console.error(err.message);

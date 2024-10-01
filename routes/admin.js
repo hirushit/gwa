@@ -679,14 +679,15 @@ router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, r
 
 router.get('/blog', isLoggedIn, async (req, res) => {
   try {
-      const doctors = await Doctor.find(); // Fetch all doctors
-      const admin = await Admin.findOne({ email: req.session.user.email }); // Fetch the logged-in admin
+      const doctors = await Doctor.find(); 
+      const admin = await Admin.findOne({ email: req.session.user.email }); 
+      const conditions = await Condition.find(); 
 
       if (!admin) {
           return res.status(403).send('Unauthorized');
       }
 
-      res.render('admin-blog-upload-form', { activePage: 'blog-upload', doctors, admin });
+      res.render('admin-blog-upload-form', { activePage: 'blog-upload', doctors, admin, conditions });
   } catch (err) {
       console.error(err);
       res.status(500).send('Server Error');
@@ -695,12 +696,11 @@ router.get('/blog', isLoggedIn, async (req, res) => {
 
 router.post('/blog-all', upload.single('image'), async (req, res) => {
   try {
-      const { title, description, summary, categories, subcategories, hashtags, priority, authorId } = req.body;
+      const { title, description, categories, hashtags, priority, authorId, selectedConditions } = req.body;
 
       let author = null;
       let authorEmail = null;
 
-      // Determine if the selected author is a doctor or admin
       const doctor = await Doctor.findById(authorId);
       if (doctor) {
           author = doctor.name;
@@ -721,18 +721,17 @@ router.post('/blog-all', upload.single('image'), async (req, res) => {
           title,
           author,
           description,
-          summary,
           authorEmail,
           authorId, 
           categories,
-          subcategories: subcategories, 
-          hashtags, 
+          conditions: selectedConditions,
+          hashtags,
           priority,
           image: {
               data: req.file.buffer,
               contentType: req.file.mimetype
           },
-          verificationStatus: 'Pending' 
+          verificationStatus: 'Verified' 
       });
 
       await newBlog.save();

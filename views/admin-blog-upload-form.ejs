@@ -5,105 +5,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Blog Upload</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
         .select2-container--default .select2-selection--multiple .select2-selection__choice {
             background-color: #007bff;
             border: 1px solid #007bff;
             color: white;
         }
+        #editor {
+            height: 200px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="dashboard">
-        <!-- Sidebar -->
-        <!-- <div class="sidebar">
-            <div class="sidebar-logo">
-                <img src="/logo.png" alt="Admin Logo">
-            </div> -->
-            <h2>Admin Functions</h2>
-            <ul class="sidebar-menu">
-                <li><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View and Approve Blogs</a></li>
-                <li><a href="/admin/blog" <% if (activePage === 'blog') { %> class="active" <% } %>>Upload Admin Blog</a></li>
-                <li><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
-                <li><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
-                <li><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
-                <!-- <li><a href="/admin/blogs-all" <% if (activePage === 'blogs-all') { %> class="active" <% } %>>Search Blogs</a></li> -->
-                <li><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
-                <li><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
-                <li><a href="/admin/bookings" <% if (activePage === 'bookings') { %> class="active" <% } %>>View Bookings</a></li>
-                <li><a href="/admin/insights" <% if (activePage === 'insights') { %> class="active" <% } %>>View Insights</a></li>
-                <li><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>          
-                <li><a href="/admin/specialty/new" class="<%= activePage === 'specialties' ? 'active' : '' %>">Manage Specialties</a></li>
-                <li><a href="/admin/condition/new" class="<%= activePage === 'conditions' ? 'active' : '' %>">Manage Conditions</a></li>  
-            </ul>
-        </div>
+        <h2>Admin Functions</h2>
+        <ul class="sidebar-menu">
+            <li><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View and Approve Blogs</a></li>
+            <li><a href="/admin/blog" <% if (activePage === 'blog') { %> class="active" <% } %>>Upload Admin Blog</a></li>
+            <li><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
+            <li><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
+            <li><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
+            <li><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
+            <li><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
+            <li><a href="/admin/bookings" <% if (activePage === 'bookings') { %> class="active" <% } %>>View Bookings</a></li>
+            <li><a href="/admin/insights" <% if (activePage === 'insights') { %> class="active" <% } %>>View Insights</a></li>
+            <li><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
+            <li><a href="/admin/specialty/new" class="<%= activePage === 'specialties' ? 'active' : '' %>">Manage Specialties</a></li>
+            <li><a href="/admin/condition/new" class="<%= activePage === 'conditions' ? 'active' : '' %>">Manage Conditions</a></li>  
+        </ul>
+    </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <div class="container">
-                <h1>Admin Blog Upload Form</h1>
-                <form id="blogForm" action="/admin/blog-all" method="POST" enctype="multipart/form-data">
-                    <label for="title">Title:</label><br>
-                    <input type="text" id="title" name="title" required><br><br>
-                    
-                    <label for="author">Select Author (Doctor or Admin):</label>
-                    <select name="authorId" id="author" required>
-                        <option value="<%= admin._id %>"><%= admin.name %> (Admin)</option> <!-- Option to blog as admin -->
-                        <% doctors.forEach(doctor => { %>
-                            <option value="<%= doctor._id %>"><%= doctor.name %> (Doctor)</option>
-                        <% }); %>
+    <div class="main-content">
+        <div class="container">
+            <h1>Admin Blog Upload Form</h1>
+            <form id="blogForm" action="/admin/blog-all" method="POST" enctype="multipart/form-data">
+                <label for="title">Title:</label><br>
+                <input type="text" id="title" name="title" required><br><br>
+                
+                <label for="author">Select Author (Doctor or Admin):</label>
+                <select name="authorId" id="author" required>
+                    <option value="<%= admin._id %>"><%= admin.name %> (Admin)</option> 
+                    <% doctors.forEach(doctor => { %>
+                        <option value="<%= doctor._id %>"><%= doctor.name %> (Doctor)</option>
+                    <% }); %>
+                </select><br><br>
+
+                <label for="description">Description:</label><br>
+                <div id="editor"></div>
+                <input type="hidden" name="description" id="description"><br><br>
+
+                <label for="image">Upload Image:</label><br>
+                <input type="file" id="image" name="image" accept="image/*" required><br><br>
+
+                <div class="form-group">
+                    <label for="conditions">Conditions:</label>
+                    <select id="conditions" name="selectedConditions" class="form-control" required>
+                        <% conditions.forEach(condition => { %>
+                        <option value="<%= condition.name %>"><%= condition.name %></option>
+                        <% }) %>
                     </select>
+                </div>
+                
+                <label for="categories">Category:</label><br>
+                <select id="categories" name="categories" style="width: 100%;" required>
+                    <option value="Signs & Symptoms">Signs & Symptoms</option>
+                    <option value="Causes & Risks">Causes & Risks</option>
+                    <option value="Testing & Diagnosis">Testing & Diagnosis</option>
+                    <option value="Treatment">Treatment</option>
+                    <option value="Living with [condition]">Living with [condition]</option>
+                </select><br><br>
+                
+                <label for="hashtags">Hashtags:</label><br>
+                <select id="hashtags" name="hashtags" multiple="multiple" style="width: 100%;">
+                    <option value="#diabetes">#diabetes</option>
+                    <option value="#type1diabetes">#type1diabetes</option>
+                    <option value="#type2diabetes">#type2diabetes</option>
+                    <option value="#gestationaldiabetes">#gestationaldiabetes</option>
+                    <option value="#diabetesawareness">#diabetesawareness</option>
+                    <option value="#diabeticlife">#diabeticlife</option>
+                    <option value="#diabetesmanagement">#diabetesmanagement</option>
+                    <option value="#insulin">#insulin</option>
+                    <option value="#bloodsugar">#bloodsugar</option>
+                    <option value="#diabetescommunity">#diabetescommunity</option>
+                    <option value="#diabeteswarrior">#diabeteswarrior</option>
+                    <option value="#diabeteseducation">#diabeteseducation</option>
+                    <option value="#diabetesdiet">#diabetesdiet</option>
+                    <option value="#diabetesresearch">#diabetesresearch</option>
+                    <option value="#diabeteslife">#diabeteslife</option>
 
+                    <option value="#asthma">#asthma</option>
+                    <option value="#asthmaawareness">#asthmaawareness</option>
+                    <option value="#asthmaattack">#asthmaattack</option>
+                    <option value="#asthmawarrior">#asthmawarrior</option>
+                    <option value="#asthmatreatment">#asthmatreatment</option>
+                    <option value="#asthmaeducation">#asthmaeducation</option>
+                    <option value="#asthmafriendly">#asthmafriendly</option>
+                    <option value="#asthmalife">#asthmalife</option>
+                    <option value="#asthmarelief">#asthmarelief</option>
+                    <option value="#asthmaresearch">#asthmaresearch</option>
+                    <option value="#asthmaawarenessmonth">#asthmaawarenessmonth</option>
+                    <option value="#asthmajourney">#asthmajourney</option>
+                    <option value="#asthmamanagement">#asthmamanagement</option>
+                    <option value="#doctorsofinstagram">#doctorsofinstagram</option>
+                </select><br><br>
 
-                    <label for="description">Description:</label><br>
-                    <textarea id="description" name="description" rows="4" required></textarea><br><br>
-                                        
-                    <label for="image">Upload Image:</label><br>
-                    <input type="file" id="image" name="image" accept="image/*" required><br><br>
-                    
-                    <label for="categories">Categories:</label><br>
-                    <select id="categories" name="categories" style="width: 100%;" required>
-                        <option value="">Select Category</option>
-                        <option value="Doctor">Doctor</option>
-                        <option value="Travel">Travel</option>
-                        <option value="Lifestyle">Lifestyle</option>
-                        <option value="Medical">Medical</option>
-                        <option value="Politics">Politics</option>
-                        <option value="Sports">Sports</option>
-                        <option value="Music">Music</option>
-                        <option value="Fashion">Fashion</option>
-                        <option value="Fitness">Fitness</option>
-                    </select><br><br>
-                    
-                    <label for="subcategories">Subcategories:</label><br>
-                    <select id="subcategories" name="subcategories" multiple="multiple" style="width: 100%;" required>
-                        <!-- Subcategories will be populated based on the selected category -->
-                    </select><br><br>
-                    
-                    <label for="hashtags">Hashtags:</label><br>
-                    <select id="hashtags" name="hashtags" multiple="multiple" style="width: 100%;">
-                        <option value="#blogger">#blogger</option>
-                        <option value="#medfluencer">#medfluencer</option>
-                        <option value="#wms">#wms</option>
-                        <option value="#mbchb">#mbchb</option>
-                        <!-- Other hashtags omitted for brevity -->
-                        <option value="#doctorsofinstagram">#doctorsofinstagram</option>
-                    </select><br><br>
+                <label for="priority">Priority:</label><br>
+                <select id="priority" name="priority">
+                    <option value="high">High</option>
+                    <option value="low">Low</option>
+                </select><br><br>
 
-                    <label for="priority">Priority:</label><br>
-                    <select id="priority" name="priority">
-                        <option value="high">High</option>
-                        <option value="low">Low</option>
-                    </select><br><br>
-
-                    <button type="submit">Upload Blog</button>
-                </form>
-            </div>
+                <button type="submit">Upload Blog</button>
+            </form>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
         $(document).ready(function() {
             $('#categories').select2({
@@ -114,33 +135,20 @@
                 placeholder: "Select hashtags",
                 allowClear: true
             });
-            $('#subcategories').select2({
-                placeholder: "Select subcategories",
+            $('#conditions').select2({
+                placeholder: "Select conditions",
                 allowClear: true
             });
 
-            const subcategoriesData = {
-                "Doctor": ["General Surgery", "Oriental Medicine", "Latest Medical Research", "Common Medical Condition", "Mental Health", "Conventional Medicine", "Medical Education", "Psychology"],
-                "Travel": ["Adventure", "Cultural", "Luxury", "Backpacking", "Budget Travel"],
-                "Lifestyle": ["Healthy Living", "Home Decor", "Relationships", "Self-Care"],
-                "Medical": ["Neurology", "Cardiology", "Dermatology", "Oncology", "Pediatrics"],
-                "Politics": ["International", "Domestic", "Elections", "Policy"],
-                "Sports": ["Football", "Basketball", "Cricket", "Tennis", "Athletics"],
-                "Music": ["Classical", "Rock", "Pop", "Jazz", "Hip-Hop"],
-                "Fashion": ["Trends", "Designers", "Runway", "Street Style"],
-                "Fitness": ["Workouts", "Nutrition", "Yoga", "Mental Health"]
-            };
+            const quill = new Quill('#editor', {
+                theme: 'snow'
+            });
 
-            $('#categories').change(function() {
-                const selectedCategory = $(this).val();
-                const subcategories = subcategoriesData[selectedCategory] || [];
-                
-                $('#subcategories').empty().trigger('change');
-                subcategories.forEach(subcategory => {
-                    const newOption = new Option(subcategory, subcategory, false, false);
-                    $('#subcategories').append(newOption).trigger('change');
-                });
+            $('#blogForm').on('submit', function(e) {
+                const description = quill.root.innerHTML;
+                $('#description').val(description);
             });
         });
     </script>
+</body>
 </html>

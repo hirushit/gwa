@@ -1,8 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        function timeAgo(date) {
+            const now = new Date();
+            const seconds = Math.floor((now - new Date(date)) / 1000);
+            let interval = Math.floor(seconds / 31536000); // Years
+            if (interval >= 1) return interval + " year" + (interval === 1 ? "" : "s") + " ago";
+            interval = Math.floor(seconds / 2592000); // Months
+            if (interval >= 1) return interval + " month" + (interval === 1 ? "" : "s") + " ago";
+            interval = Math.floor(seconds / 86400); // Days
+            if (interval >= 1) return interval + " day" + (interval === 1 ? "" : "s") + " ago";
+            interval = Math.floor(seconds / 3600); // Hours
+            if (interval >= 1) return interval + " hr" + (interval === 1 ? "" : "s") + " ago";
+            interval = Math.floor(seconds / 60); // Minutes
+            if (interval >= 1) return interval + " min" + (interval === 1 ? "" : "s") + " ago";
+            return "just now";
+        }
+    </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="<%= blog.title %>" />
+    <meta property="og:description" content="<%= blog.description %>" />
+    <meta property="og:image" content="<%= blogImageBase64 ? `data:${blog.image.contentType};base64,${blogImageBase64}` : 'https://yourwebsite.com/path/to/default-image.jpeg' %>">
+    <meta property="og:url" content="https://beta.medxbay.com/blogPost/<%= blog._id %>" />
+    <meta property="og:type" content="article" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="<%= blog.title %>" />
+    <meta name="twitter:description" content="<%= blog.description %>" />
+    <meta name="twitter:image" content="<%= blogImageBase64 ? `data:${blog.image.contentType};base64,${blogImageBase64}` : 'https://yourwebsite.com/path/to/default-image.jpeg' %>">
+    <meta name="twitter:url" content="https://beta.medxbay.com/blogPost/<%= blog._id %>" />
     <title>Blog Details</title>
     <style>
         body {
@@ -22,41 +50,31 @@
             flex: 1;
             padding-left: 20px;
         }
-        .sidebar h2 {
-            font-size: 1.5em;
-            margin-top: 0;
-        }
-        .sidebar ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        .sidebar li {
-            margin-bottom: 20px;
-        }
-        .sidebar img {
-            width: 80px; /* Reduced width */
-            height: auto; /* Maintains aspect ratio */
-            display: block;
-            margin-bottom: 10px;
-        }
-        .sidebar strong {
-            font-size: 1.2em;
-            display: block;
-            margin-top: 5px;
-        }
-        .sidebar p {
-            font-size: 0.9em;
-            color: #555;
-        }
-        .comments {
+        .comments-section {
             margin-top: 30px;
         }
-        .comments ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        .comments li {
+        .comment, .reply {
+            border: 1px solid #ddd;
+            padding: 10px;
             margin-bottom: 10px;
+        }
+        .comment-header, .reply-header {
+            display: flex;
+            align-items: center;
+        }
+        .comment-profile-picture, .reply-profile-picture {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .comment-username, .reply-username {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .comment-date, .reply-date {
+            font-size: 0.9em;
+            color: #777;
         }
     </style>
 </head>
@@ -76,11 +94,8 @@
             <a href="/doctor/author/<%= blog.authorId %>">View Author Info</a>
             
             <h2>Description</h2>
-            <!-- Render the HTML content with decoration -->
             <div><%- blog.description %></div>
             
-           
-
             <h2>Categories</h2>
             <ul>
                 <% blog.categories.forEach(category => { %>
@@ -97,22 +112,62 @@
                     <li><%= hashtag %></li>
                 <% }); %>
             </ul>
-            
-            <div class="comments">
-                <h2>Comments:</h2>
-                <ul>
+
+            <!-- Comments Section -->
+            <section class="comments-section">
+                <h2>Comments</h2>
+                <% if (blog.comments && Array.isArray(blog.comments)) { %>
                     <% blog.comments.forEach(comment => { %>
-                        <li><strong><%= comment.username %>:</strong> <%= comment.comment %> (<%= comment.date.toLocaleString() %>)</li>
+                        <div class="comment">
+                            <div class="comment-header">
+                                <% if (comment.profilePicture) { %>
+                                    <img src="<%= comment.profilePicture %>" alt="Profile Picture" class="comment-profile-picture">
+                                <% } %>
+                                <span class="comment-username"><%= comment.username %></span>
+                                <span class="comment-date">
+                                    <script>document.write(timeAgo("<%= comment.date %>"));</script>
+                                </span>
+                            </div>
+                            <p><%= comment.comment %></p>
+                            <!-- Display replies if any -->
+                            <% if (comment.replies && Array.isArray(comment.replies) && comment.replies.length > 0) { %>
+                                <ul>
+                                    <% comment.replies.forEach(reply => { %>
+                                        <li class="reply">
+                                            <div class="reply-header" style="margin-left: 20px;">
+                                                <% if (reply.profilePicture) { %>
+                                                    <img src="<%= reply.profilePicture %>" alt="Reply Profile Picture" class="reply-profile-picture">
+                                                <% } %>
+                                                <span class="reply-username"><%= reply.username %></span>
+                                                <span class="reply-date">
+                                                    <script>document.write(timeAgo("<%= reply.date %>"));</script>
+                                                </span>
+                                            </div>
+                                            <p style="margin-left: 20px;"><%= reply.reply %></p>
+                                        </li>
+                                    <% }); %>
+                                </ul>
+                            <% } %>
+                            <!-- Reply Form -->
+                            <form action="/doctor/blogs/comment/<%= blog._id %>/reply/<%= comment._id %>" method="POST" style="margin-top: 10px;">
+                                <textarea name="reply" placeholder="Write a reply..." rows="2" cols="50" ></textarea><br>
+                                <button type="submit">Reply</button>
+                            </form>
+                        </div>
                     <% }); %>
-                </ul>
+                <% } else { %>
+                    <p>No comments available.</p>
+                <% } %>
+
+                <!-- Add a New Comment -->
+                <h3>Add a Comment</h3>
                 <form action="/doctor/blogs/comment/<%= blog._id %>" method="POST">
-                    <label for="comment">Add Comment:</label>
-                    <textarea name="comment" id="comment" cols="30" rows="5" required></textarea>
-                    <button type="submit">Submit Comment</button>
+                    <textarea name="comment" placeholder="Write your comment here..." rows="4" cols="50" required></textarea><br>
+                    <button type="submit">Submit</button>
                 </form>
-            </div>
+            </section>
         </div>
-        
+
         <div class="sidebar">
             <h2>Related Posts</h2>
             <ul>
@@ -140,6 +195,16 @@
                 <% }) %>
             </ul>
         </div>
+
+        <div class="social-share">
+            <h3>Share this Blog:</h3>
+            <a href="<%= facebookShareUrl %>" target="_blank">
+                <button>Share on Facebook</button>
+            </a>
+            <a href="<%= twitterShareUrl %>" target="_blank">
+                <button>Share on Twitter</button>
+            </a>
+        </div>
     </div>
-</body>
+    </body>
 </html>

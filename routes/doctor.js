@@ -1326,60 +1326,121 @@ router.get('/blogs/conditions', isLoggedIn, isDoctor,async (req, res) => {
 
 
 
-router.get('/blogs/conditions/:condition', isLoggedIn,  isDoctor,async (req, res) => {
+router.get('/blogs/conditions/:condition', isLoggedIn, isDoctor, async (req, res) => {
     try {
         const { condition } = req.params;
-  
+
+        // Fetch top 5 priority blogs for the given condition
         const topPriorityBlogs = await Blog.find({ conditions: condition })
-            .sort({ priority: -1 }) 
+            .sort({ priority: -1 })
             .limit(5);
-  
+
+        // Fetch first 5 recent blogs
         const recentBlogs = await Blog.find({ conditions: condition })
             .sort({ createdAt: -1 })
             .limit(5);
-  
+
+        // Fetch first 5 most-read blogs
         const mostReadBlogs = await Blog.find({ conditions: condition })
-            .sort({ readCount: -1 }) 
+            .sort({ readCount: -1 })
             .limit(5);
-  
+
+        // Fetch blogs grouped by categories, showing only 3 categories
         const blogsByCategory = await Blog.aggregate([
             { $match: { conditions: condition } },
             {
                 $group: {
                     _id: "$categories",
-                    blogs: { $push: "$$ROOT" }
+                    blogs: { $push: "$$ROOT" },
+                    totalBlogs: { $sum: 1 } // Count the total blogs in each category
                 }
             },
             {
                 $project: {
                     _id: 1,
-                    blogs: { $slice: ["$blogs", 6] }
+                    blogs: { $slice: ["$blogs", 6] }, // Limit to 6 blogs per category
+                    totalBlogs: 1,
+                    showAll: { $cond: { if: { $gt: ["$totalBlogs", 3] }, then: true, else: false } }
                 }
-            }
+            },
+            { $limit: 3 } // Show only 3 categories
         ]);
-  
+
+        // Aggregate and count hashtags
         const hashtags = await Blog.aggregate([
             { $match: { conditions: condition } },
             { $unwind: "$hashtags" },
             { $group: { _id: "$hashtags", count: { $sum: 1 } } },
             { $sort: { count: -1 } }
         ]);
-        console.log(hashtags);
-        
-  
+
         res.render('condition-blogs', {
             condition,
             topPriorityBlogs,
             recentBlogs,
             mostReadBlogs,
             blogsByCategory,
-            hashtags
+            hashtags,
+            showAllRecent: true, // Flag to display "Show All" link for Recent Blogs
+            showAllMostRead: true // Flag to display "Show All" link for Most Read Blogs
         });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
     }
-  });
+});
+
+
+router.get('/blogs/conditions/:condition/recent-blogs', isLoggedIn, isDoctor, async (req, res) => {
+    try {
+        const { condition } = req.params;
+
+        const allRecentBlogs = await Blog.find({ conditions: condition })
+            .sort({ createdAt: -1 });
+
+        res.render('all-blogs', {
+            condition,
+            blogs: allRecentBlogs,
+            title: 'All Recent Blogs'
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+router.get('/blogs/conditions/:condition/most-read-blogs', isLoggedIn, isDoctor, async (req, res) => {
+    try {
+        const { condition } = req.params;
+
+        const allMostReadBlogs = await Blog.find({ conditions: condition })
+            .sort({ readCount: -1 });
+
+        res.render('all-blogs', {
+            condition,
+            blogs: allMostReadBlogs,
+            title: 'All Most Read Blogs'
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+router.get('/blogs/conditions/:condition/category/:category', isLoggedIn, isDoctor, async (req, res) => {
+    try {
+        const { condition, category } = req.params;
+
+        const categoryBlogs = await Blog.find({
+            conditions: condition,
+            categories: category
+        }).sort({ createdAt: -1 }); 
+
+        res.render('category-blogs', { conditionName: condition, categoryName:category, blogs: categoryBlogs });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
 
   router.get('/blogs/conditions/:condition/hashtag/:hashtag', isLoggedIn, isDoctor,async (req, res) => {
     try {
@@ -1458,6 +1519,25 @@ router.get('/blogs/conditions/:condition', isLoggedIn,  isDoctor,async (req, res
     }
 });
 
+router.get('/blogs/conditions/:condition/all', isLoggedIn, isDoctor, async (req, res) => {
+    try {
+        const { condition } = req.params;
+
+        const allBlogs = await Blog.find({ conditions: condition }).sort({ createdAt: -1 });
+
+        const conditionDescription = "Description of the condition";
+
+        res.render('all-condition-blogs', {
+            condition,
+            conditionDescription,
+            allBlogs,
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
 
   
 
@@ -1465,19 +1545,16 @@ router.get('/blogs/category/:category', isDoctor, isLoggedIn, async (req, res) =
     try {
         const { category } = req.params;
 
-        // Fetch blogs by category
         const blogs = await Blog.find({ 
             categories: { $in: [category] }, 
             verificationStatus: 'Verified' 
         }).lean();
 
-        // Fetch most read blogs
         const mostReadBlogs = await Blog.find({ verificationStatus: 'Verified' })
             .sort({ readCount: -1 })
             .limit(5)
             .lean();
 
-        // Fetch related posts by the same category
         const relatedPosts = await Blog.find({
             verificationStatus: 'Verified',
             categories: { $in: [category] }
@@ -1485,10 +1562,8 @@ router.get('/blogs/category/:category', isDoctor, isLoggedIn, async (req, res) =
         .limit(5)
         .lean();
 
-        // Fetch all categories
         const categories = await Blog.distinct('categories');
 
-        // Count the number of blogs in each category
         const categoryCountMap = await Blog.aggregate([
             { $match: { verificationStatus: 'Verified' } },
             { $unwind: '$categories' },
@@ -1501,10 +1576,8 @@ router.get('/blogs/category/:category', isDoctor, isLoggedIn, async (req, res) =
             return acc;
         }, {});
 
-        // Fetch all hashtags
         const hashtags = await Blog.distinct('hashtags');
 
-        // Count the number of blogs in each hashtag
         const hashtagCountMap = await Blog.aggregate([
             { $match: { verificationStatus: 'Verified' } },
             { $unwind: '$hashtags' },
@@ -1633,7 +1706,7 @@ router.get('/blogs/category/:category', isDoctor, isLoggedIn, async (req, res) =
 
 
 
-router.get('/profile/blogs', isLoggedIn, async (req, res) => {
+router.get('/profile/blogs', isLoggedIn, checkSubscription,async (req, res) => {
     try {
       const doctorEmail = req.session.user.email; 
   
@@ -1646,24 +1719,47 @@ router.get('/profile/blogs', isLoggedIn, async (req, res) => {
     }
   });
 
-  router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
+  router.post('/profile/blogs/delete/:id', isLoggedIn, checkSubscription, async (req, res) => {
+    try {
+
+      await Blog.findByIdAndDelete(req.params.id);
+  
+
+      res.redirect('/doctor/profile/blogs');
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
+router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
     try {
         const blog = await Blog.findById(req.params.id);
-        const conditions = await Condition.find(); 
 
         if (!blog) {
             console.error('Blog not found');
             return res.status(404).send('Blog not found');
         }
 
+        if (!req.session.user || !req.session.user._id) {
+            console.error('Unauthorized: No user session found');
+            return res.status(403).send('Unauthorized');
+        }
+
+        if (!blog.authorId) {
+            console.error('Blog author ID is not defined');
+            return res.status(403).send('Unauthorized');
+        }
+
         if (blog.authorId.toString() !== req.session.user._id.toString()) {
             return res.status(403).send('Unauthorized');
         }
 
-        const hashtags = Array.isArray(blog.hashtags) ? blog.hashtags : blog.hashtags.split(',');
-        const categories = Array.isArray(blog.categories) ? blog.categories : blog.categories.split(',');
+        const conditions = await Condition.find(); 
+        const categories = blog.categories; 
+        const hashtags = blog.hashtags;
 
-        res.render('edit-blog', { blog, conditions, hashtags, categories });
+        res.render('edit-blog', { blog, conditions, categories, hashtags });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -1690,7 +1786,9 @@ router.post('/blogs/edit/:id', isLoggedIn, checkSubscription, upload.single('ima
         blog.hashtags = Array.isArray(hashtags) ? hashtags : hashtags.split(',');
         blog.conditions = selectedConditions;
 
-        blog.verificationStatus = 'Pending';
+        if (req.body.action === 'edit') {
+            blog.verificationStatus = 'Pending';
+        }
 
         if (req.file) {
             blog.image.data = req.file.buffer;
@@ -1705,6 +1803,65 @@ router.post('/blogs/edit/:id', isLoggedIn, checkSubscription, upload.single('ima
         res.status(500).send('Server Error');
     }
 });
+
+router.delete('/blogs/:blogId/comments/:commentId', isLoggedIn, async (req, res) => {
+    const { blogId, commentId } = req.params;
+
+    try {
+        const blog = await Blog.findById(blogId);
+
+        if (!blog) {
+            return res.status(404).send('Blog not found');
+        }
+
+        const commentIndex = blog.comments.findIndex(comment => comment._id.toString() === commentId);
+        if (commentIndex === -1) {
+            return res.status(404).send('Comment not found');
+        }
+
+        blog.comments.splice(commentIndex, 1);
+
+        await blog.save();
+
+        res.status(200).send('Comment deleted successfully');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+router.delete('/blogs/:blogId/comments/:commentId/replies/:replyId', isLoggedIn, async (req, res) => {
+    const { blogId, commentId, replyId } = req.params;
+
+    try {
+        const blog = await Blog.findById(blogId);
+
+        if (!blog) {
+            return res.status(404).send('Blog not found');
+        }
+
+        const comment = blog.comments.id(commentId);
+        if (!comment) {
+            return res.status(404).send('Comment not found');
+        }
+
+        const replyIndex = comment.replies.findIndex(reply => reply._id.toString() === replyId);
+        if (replyIndex === -1) {
+            return res.status(404).send('Reply not found');
+        }
+
+        comment.replies.splice(replyIndex, 1);
+
+        await blog.save();
+
+        res.status(200).send('Reply deleted successfully');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+
 
 
 
@@ -1849,13 +2006,26 @@ router.get('/blogs/view/:id', isLoggedIn, checkSubscription, async (req, res) =>
             verificationStatus: "Verified" 
         }).sort({ readCount: -1 }).limit(5).lean();
 
-        res.render('DoctorViewBlog', { blog, relatedPosts, mostReadPosts });
+        let blogImageBase64 = null;
+        if (blog.image && blog.image.data) {
+            blogImageBase64 = Buffer.from(blog.image.data).toString('base64');
+        }
+
+        const blogUrl = `http://medxbay.com/doctor/blogs/view/${blogId}`;
+        const encodedBlogUrl = encodeURIComponent(blogUrl);
+        const encodedTitle = encodeURIComponent(blog.title);
+
+        const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedBlogUrl}`;
+
+        const twitterShareUrl = `https://twitter.com/intent/tweet?url=${encodedBlogUrl}&text=${encodeURIComponent(blog.title)}`;
+
+        res.render('DoctorViewBlog', { blog, relatedPosts, mostReadPosts,facebookShareUrl, blogImageBase64,
+            twitterShareUrl });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
-
 
 
   
@@ -1873,11 +2043,7 @@ router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
 
         blog.comments.push({
             username: user.name,
-            comment: comment,
-            profilePicture: {
-                data: user.profilePicture.data, 
-                contentType: user.profilePicture.contentType
-            }
+            comment: comment
         });
   
         await blog.save();
@@ -1889,6 +2055,80 @@ router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+
+router.post('/blogs/comment/:blogId', isLoggedIn, async (req, res) => {
+    try {
+        const { comment } = req.body;
+        const { blogId } = req.params;
+
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).send('Blog not found');
+        }
+
+        const user = req.session.user;
+
+        if (!user || !user.name) {
+            req.flash('error_msg', 'User not logged in or username not found.');
+            return res.redirect(`/doctor/blogs/view/${blogId}`);
+        }
+
+        blog.comments.push({
+            username: user.name,
+            comment: comment,
+            timestamp: Date.now() 
+        });
+
+        await blog.save();
+
+        req.flash('success_msg', 'Comment added successfully');
+        res.redirect(`/doctor/blogs/view/${blogId}`);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+router.post('/blogs/comment/:blogId/reply/:commentId', isLoggedIn, async (req, res) => {
+    try {
+        const { reply } = req.body;
+        const { blogId, commentId } = req.params;
+
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).send('Blog not found');
+        }
+
+        const comment = blog.comments.id(commentId);
+        if (!comment) {
+            return res.status(404).send('Comment not found');
+        }
+
+        const user = req.session.user;
+
+        if (!user || !user.name) {
+            req.flash('error_msg', 'User not logged in or username not found.');
+            return res.redirect(`/doctor/blogs/view/${blogId}`);
+        }
+
+        comment.replies.push({
+            username: user.name,
+            reply: reply,
+            timestamp: Date.now() 
+        });
+
+        await blog.save();
+
+        req.flash('success_msg', 'Reply added successfully');
+        res.redirect(`/doctor/blogs/view/${blogId}`);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 
   
   router.get('/author/:id', async (req, res) => {

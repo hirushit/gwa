@@ -11,6 +11,8 @@ const Notification = require('../models/Notification');
 const Insurance = require('../models/Insurance'); 
 const Specialty = require('../models/Specialty');
 const Condition = require('../models/Condition');
+const NewsRelease = require('../models/NewsRelease');  
+const NewsLogo = require('../models/NewsLogo'); 
 const storage = multer.memoryStorage(); 
 const upload = multer({ storage: storage });
 
@@ -29,7 +31,7 @@ function isAdmin(req, res, next) {
 };
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // or any other email service you use
+  service: 'gmail', 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
@@ -135,7 +137,6 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
       message = `Your profile has been rejected. Reason: ${reason}`;
     }
 
-    // Save notification to the database
     const notification = new Notification({
       userId: doctor._id, 
       message,
@@ -144,10 +145,9 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     });
     await notification.save();
 
-    // Send email notification
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: doctor.email, // Ensure doctor has an email field
+      to: doctor.email, 
       subject: '🎉 Your Profile Status Has Been Updated 🎉',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #F4F7FC;">
@@ -187,25 +187,22 @@ router.get('/manage-payments', isLoggedIn, async (req, res) => {
   try {
     const { name, email, subscriptionType } = req.query;
 
-    // Build the search query
     let query = {};
 
     if (name) {
-      query.name = new RegExp(name, 'i'); // Case-insensitive regex search for the name
+      query.name = new RegExp(name, 'i'); 
     }
 
     if (email) {
-      query.email = new RegExp(email, 'i'); // Case-insensitive regex search for the email
+      query.email = new RegExp(email, 'i'); 
     }
 
-    // Filter by subscriptionType only if provided in the query; otherwise, default to Standard, Premium, and Enterprise
     if (subscriptionType) {
       query.subscriptionType = subscriptionType;
     } else {
       query.subscriptionType = { $in: ['Standard', 'Premium', 'Enterprise'] };
     }
 
-    // Fetch doctors based on the constructed query
     const doctors = await Doctor.find(query).lean();
 
     res.render('managePayments', { doctors, activePage: 'manage-payments', name, email, subscriptionType });
@@ -220,7 +217,6 @@ router.get('/update-payments/:doctorId', isAdmin, async (req, res) => {
     const doctorId = req.params.doctorId;
     const doctor = await Doctor.findById(doctorId).lean();
 
-    // Check if the subscription type is 'Standard', 'Premium', or 'Enterprise'
     if (doctor.subscriptionType === 'Standard' || 
         doctor.subscriptionType === 'Premium' || 
         doctor.subscriptionType === 'Enterprise') {
@@ -228,7 +224,6 @@ router.get('/update-payments/:doctorId', isAdmin, async (req, res) => {
       res.render('updatePayments', { doctor });
       
     } else {
-      // If subscriptionType is not 'Standard', 'Premium', or 'Enterprise', redirect or show error
       res.status(403).send('Access denied: The doctor does not have the correct subscription type.');
     }
   } catch (err) {
@@ -243,26 +238,22 @@ router.post('/update-payments/:doctorId', isAdmin, async (req, res) => {
       const doctorId = req.params.doctorId;
       const updateData = {};
 
-      // Check if tempDoctorFee is provided in the request body
       if (req.body.tempDoctorFee !== undefined) {
           updateData.tempDoctorFee = req.body.tempDoctorFee * 100;
-          console.log(updateData); // Convert to cents (assuming the value in the form is in dollars)
+          console.log(updateData); 
       }
 
-      // Check if tempDoctorFeeStatus is provided in the request body
       if (req.body.tempDoctorFeeStatus !== undefined) {
           updateData.tempDoctorFeeStatus = req.body.tempDoctorFeeStatus;
       }
       console.log(updateData)
 
-      // Update the doctor document with the new values
       const doctor = await Doctor.findByIdAndUpdate(doctorId, updateData, { new: true });
 
       if (!doctor) {
           return res.status(404).send('Doctor not found');
       }
 
-      // Redirect after successful update
       res.redirect('/admin/manage-payments');
   } catch (err) {
       console.error(err.message);
@@ -379,7 +370,6 @@ router.get('/view-patients', isLoggedIn, async (req, res) => {
 router.get('/edit-patient/:patientId', async (req, res) => {
   try {
     const patientId = req.params.patientId;
-    // Fetch patient details by ID from the database
     const patient = await Patient.findById(patientId);
     if (!patient) {
       return res.status(404).send('Patient not found');
@@ -579,7 +569,7 @@ router.get('/blogs', isLoggedIn, async (req, res) => {
     res.render('adminBlogs', { 
       blogs, 
       success_msg: req.flash('success_msg'),
-      activePage: 'blogs' // Add this line
+      activePage: 'blogs' 
     });
   } catch (err) {
     console.error(err.message);
@@ -587,6 +577,16 @@ router.get('/blogs', isLoggedIn, async (req, res) => {
   }
 });
 
+router.post('/blogs/delete/:id', isLoggedIn, async (req, res) => {
+  try {
+    await Blog.findByIdAndDelete(req.params.id);
+    req.flash('success_msg', 'Blog successfully deleted');
+    res.redirect('/admin/blogs');
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 
 router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
@@ -599,6 +599,56 @@ router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
       }
 
       res.render('adminViewBlog', { blog, activePage: 'blogs' }); 
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+
+router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
+  try {
+      const blogId = req.params.id;
+      const blog = await Blog.findById(blogId).lean();
+
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+
+      res.render('adminViewBlog', { blog, activePage: 'blogs' }); 
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.post('/blogs/verify/:id', isLoggedIn, async (req, res) => {
+  try {
+      const blogId = req.params.id;
+      const { verificationStatus } = req.body;
+
+      if (!['Verified', 'Pending', 'Not Verified'].includes(verificationStatus)) {
+          return res.status(400).send('Invalid verification status');
+      }
+
+      const blog = await Blog.findById(blogId);
+
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+
+      await Blog.updateOne({ _id: blogId }, { verificationStatus });
+
+      const notification = new Notification({
+          userId: blog.authorId, 
+          message: `Your blog titled "${blog.title}" has been ${verificationStatus.toLowerCase()}.`,
+          type: 'verification',
+      });
+
+      await notification.save();
+
+      req.flash('success_msg', 'Blog verification status updated and user notified.');
+      res.redirect('/admin/blogs');
   } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');
@@ -637,43 +687,6 @@ router.post('/blogs/verify/:id', isLoggedIn, async (req, res) => {
   } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');
-  }
-});
-
-
-router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, res) => {
-  try {
-    const { title, description, summary, categories, subcategories, priority, hashtags } = req.body;
-    const blogId = req.params.id;
-
-    const blog = await Blog.findById(blogId);
-
-    if (!blog) {
-      return res.status(404).send('Blog not found');
-    }
-
-    blog.title = title;
-    blog.description = description;
-    blog.summary = summary;
-    blog.categories = Array.isArray(categories) ? categories : categories.split(',');
-    blog.subcategories = Array.isArray(subcategories) ? subcategories : subcategories.split(',');
-    blog.hashtags = Array.isArray(hashtags) ? hashtags : hashtags.split(',');
-    blog.priority = priority;
-
-    if (req.file) {
-      blog.image = {
-        data: req.file.buffer,
-        contentType: req.file.mimetype
-      };
-    }
-
-    await blog.save();
-
-    req.flash('success_msg', 'Blog updated successfully');
-    res.redirect('/admin/blogs');
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
   }
 });
 
@@ -812,6 +825,134 @@ router.post('/blogs-all/comment/:id', isLoggedIn, async (req, res) => {
   }
 });
 
+router.post('/profile/blogs/delete/:id', isLoggedIn,  async (req, res) => {
+  try {
+
+    await Blog.findByIdAndDelete(req.params.id);
+
+
+    res.redirect('/admin/blogs');
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
+  try {
+      const blog = await Blog.findById(req.params.id);
+
+      if (!blog) {
+          console.error('Blog not found');
+          return res.status(404).send('Blog not found');
+      }
+
+
+
+      const conditions = await Condition.find(); 
+      const categories = blog.categories; 
+      const hashtags = blog.hashtags;
+
+      res.render('admin-edit-blog', { blog, conditions, categories, hashtags });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+
+
+
+router.post('/blogs/edit/:id', isLoggedIn, upload.single('image'), async (req, res) => {
+  try {
+      const blog = await Blog.findById(req.params.id);
+      
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+
+
+      const { title, description, categories, hashtags, selectedConditions } = req.body;
+
+      blog.title = title;
+      blog.description = description;
+      blog.categories = Array.isArray(categories) ? categories : categories.split(',');
+      blog.hashtags = Array.isArray(hashtags) ? hashtags : hashtags.split(',');
+      blog.conditions = selectedConditions;
+
+      if (req.body.action === 'edit') {
+          blog.verificationStatus = 'Verified';
+      }
+
+      if (req.file) {
+          blog.image.data = req.file.buffer;
+          blog.image.contentType = req.file.mimetype;
+      }
+
+      await blog.save();
+
+      res.redirect(`/admin/blogs/edit/${blog._id}`); 
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.delete('/blogs/:blogId/comments/:commentId', isLoggedIn, async (req, res) => {
+  const { blogId, commentId } = req.params;
+
+  try {
+      const blog = await Blog.findById(blogId);
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+
+      const commentIndex = blog.comments.findIndex(comment => comment._id.toString() === commentId);
+      if (commentIndex === -1) {
+          return res.status(404).send('Comment not found');
+      }
+
+      blog.comments.splice(commentIndex, 1);
+      await blog.save();
+
+      res.redirect(`/admin/blogs/edit/${blog._id}`);
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+
+
+router.delete('/blogs/:blogId/comments/:commentId/replies/:replyId', isLoggedIn, async (req, res) => {
+  const { blogId, commentId, replyId } = req.params;
+
+  try {
+      const blog = await Blog.findById(blogId);
+
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+
+      const comment = blog.comments.id(commentId);
+      if (!comment) {
+          return res.status(404).send('Comment not found');
+      }
+
+      const replyIndex = comment.replies.findIndex(reply => reply._id.toString() === replyId);
+      if (replyIndex === -1) {
+          return res.status(404).send('Reply not found');
+      }
+
+      comment.replies.splice(replyIndex, 1);
+
+      await blog.save();
+
+      res.redirect(`/admin/blogs/edit/${blog._id}`);
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+
 router.get('/author/:id', async (req, res) => {
   try {
     const authorId = req.params.id;
@@ -876,10 +1017,8 @@ router.get('/blogs-all', async (req, res) => {
 });
 
 router.get('/insurance/new', isAdmin, (req, res) => {
-  // Set the activePage variable for the 'insurance' section
   const activePage = 'insurances';
 
-  // Render the template with the activePage variable
   res.render('adminNewInsurance', { activePage });
 });
 
@@ -944,19 +1083,16 @@ router.post('/insurances/edit/:id', isAdmin, upload.single('logo'), async (req, 
       return res.status(404).send('Insurance not found');
     }
 
-    // Update the insurance name
     insurance.name = name;
 
-    // Update the logo if a new file is uploaded
     if (req.file) {
       insurance.logo.data = req.file.buffer;
       insurance.logo.contentType = req.file.mimetype;
     }
 
-    // Save the updated insurance
     await insurance.save();
 
-    res.redirect('/admin/insurances'); // Redirect back to the insurance list
+    res.redirect('/admin/insurances'); 
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -972,7 +1108,6 @@ router.get('/insurance/:id', isAdmin, async (req, res) => {
       return res.status(404).send('Insurance not found');
     }
 
-    // Set the activePage variable here
     const activePage = 'insurances';
 
     res.render('adminViewInsurance', { insurance, activePage });
@@ -983,7 +1118,6 @@ router.get('/insurance/:id', isAdmin, async (req, res) => {
 });
 
 
-// Route to handle insurance deletion
 router.post('/insurance/delete/:id', isAdmin, async (req, res) => {
   try {
     const insuranceId = req.params.id;
@@ -1011,7 +1145,6 @@ router.get('/view-appointments', isLoggedIn, async (req, res) => {
   }
 });
 
-// Update appointment status
 router.post('/view-appointments/:id', isLoggedIn, async (req, res) => {
   try {
       const { status } = req.body;
@@ -1025,7 +1158,6 @@ router.post('/view-appointments/:id', isLoggedIn, async (req, res) => {
           return res.status(404).send('Booking not found');
       }
 
-      // Handle status update logic, including sending notifications if needed
       booking.status = status;
       await booking.save();
 
@@ -1102,35 +1234,30 @@ router.get('/bookings', async (req, res) => {
   try {
       const { doctorName, doctorEmail, consultationType, patientName, appointmentDate } = req.query;
 
-      // Initialize empty arrays to store IDs
       let doctorIds = [];
       let patientIds = [];
 
-      // Fetch doctor IDs based on doctorName and doctorEmail
       if (doctorName || doctorEmail) {
           const doctorQuery = {};
-          if (doctorName) doctorQuery.name = new RegExp(doctorName, 'i'); // Case-insensitive search
+          if (doctorName) doctorQuery.name = new RegExp(doctorName, 'i'); 
           if (doctorEmail) doctorQuery.email = doctorEmail;
 
           const doctors = await Doctor.find(doctorQuery, '_id').lean();
           doctorIds = doctors.map(doc => doc._id);
       }
 
-      // Fetch patient IDs based on patientName
       if (patientName) {
-          const patientQuery = { name: new RegExp(patientName, 'i') }; // Case-insensitive search
+          const patientQuery = { name: new RegExp(patientName, 'i') };
 
           const patients = await Patient.find(patientQuery, '_id').lean();
           patientIds = patients.map(patient => patient._id);
       }
 
-      // Build the booking query using the doctor and patient IDs
       const bookingQuery = {};
       if (doctorIds.length > 0) bookingQuery.doctor = { $in: doctorIds };
       if (patientIds.length > 0) bookingQuery.patient = { $in: patientIds };
       if (consultationType) bookingQuery.consultationType = consultationType;
 
-      // Handle appointment date filtering
       if (appointmentDate) {
           const date = new Date(appointmentDate);
           bookingQuery.date = {
@@ -1139,10 +1266,8 @@ router.get('/bookings', async (req, res) => {
           };
       }
 
-      // Fetch bookings based on the query
       const bookings = await Booking.find(bookingQuery).lean();
 
-      // Prepare the booking details with doctor and patient info
       const bookingDetails = await Promise.all(
           bookings.map(async (booking) => {
               const doctor = await Doctor.findById(booking.doctor, 'name email').lean();
@@ -1164,7 +1289,6 @@ router.get('/bookings', async (req, res) => {
           })
       );
 
-      // Render the results
       res.render('bookings', { bookings: bookingDetails, query: req.query || {} });
   } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -1177,26 +1301,22 @@ router.get('/booking-details/:bookingId', isLoggedIn, isAdmin, async (req, res) 
   try {
       const bookingId = req.params.bookingId;
 
-      // Fetch the booking details using the bookingId
       const booking = await Booking.findById(bookingId).lean();
       
       if (!booking) {
           return res.status(404).send('Booking not found');
       }
       console.log(booking.doctor)
-      // Fetch the doctor details using doctorId
       const doctor = await Doctor.findById(booking.doctor, 'name email').lean();
       if (!doctor) {
           return res.status(404).send('Doctor not found');
       }
       console.log(doctor);
-      // Fetch the patient details using patientId
       const patient = await Patient.findById(booking.patient, 'name').lean();
       if (!patient) {
           return res.status(404).send('Patient not found');
       }
 
-      // Combine the data
       const bookingDetails = {
         doctorName: doctor.name,
         doctorEmail: doctor.email,
@@ -1212,7 +1332,6 @@ router.get('/booking-details/:bookingId', isLoggedIn, isAdmin, async (req, res) 
     };
 
 
-      // Send the booking details as response
       res.render('booking-details', { booking: bookingDetails });
   } catch (error) {
       console.error(error);
@@ -1289,7 +1408,6 @@ router.get('/insights', async (req, res) => {
 });
 
 
-// Render the Add Specialty page
 router.get('/specialty/new', isAdmin, async (req, res) => {
   try {
       const specialties = await Specialty.find().lean();
@@ -1300,7 +1418,6 @@ router.get('/specialty/new', isAdmin, async (req, res) => {
   }
 });
 
-// Handle Add Specialty form submission
 router.post('/specialty', isAdmin, async (req, res) => {
   try {
       const { name } = req.body;
@@ -1322,7 +1439,6 @@ router.post('/specialty', isAdmin, async (req, res) => {
   }
 });
 
-// Delete a specialty
 router.post('/specialty/:id/delete', isAdmin, async (req, res) => {
   try {
       await Specialty.findByIdAndDelete(req.params.id);
@@ -1335,7 +1451,6 @@ router.post('/specialty/:id/delete', isAdmin, async (req, res) => {
   }
 });
 
-// Render the Add Condition page
 router.get('/condition/new', isAdmin, async (req, res) => {
   try {
       const conditions = await Condition.find().lean();
@@ -1346,7 +1461,6 @@ router.get('/condition/new', isAdmin, async (req, res) => {
   }
 });
 
-// Handle Add Condition form submission
 router.post('/condition', isAdmin, async (req, res) => {
   try {
       const { name } = req.body;
@@ -1368,7 +1482,6 @@ router.post('/condition', isAdmin, async (req, res) => {
   }
 });
 
-// Delete a condition
 router.post('/condition/:id/delete', isAdmin, async (req, res) => {
   try {
       await Condition.findByIdAndDelete(req.params.id);
@@ -1381,5 +1494,75 @@ router.post('/condition/:id/delete', isAdmin, async (req, res) => {
   }
 });
 
+router.get('/news-releases', isLoggedIn, async (req, res) => {
+  try {
+      const newsReleases = await NewsRelease.find().sort({ date: -1 });  
+      res.render('adminViewNewsReleases', { newsReleases, activePage: 'news-releases' });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.get('/news-releases/add', isLoggedIn, (req, res) => {
+  res.render('adminAddNewsRelease', { activePage: 'news-releases-add' });
+});
+
+router.post('/news-releases/add', isLoggedIn, upload.single('image'), async (req, res) => {
+  try {
+      const { title, description, date, link } = req.body; 
+
+      const newNewsRelease = new NewsRelease({
+          title,
+          description,
+          date,
+          link, 
+          image: req.file ? {
+              data: req.file.buffer,
+              contentType: req.file.mimetype
+          } : null
+      });
+
+      await newNewsRelease.save();
+      res.redirect('/admin/news-releases'); 
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.get('/news-logos', isLoggedIn, async (req, res) => {
+  try {
+      const newsLogos = await NewsLogo.find();
+      res.render('viewNewsLogos', { newsLogos, activePage: 'news-logos' });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.get('/news-logos/add', isLoggedIn, (req, res) => {
+  res.render('addNewsLogo', { activePage: 'news-logos' });
+});
+
+router.post('/news-logos/add', isLoggedIn, upload.single('image'), async (req, res) => {
+  try {
+      const { name } = req.body;
+
+      const newNewsLogo = new NewsLogo({
+          name,
+          image: {
+              data: req.file.buffer,
+              contentType: req.file.mimetype
+          }
+      });
+
+      await newNewsLogo.save();
+      res.redirect('/admin/news-logos/');
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
 
 module.exports = router;

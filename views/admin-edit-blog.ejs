@@ -15,7 +15,7 @@
 </head>
 <body>
     <h1>Edit Blog Post</h1>
-    <form id="editBlogForm" action="/doctor/blogs/edit/<%= blog._id %>" method="POST" enctype="multipart/form-data">
+    <form id="editBlogForm" action="/admin/blogs/edit/<%= blog._id %>" method="POST" enctype="multipart/form-data">
         <label for="title">Title:</label><br>
         <input type="hidden" name="action" value="edit">
         <input type="text" id="title" name="title" value="<%= blog.title %>" required><br><br>
@@ -57,19 +57,24 @@
             </option>
             <% }) %>
         </select><br><br>
+
         <h2>Comments</h2>
         <div class="comments-section">
             <% blog.comments.forEach(comment => { %>
                 <div class="comment" id="comment-<%= comment._id %>">
                     <p><strong>User:</strong> <%= comment.username || "Unknown User" %></p>
                     <p><%= comment.comment %></p>
-                    <button class="delete-comment" data-comment-id="<%= comment._id %>">Delete Comment</button>
+                    <form action="/admin/blogs/<%= blog._id %>/comments/<%= comment._id %>?_method=DELETE" method="POST">
+                        <button type="submit">Delete Comment</button>
+                    </form>
                     <div class="replies">
                         <% comment.replies.forEach(reply => { %>
                             <div class="reply">
                                 <p><strong>User:</strong> <%= reply.username || "Unknown User" %></p>
                                 <p><%= reply.reply %></p>
-                                <button class="delete-reply" data-reply-id="<%= reply._id %>">Delete Reply</button>
+                                <form action="/admin/blogs/<%= blog._id %>/comments/<%= comment._id %>/replies/<%= reply._id %>?_method=DELETE" method="POST">
+                                    <button type="submit">Delete Reply</button>
+                                </form>
                             </div>
                         <% }) %>
                     </div>
@@ -77,8 +82,6 @@
             <% }) %>
         </div>
         
-
-
         <button type="submit">Update Blog</button>
     </form>
 
@@ -110,60 +113,14 @@
                     ]
                 }
             });
-        
-            // Set the initial content of the Quill editor using HTML content from the blog description
-            quill.clipboard.dangerouslyPasteHTML(`<%= blog.description %>`);
-        
-            // On form submission, capture the HTML content from Quill and set it in the hidden input
+
+            quill.root.innerHTML = `<%= blog.description %>`;
+
             $('#editBlogForm').on('submit', function (e) {
                 var description = document.querySelector('input[name=description]');
-                description.value = quill.root.innerHTML; // Save the HTML content in the hidden input
-            });
-            $('.delete-comment').on('click', function (e) {
-                const commentId = $(this).data('comment-id');
-                const blogId = "<%= blog._id %>"; // Get the blog ID dynamically
-    
-                if (confirm('Are you sure you want to delete this comment?')) {
-                    $.ajax({
-                        url: `/doctor/blogs/${blogId}/comments/${commentId}`,
-                        type: 'DELETE',
-                        success: function (response) {
-                            // Remove the comment from the DOM
-                            $(`#comment-${commentId}`).remove();
-                            alert(response);
-                        },
-                        error: function (xhr) {
-                            alert('Error deleting comment: ' + xhr.responseText);
-                        }
-                    });
-                }
-            });
-    
-            // Delete reply functionality
-            $('.delete-reply').on('click', function (e) {
-                const replyId = $(this).data('reply-id');
-                const commentId = $(this).closest('.comment').attr('id').split('-')[1]; // Extract comment ID
-                const blogId = "<%= blog._id %>"; // Get the blog ID dynamically
-    
-                if (confirm('Are you sure you want to delete this reply?')) {
-                    $.ajax({
-                        url: `/doctor/blogs/${blogId}/comments/${commentId}/replies/${replyId}`,
-                        type: 'DELETE',
-                        success: function (response) {
-                            // Remove the reply from the DOM
-                            $(`.reply[data-reply-id="${replyId}"]`).remove();
-                            alert(response);
-                        },
-                        error: function (xhr) {
-                            alert('Error deleting reply: ' + xhr.responseText);
-                        }
-                    });
-                }
+                description.value = quill.root.innerHTML;
             });
         });
     </script>
-   
-    
-    
 </body>
 </html>

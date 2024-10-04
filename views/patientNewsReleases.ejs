@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Releases</title>
+    <style>
+        .logo-container {
+            display: flex;
+            overflow-x: auto; /* Allows scrolling if there are more logos than fit */
+            white-space: nowrap;
+            margin-bottom: 20px;
+        }
+        .logo-container img {
+            max-height: 50px; /* Set a maximum height for logos */
+            margin-right: 10px; /* Space between logos */
+        }
+    </style>
+</head>
+<body>
+    <h1>News Releases</h1>
+    <br><br>
+    
+    <h2>Where We Have Been Featured</h2>
+    <div class="logo-container">
+        <% logos.forEach(logo => { %>
+            <img src="data:<%= logo.image.contentType %>;base64,<%= logo.image.data.toString('base64') %>" alt="<%= logo.name %> Logo">
+        <% }) %>
+    </div>
+    <br><br>
+    <h2>News Releases</h2>
+
+
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Date</th>
+                <th>Image</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% newsReleases.forEach(news => { %>
+                <tr>
+                    <td><%= news.title.length > 30 ? news.title.substring(0, 30) + '...' : news.title %></td>
+                    <td><%= news.date.toLocaleDateString() %></td>
+                    <td>
+                        <% if (news.image) { %>
+                            <img src="data:<%= news.image.contentType %>;base64,<%= news.image.data.toString('base64') %>" alt="News Image" width="100">
+                        <% } else { %>
+                            No Image
+                        <% } %>
+                    </td>
+                    <td>
+                        <a href="<%= news.link %>" target="_blank">Read More</a>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</body>
+</html>

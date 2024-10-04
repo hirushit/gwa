@@ -13,6 +13,8 @@ const Insurance = require('../models/Insurance');
 const Chat = require('../models/Chat');
 const Prescription = require('../models/Prescription');
 const Notification = require('../models/Notification');
+const NewsRelease = require('../models/NewsRelease');  
+const NewsLogo = require('../models/NewsLogo'); 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -715,8 +717,6 @@ router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-
-
 router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
   try {
       const { comment } = req.body;
@@ -726,15 +726,99 @@ router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
       if (!blog) {
           return res.status(404).send('Blog not found');
       }
-      console.log(req.session.user.name)
+
+      const user = req.session.user;
+
+      // Ensure the user has a profile picture
+      let profilePicture = null;
+      if (user && user.profilePicture) {
+          profilePicture = {
+              data: user.profilePicture.data, 
+              contentType: user.profilePicture.contentType
+          };
+      }
+
       blog.comments.push({
-          username: req.session.user.name, 
-          comment: comment
+          username: user.name,
+          comment: comment// This can be null or the image object
       });
 
       await blog.save();
 
       req.flash('success_msg', 'Comment added successfully');
+      res.redirect(`/patient/blogs/view/${blogId}`);
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+
+router.post('/blogs/comment/:blogId', isLoggedIn, async (req, res) => {
+  try {
+      const { comment } = req.body;
+      const { blogId } = req.params;
+
+      const blog = await Blog.findById(blogId);
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+
+      const user = req.session.user;
+
+      if (!user || !user.name) {
+          req.flash('error_msg', 'User not logged in or username not found.');
+          return res.redirect(`/patient/blogs/view/${blogId}`);
+      }
+
+      blog.comments.push({
+          username: user.name,
+          comment: comment,
+          timestamp: Date.now() 
+      });
+
+      await blog.save();
+
+      req.flash('success_msg', 'Comment added successfully');
+      res.redirect(`/patient/blogs/view/${blogId}`);
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server Error');
+  }
+});
+
+
+router.post('/blogs/comment/:blogId/reply/:commentId', isLoggedIn, async (req, res) => {
+  try {
+      const { reply } = req.body;
+      const { blogId, commentId } = req.params;
+
+      const blog = await Blog.findById(blogId);
+      if (!blog) {
+          return res.status(404).send('Blog not found');
+      }
+
+      const comment = blog.comments.id(commentId);
+      if (!comment) {
+          return res.status(404).send('Comment not found');
+      }
+
+      const user = req.session.user;
+
+      if (!user || !user.name) {
+          req.flash('error_msg', 'User not logged in or username not found.');
+          return res.redirect(`/patient/blogs/view/${blogId}`);
+      }
+
+      comment.replies.push({
+          username: user.name,
+          reply: reply,
+          timestamp: Date.now() 
+      });
+
+      await blog.save();
+
+      req.flash('success_msg', 'Reply added successfully');
       res.redirect(`/patient/blogs/view/${blogId}`);
   } catch (err) {
       console.error(err.message);
@@ -1549,7 +1633,7 @@ router.get('/notifications', isLoggedIn, async (req, res) => {
           ...notification,
           senderName: sender.name || 'Unknown',
           senderProfilePic: sender.profilePicture ? `data:${sender.profilePicture.contentType};base64,${sender.profilePicture.data.toString('base64')}` : null,
-          message: notification.message, // Keep the original message
+          message: notification.message, 
           timeAgo: timeSince(notification.createdAt)
         };
       } catch (err) {
@@ -1660,7 +1744,16 @@ router.get('/locations', async (req, res) => {
   }
 });
 
-
+router.get('/news-releases', async (req, res) => {
+  try {
+      const newsReleases = await NewsRelease.find().sort({ date: -1 }); 
+      const logos = await NewsLogo.find();
+      res.render('patientNewsReleases', { newsReleases, logos }); 
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
 
 
 module.exports = router;

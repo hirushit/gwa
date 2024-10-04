@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add News Logo</title>
+</head>
+<body>
+    <h1>Add News Logo</h1>
+    <form action="/admin/news-logos/add" method="POST" enctype="multipart/form-data">
+        <div>
+            <label for="name">Logo Name:</label>
+            <input type="text" name="name" id="name" required>
+        </div>
+        <div>
+            <label for="image">Upload Logo Image:</label>
+            <input type="file" name="image" id="image" accept="image/*" required>
+        </div>
+        <button type="submit">Add Logo</button>
+    </form>
+    <a href="//news-logos">Back to Logos</a>
+</body>
+</html>

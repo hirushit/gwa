@@ -13,6 +13,8 @@ const Patient = require('./models/Patient');
 const Leads = require('./models/Leads'); 
 const compression = require('compression');
 const Subscriptions = require('./models/Subscriptions');
+const cookieParser = require('cookie-parser'); // Import cookie-parser
+const methodOverride = require('method-override');
 
 dotenv.config();
 
@@ -26,6 +28,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
+app.use(cookieParser()); // Use cookie-parser to handle cookies
+
 
 mongoose.connect(process.env.MONGODB_URI, { 
   useNewUrlParser: true, 
@@ -89,6 +93,8 @@ passport.use(new GoogleStrategy({
     }
   }
 ));
+
+app.use(methodOverride('_method'));
 
 app.use('/auth', require('./routes/auth'));
 app.use('/patient', require('./routes/patient'));

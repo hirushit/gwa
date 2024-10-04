@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage News Logos</title>
+</head>
+<body>
+    <h1>Manage News Logos</h1>
+    <a href="/admin/news-logos/add">Add New Logo</a>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Image</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% newsLogos.forEach(logo => { %>
+                <tr>
+                    <td><%= logo.name %></td>
+                    <td>
+                        <img src="data:<%= logo.image.contentType %>;base64,<%= logo.image.data.toString('base64') %>" alt="Logo Image" width="100">
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</body>
+</html>

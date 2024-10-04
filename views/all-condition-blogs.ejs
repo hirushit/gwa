@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Blogs for <%= condition %></title>
+    <link rel="stylesheet" href="/css/styles.css"> 
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <!-- Remove the conditionDescription check and rendering -->
+<!-- Updated Code -->
+<div class="container my-5">
+    <h1>All Blogs for Condition: <%= condition %></h1>
+    
+    <!-- List all blogs related to the condition -->
+    <div class="list-group">
+        <% allBlogs.forEach(function(blog) { %>
+            <a href="/doctor/blogs/view/<%= blog._id %>" class="list-group-item list-group-item-action flex-column align-items-start mb-3">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1"><%= blog.title %></h5>
+                    <small><%= new Date(blog.createdAt).toLocaleDateString() %></small>
+                </div>
+                
+                <small>Categories: <%= blog.categories.join(', ') %></small>
+            </a>
+        <% }) %>
+    </div>
+
+    <!-- Display a message if no blogs are found -->
+    <% if (allBlogs.length === 0) { %>
+        <p class="text-center mt-5">No blogs found for this condition.</p>
+    <% } %>
+
+    <!-- Back button to go back to the main condition page -->
+    <div class="mt-4">
+        <a href="/blogs/conditions/<%= condition %>" class="btn btn-secondary">Back to Condition Overview</a>
+    </div>
+</div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View News Releases</title>
+</head>
+<body>
+    <h1>News Releases</h1>
+    <a href="/admin/news-releases/add">Add News Release</a>
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Date</th>
+                <th>Image</th>
+                <th>Description</th>
+                <th>Link</th> 
+            </tr>
+        </thead>
+        <tbody>
+            <% newsReleases.forEach(news => { %>
+                <tr>
+                    <td><%= news.title %></td>
+                    <td><%= news.date.toLocaleDateString() %></td>
+                    <td>
+                        <% if (news.image) { %>
+                            <img src="data:<%= news.image.contentType %>;base64,<%= news.image.data.toString('base64') %>" alt="News Image" width="100">
+                        <% } else { %>
+                            No Image
+                        <% } %>
+                    </td>
+                    <td><%= news.description || 'No Description' %></td>
+                    <td>
+                        <% if (news.link) { %>
+                            <a href="<%= news.link %>" target="_blank">Read More</a> 
+                        <% } else { %>
+                            No Link
+                        <% } %>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</body>
+</html>

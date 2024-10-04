@@ -9,6 +9,7 @@ const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
 const Admin = require('../models/Admin');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
@@ -302,6 +303,95 @@ router.post('/login', async (req, res) => {
     req.flash('error_msg', 'Server error');
     return res.redirect('/auth/login');
   }
+});
+
+router.get('/token-login', (req, res) => {
+  res.render('token-login', {
+    error_msg: req.flash('error_msg'),
+    success_msg: req.flash('success_msg')
+  });
+});
+
+router.post('/token-login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Find user across Patient, Doctor, and Admin collections
+    let user = await Patient.findOne({ email }) ||
+               await Doctor.findOne({ email }) ||
+               await Admin.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if password matches
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Create payload for JWT
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role
+    };
+
+    // Generate the token
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // Log the token to the console (use cautiously)
+    console.log('Generated Token:', token);
+
+    // Cookie options
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Set to true in production
+      maxAge: 3600000 // 1 hour
+    };
+
+    // Set the token in the cookie
+    res.cookie('token', token, cookieOptions);
+
+    // Redirect to home after setting the cookie
+    return res.redirect('/auth/home');
+  } catch (err) {
+    console.error('Error in token login:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.token; // Get the token from cookies
+
+  if (!token) {
+    return res.status(401).json({ message: 'Access denied. No token provided.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(400).json({ message: 'Invalid token' });
+  }
+};
+
+// Protected route: /home
+router.get('/home', verifyToken, (req, res) => {
+  // Display the user's data from the decoded token
+  res.render('home', {
+    user: req.user
+  });
+});
+
+
+// Example protected route
+router.get('/protected', verifyToken, (req, res) => {
+  res.json({ message: 'You have access to this protected route', user: req.user });
 });
 
 

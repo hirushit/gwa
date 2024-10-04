@@ -75,6 +75,9 @@
                     <p class="blog-summary"><%= blog.summary %></p>
                     <p class="verification-status">Verification Status: <%= blog.verificationStatus %></p>
                     <a href="/doctor/blogs/edit/<%= blog._id %>" class="read-more">Edit Blogs</a>
+                    <form action="/doctor/profile/blogs/delete/<%= blog._id %>" method="POST" style="display:inline;">
+                        <button type="submit">Delete</button>
+                    </form>
                 </li>
             <% }) %>
         </ul>

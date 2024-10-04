@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add News Release</title>
+</head>
+<body>
+    <h1>Add News Release</h1>
+    <form action="/admin/news-releases/add" method="POST" enctype="multipart/form-data">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required><br>
+
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required><br>
+
+        <label for="link">Link</label> <!-- Add the link field -->
+        <input type="url" name="link" id="link" required>
+
+        <label for="image">Image:</label>
+        <input type="file" id="image" name="image"><br>
+
+        <label for="description">Description (Optional):</label>
+        <textarea id="description" name="description"></textarea><br>
+
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>

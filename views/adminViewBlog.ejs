@@ -11,6 +11,10 @@
             border: 1px solid #007bff;
             color: white;
         }
+        .delete-button {
+            color: red;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -24,11 +28,9 @@
             <ul class="sidebar-menu">
                 <li class="sidebar-menu-item"><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View Admin Blogs</a></li>
                 <li class="sidebar-menu-item"><a href="/admin/blog" <% if (activePage === 'blog-upload') { %> class="active" <% } %>>Upload Admin Blog</a></li>
-                <!-- <li class="sidebar-menu-item"><a href="/admin/admin-home" <% if (activePage === 'admin-home') { %> class="active" <% } %>>Home</a></li> -->
                 <li class="sidebar-menu-item"><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
                 <li class="sidebar-menu-item"><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
                 <li class="sidebar-menu-item"><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
-                <!-- <li class="sidebar-menu-item"><a href="/admin/blogs-all" <% if (activePage === 'blogs-all') { %> class="active" <% } %>>Search Blogs</a></li> -->
                 <li class="sidebar-menu-item"><a href="/admin/view-appointments" <% if (activePage === 'view-appointments') { %> class="active" <% } %>>View Appointments</a></li>
                 <li class="sidebar-menu-item"><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
                 <li class="sidebar-menu-item"><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
@@ -47,126 +49,14 @@
                 <p><strong>Author Email:</strong> <%= blog.authorEmail %></p>
 
                 <h1>Edit Blog</h1>
-                <form action="/admin/blogs/edit/<%= blog._id %>" method="POST" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label for="title">Title</label>
-                        <input type="text" id="title" name="title" value="<%= blog.title %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="description">Description</label>
-                        <textarea id="description" name="description" rows="5" required><%= blog.description %></textarea>
-                    <!-- </div>
-                    <div class="form-group">
-                        <label for="summary">Summary</label>
-                        <textarea id="summary" name="summary" rows="3" required><%= blog.summary %></textarea>
-                    </div> -->
-                    <div class="form-group">
-                        <label for="categories">Categories</label>
-                        <select id="categories" name="categories[]" multiple="multiple" style="width: 100%;" required>
-                            <% const categories = ['Travel', 'Lifestyle', 'Medical', 'Politics', 'Sports', 'Music', 'Fashion', 'Fitness']; %>
-                            <% categories.forEach(category => { %>
-                                <option value="<%= category %>" <% if (blog.categories.includes(category)) { %>selected<% } %>><%= category %></option>
-                            <% }); %>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group" id="subcategories-container">
-                        <label for="subcategories">Subcategories</label>
-                        <select id="subcategories" name="subcategories[]" multiple="multiple" style="width: 100%;">
-                            <!-- Subcategories will be dynamically populated -->
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="hashtags">Hashtags (comma separated)</label>
-                        <select id="hashtags" name="hashtags[]" multiple="multiple" style="width: 100%;">
-                            <% const hashtags = ['#blogger', '#medfluencer', '#wms', '#mbchb', '#doctorsofinstagram']; %>
-                            <% hashtags.forEach(hashtag => { %>
-                                <option value="<%= hashtag %>" <% if (blog.hashtags.includes(hashtag)) { %>selected<% } %>><%= hashtag %></option>
-                            <% }); %>
-                        </select><br><br>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="priority">Priority</label>
-                        <select id="priority" name="priority" required>
-                            <option value="High" <% if (blog.priority === 'High') { %>selected<% } %>>High</option>
-                            <option value="Low" <% if (blog.priority === 'Low') { %>selected<% } %>>Low</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="image">Upload Image</label>
-                        <input type="file" id="image" name="image">
-                    </div>
-
-                    <button type="submit">Save Changes</button>
+                <a href="/admin/blogs/edit/<%= blog._id %>">Edit the Blog</a>
+                <form action="/admin/blogs/delete/<%= blog._id %>" method="POST" style="display:inline;">
+                    <button type="submit" class="delete-button">Delete Blog</button>
                 </form>
-
                 <a href="/admin/blogs" class="back-link">Back to Blogs Dashboard</a>
             </div>
         </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            // Initialize select2
-            $('#categories').select2({
-                placeholder: "Select categories",
-                allowClear: true
-            });
-            $('#subcategories').select2({
-                placeholder: "Select subcategories",
-                allowClear: true
-            });
-            $('#hashtags').select2({
-                placeholder: "Select hashtags",
-                allowClear: true
-            });
-
-            // Predefined subcategories based on categories
-            const subcategoriesMap = {
-                "Travel": ["Adventure", "Luxury", "Beach", "Cultural", "Road Trip"],
-                "Lifestyle": ["Wellness", "Parenting", "Home Decor", "Minimalism"],
-                "Medical": ["General Surgery", "Mental Health", "Nutrition", "Pediatrics"],
-                "Politics": ["Elections", "Policy", "International Relations", "Economy"],
-                "Sports": ["Football", "Basketball", "Tennis", "Cricket","Athletics"],
-                "Music": ["Rock", "Pop", "Classical", "Jazz"],
-                "Fashion": ["Trends", "Designers", "Street Style", "Accessories"],
-                "Fitness": ["Workouts", "Nutrition", "Yoga", "Bodybuilding"]
-            };
-
-            // Populate subcategories based on selected categories
-            $('#categories').on('change', function() {
-                const selectedCategories = $(this).val();
-                const $subcategories = $('#subcategories');
-                
-                // Clear previous subcategories
-                $subcategories.empty();
-                
-                // Populate subcategories based on selected categories
-                if (selectedCategories.length > 0) {
-                    selectedCategories.forEach(category => {
-                        if (subcategoriesMap[category]) {
-                            subcategoriesMap[category].forEach(subcategory => {
-                                $subcategories.append(`<option value="${subcategory}">${subcategory}</option>`);
-                            });
-                        }
-                    });
-                    $('#subcategories-container').show();
-                } else {
-                    $('#subcategories-container').hide();
-                }
-
-                // Pre-select options based on existing selected subcategories
-                const selectedSubcategories = <%- JSON.stringify(blog.subcategories || []) %>;
-                $subcategories.val(selectedSubcategories).trigger('change');
-            });
-
-            // Trigger change event on page load to populate subcategories if needed
-            $('#categories').trigger('change');
-        });
-    </script>
+    
 </body>
 </html>

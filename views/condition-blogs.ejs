@@ -54,43 +54,48 @@
                     </li>
                 <% }) %>
             </ul>
+            <% if (categoryGroup.showAll) { %> 
+                <a href="/doctor/blogs/conditions/<%= condition %>/category/<%= categoryGroup._id %>">Show All</a>
+            <% } %>
         <% }) %>
     <% } else { %>
         <p>No blogs found for this condition.</p>
     <% } %>
-    <h2>Most Read Blogs</h2>
-    <ul>
-        <% if (mostReadBlogs.length > 0) { %>
-            <% mostReadBlogs.forEach(blog => { %>
-                <li class="blog-card">
-                    <% if (blog.image && blog.image.data) { %>
-                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
-                    <% } %>
-                    <h3><%= blog.title || 'Untitled Blog' %></h3>
-                    <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
-                </li>
-            <% }) %>
-        <% } else { %>
-            <p>No most read blogs found for this condition.</p>
-        <% } %>
-    </ul>
+    
+
+    
     <h2>Recent Blogs</h2>
     <ul>
-        <% if (recentBlogs.length > 0) { %>
-            <% recentBlogs.forEach(blog => { %>
-                <li class="blog-card">
-                    <% if (blog.image && blog.image.data) { %>
-                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
-                    <% } %>
-                    <h3><%= blog.title || 'Untitled Blog' %></h3>
-                    
-                    <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
-                </li>
-            <% }) %>
-        <% } else { %>
-            <p>No recent blogs found for this condition.</p>
-        <% } %>
+        <% recentBlogs.forEach(blog => { %>
+            <li>
+                <h3><%= blog.title %></h3>
+                <% if (blog.image && blog.image.data) { %>
+                    <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                <% } %>
+                <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+            </li>
+        <% }) %>
     </ul>
+    <% if (showAllRecent) { %>
+        <a href="/doctor/blogs/conditions/<%= condition %>/recent-blogs">Show All Recent Blogs</a>
+    <% } %>
+
+    <!-- Most Read Blogs Section -->
+    <h2>Most Read Blogs</h2>
+    <ul>
+        <% mostReadBlogs.forEach(blog => { %>
+            <li>
+                <h3><%= blog.title %></h3>
+                <% if (blog.image && blog.image.data) { %>
+                    <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                <% } %>
+                <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+            </li>
+        <% }) %>
+    </ul>
+    <% if (showAllMostRead) { %>
+        <a href="/doctor/blogs/conditions/<%= condition %>/most-read-blogs">Show All Most Read Blogs</a>
+    <% } %>
     <div class="hashtags">
         <h2>Hashtags</h2>
         <ul>
@@ -104,6 +109,8 @@
             <% }) %>
         </ul>
     </div>
+    <a href="/doctor/blogs/conditions/<%= condition %>/all" class="btn btn-primary">Show All</a>
+
     
 </body>
 </html>

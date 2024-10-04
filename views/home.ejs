@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="/path/to/your/styles.css"> <!-- Add your CSS path -->
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome, <%= user.email %>!</h1>
+        <p>Your role: <%= user.role %></p>
+        <p>Your User ID: <%= user.id %></p>
+
+        <a href="/auth/logout">Logout</a> <!-- Add a logout link -->
+    </div>
+</body>
+</html>

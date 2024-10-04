@@ -34,6 +34,7 @@
             <li><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
             <li><a href="/admin/specialty/new" class="<%= activePage === 'specialties' ? 'active' : '' %>">Manage Specialties</a></li>
             <li><a href="/admin/condition/new" class="<%= activePage === 'conditions' ? 'active' : '' %>">Manage Conditions</a></li>  
+            <li><a href="/admin/news-releases" <% if (activePage === 'news-releases') { %> class="active" <% } %>>Manage News Releases</a></li>
         </ul>
     </div>
 
@@ -126,7 +127,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('#categories').select2({
                 placeholder: "Select category",
                 allowClear: true
@@ -136,17 +137,43 @@
                 allowClear: true
             });
             $('#conditions').select2({
-                placeholder: "Select conditions",
+                placeholder: "Search for conditions",
                 allowClear: true
             });
 
             const quill = new Quill('#editor', {
-                theme: 'snow'
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, false] }],
+                        ['bold', 'italic', 'underline'],
+                        ['image', 'blockquote', 'code-block'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['clean']
+                    ]
+                }
             });
 
-            $('#blogForm').on('submit', function(e) {
-                const description = quill.root.innerHTML;
-                $('#description').val(description);
+            $('#categories').change(function () {
+                const selectedCondition = $('#conditions').val();
+                const livingWithOption = $('#categories option[value="Living with [condition]"]');
+
+                if (selectedCondition) {
+                    livingWithOption.text(`Living with ${selectedCondition}`);
+                } else {
+                    livingWithOption.text("Living with [condition]");
+                }
+            });
+
+            $('#conditions').on('change', function () {
+                $('#categories').trigger('change');
+            });
+
+            // Handle form submission
+            $('#blogForm').on('submit', function (e) {
+                var description = document.querySelector('input[name=description]');
+                description.value = quill.root.innerHTML;
             });
         });
     </script>

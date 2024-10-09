@@ -182,13 +182,16 @@ select:focus {
                 <li><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
                 <li><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
                 <li><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
+                <!-- <li><a href="/admin/blogs-all" <% if (activePage === 'blogs-all') { %> class="active" <% } %>>Search Blogs</a></li> -->
                 <li><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
                 <li><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
                 <li><a href="/admin/bookings" <% if (activePage === 'bookings') { %> class="active" <% } %>>View Bookings</a></li>
                 <li><a href="/admin/insights" <% if (activePage === 'insights') { %> class="active" <% } %>>View Insights</a></li>
                 <li><a href="/admin/manage-payments" <% if (activePage === 'manage-payments') { %> class="active" <% } %>>Manage Payments</a></li>
-                <li><a href="/admin/specialty/new" <% if (activePage === 'specialties') { %> class="active" <% } %>>Manage Specialties</a></li>
-                <li><a href="/admin/condition/new" <% if (activePage === 'conditions') { %> class="active" <% } %>>Manage Conditions</a></li>
+                <li><a href="/admin/specialty/new" class="<%= activePage === 'specialties' ? 'active' : '' %>">Manage Specialties</a></li>
+                <li><a href="/admin/condition/new" class="<%= activePage === 'conditions' ? 'active' : '' %>">Manage Conditions</a></li>
+                <li><a href="/admin/news-releases" <% if (activePage === 'news-releases') { %> class="active" <% } %>>Manage News Releases</a></li>
+                <li><a href="/admin/news-logos" <% if (activePage === 'news-logos') { %> class="active" <% } %>>Manage News Logos</a></li> <!-- Added link for managing logos -->
                 <li><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
                 
             </ul>

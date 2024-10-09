@@ -4,20 +4,165 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add News Logo</title>
+    <style>
+        /* Add the existing styles from your admin theme */
+        body {
+            font-family: 'Matter-Regular', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #f8f9fa;
+        }
+
+        .dashboard {
+            display: flex;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #F7FAFF;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-logo img {
+            width: 170px;
+            height: auto;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar-menu-item {
+            margin: 10px 0;
+        }
+
+        .sidebar-menu-item a {
+            text-decoration: none;
+            color: #A0AAC8;
+            display: block;
+            padding: 13px;
+            transition: color 0.3s ease;
+        }
+
+        .sidebar-menu-item a.active,
+        .sidebar-menu-item a:hover {
+            color: #42427D;
+            background-color: transparent;
+        }
+
+        .sidebar h2 {
+            color: #42427D;
+            margin: 0 0 20px 0;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+
+        form div {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: transparent;
+            color: #42427D;
+            border: 1px solid #42427D;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #42427D;
+            color: white;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007BFF;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <h1>Add News Logo</h1>
-    <form action="/admin/news-logos/add" method="POST" enctype="multipart/form-data">
-        <div>
-            <label for="name">Logo Name:</label>
-            <input type="text" name="name" id="name" required>
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img src="/logo.png" alt="Admin Logo">
+            </div>
+            <h2>Admin Functions</h2>
+            <ul class="sidebar-menu">
+                <li class="sidebar-menu-item"><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View Admin Blogs</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/blog" <% if (activePage === 'blog-upload') { %> class="active" <% } %>>Upload Admin Blog</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/view-appointments" <% if (activePage === 'view-appointments') { %> class="active" <% } %>>View Appointments</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/manage-payments" <% if (activePage === 'manage-payments') { %> class="active" <% } %>>Manage Payments</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/specialty/new" class="<%= activePage === 'specialties' ? 'active' : '' %>">Manage Specialties</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/condition/new" class="<%= activePage === 'conditions' ? 'active' : '' %>">Manage Conditions</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/news-releases" <% if (activePage === 'news-releases') { %> class="active" <% } %>>Manage News Releases</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/news-logos" <% if (activePage === 'news-logos') { %> class="active" <% } %>>Manage News Logos</a></li> <!-- Added link for managing logos -->
+                <li class="sidebar-menu-item"><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
+            </ul>
         </div>
-        <div>
-            <label for="image">Upload Logo Image:</label>
-            <input type="file" name="image" id="image" accept="image/*" required>
+
+        <div class="main-content">
+            <h1>Add News Logo</h1>
+            <form action="/admin/news-logos/add" method="POST" enctype="multipart/form-data">
+                <div>
+                    <label for="name">Logo Name:</label>
+                    <input type="text" name="name" id="name" required>
+                </div>
+                <div>
+                    <label for="image">Upload Logo Image:</label>
+                    <input type="file" name="image" id="image" accept="image/*" required>
+                </div>
+                <button type="submit">Add Logo</button>
+            </form>
+            <a href="/admin/news-logos">Back to Logos</a>
         </div>
-        <button type="submit">Add Logo</button>
-    </form>
-    <a href="//news-logos">Back to Logos</a>
+    </div>
 </body>
 </html>

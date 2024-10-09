@@ -169,8 +169,13 @@
           <li class="sidebar-menu-item"><a href="/admin/view-appointments" <% if (activePage === 'view-appointments') { %> class="active" <% } %>>View Appointments</a></li>
           <li class="sidebar-menu-item"><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
           <li class="sidebar-menu-item"><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
+          <li class="sidebar-menu-item"><a href="/admin/manage-payments" <% if (activePage === 'manage-payments') { %> class="active" <% } %>>Manage Payments</a></li>
+          <li class="sidebar-menu-item"><a href="/admin/specialty/new" class="<%= activePage === 'specialties' ? 'active' : '' %>">Manage Specialties</a></li>
+          <li class="sidebar-menu-item"><a href="/admin/condition/new" class="<%= activePage === 'conditions' ? 'active' : '' %>">Manage Conditions</a></li>
+          <li class="sidebar-menu-item"><a href="/admin/news-releases" <% if (activePage === 'news-releases') { %> class="active" <% } %>>Manage News Releases</a></li>
+          <li class="sidebar-menu-item"><a href="/admin/news-logos" <% if (activePage === 'news-logos') { %> class="active" <% } %>>Manage News Logos</a></li> <!-- Added link for managing logos -->
           <li class="sidebar-menu-item"><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
-        </ul>
+  </ul>
     </div>
 
     <div class="main-content">

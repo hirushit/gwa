@@ -1504,9 +1504,63 @@ router.get('/news-releases', isLoggedIn, async (req, res) => {
   }
 });
 
+router.get('/news-releases/edit/:id', isLoggedIn, async (req, res) => {
+  try {
+    const newsRelease = await NewsRelease.findById(req.params.id);
+    if (!newsRelease) {
+      return res.status(404).send('News Release not found');
+    }
+    res.render('adminEditNewsRelease', { newsRelease, activePage: 'news-releases' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.post('/news-releases/edit/:id', isLoggedIn, upload.single('image'), async (req, res) => {
+  try {
+    const { title, description, link, date } = req.body;
+    const updateData = {
+      title,
+      description,
+      link,
+      date: new Date(date)
+    };
+
+    if (req.file) {
+      updateData.image = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype
+      };
+    }
+
+    const newsRelease = await NewsRelease.findByIdAndUpdate(req.params.id, updateData);
+    if (!newsRelease) {
+      return res.status(404).send('News Release not found');
+    }
+    res.redirect('/admin/news-releases');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+router.post('/news-releases/delete/:id', isLoggedIn, async (req, res) => {
+  try {
+    await NewsRelease.findByIdAndDelete(req.params.id);
+    res.redirect('/admin/news-releases');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+
 router.get('/news-releases/add', isLoggedIn, (req, res) => {
   res.render('adminAddNewsRelease', { activePage: 'news-releases-add' });
 });
+
 
 router.post('/news-releases/add', isLoggedIn, upload.single('image'), async (req, res) => {
   try {
@@ -1540,6 +1594,17 @@ router.get('/news-logos', isLoggedIn, async (req, res) => {
       res.status(500).send('Server Error');
   }
 });
+
+router.post('/news-logos/delete/:id', isLoggedIn, async (req, res) => {
+  try {
+    await NewsLogo.findByIdAndDelete(req.params.id);
+    res.redirect('/admin/news-logos'); 
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
 
 router.get('/news-logos/add', isLoggedIn, (req, res) => {
   res.render('addNewsLogo', { activePage: 'news-logos' });

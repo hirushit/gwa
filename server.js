@@ -13,8 +13,11 @@ const Patient = require('./models/Patient');
 const Leads = require('./models/Leads'); 
 const compression = require('compression');
 const Subscriptions = require('./models/Subscriptions');
-const cookieParser = require('cookie-parser'); // Import cookie-parser
+const cookieParser = require('cookie-parser'); 
 const methodOverride = require('method-override');
+const oauthModel = require('./models/oauthModel');
+const OAuth2Server = require('oauth2-server');
+
 
 dotenv.config();
 
@@ -28,7 +31,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
-app.use(cookieParser()); // Use cookie-parser to handle cookies
+app.use(cookieParser()); 
+
+app.oauth = new OAuth2Server({
+  model: oauthModel,
+  accessTokenLifetime: 3600,
+  allowBearerTokensInQueryString: true,
+});
 
 
 mongoose.connect(process.env.MONGODB_URI, { 
@@ -54,7 +63,6 @@ app.use(session({
 }));
 
 app.use(flash());
-
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -100,6 +108,7 @@ app.use('/auth', require('./routes/auth'));
 app.use('/patient', require('./routes/patient'));
 app.use('/doctor', require('./routes/doctor'));
 app.use('/admin', require('./routes/admin'));
+app.use('/oauth', require('./routes/oauth'));
 
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) {
@@ -115,7 +124,6 @@ app.get('/', (req, res) => {
   res.render('index', { user, patient, doctor });
 });
 
-
 app.post('/auth/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -123,10 +131,6 @@ app.post('/auth/logout', (req, res) => {
     }
     res.redirect('/auth/login');
   });
-});
-app.use((err, req, res, next) => {
-  console.error('Error:', err.stack);
-  res.status(500).send('Something broke!');
 });
 
 app.get('/auth/search-doctors', async (req, res) => {
@@ -207,11 +211,10 @@ app.get('/auth/countries', async (req, res) => {
       { $match: { role: 'doctor', verified: 'Verified', 'timeSlots.status': 'free' } },
       { $unwind: '$timeSlots' }, 
       { $group: { _id: '$timeSlots.hospitalLocation.country' } }, 
-      { $sort: { _id: 1 } }, // Optional: Sort countries alphabetically
-      { $project: { _id: 0, country: '$_id' } } // Project the country field
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, country: '$_id' } } 
     ]);
 
-    // Convert the results to an array of country names
     const countryList = countries.map(country => country.country);
     
     res.json(countryList);
@@ -246,14 +249,13 @@ app.get('/auth/cities', async (req, res) => {
   try {
     const cities = await Doctor.aggregate([
       { $match: { role: 'doctor', verified: 'Verified', 'timeSlots.status': 'free' } },
-      { $unwind: '$timeSlots' }, // Unwind the timeSlots array to work with individual documents
-      { $match: { 'timeSlots.status': 'free' } }, // Match only documents with free time slots
-      { $group: { _id: '$timeSlots.hospitalLocation.city' } }, // Group by city to remove duplicates
-      { $sort: { _id: 1 } }, // Optionally sort by city name
-      { $project: { _id: 0, city: '$_id' } } // Project the city field
+      { $unwind: '$timeSlots' }, 
+      { $match: { 'timeSlots.status': 'free' } }, 
+      { $group: { _id: '$timeSlots.hospitalLocation.city' } }, 
+      { $sort: { _id: 1 } }, 
+      { $project: { _id: 0, city: '$_id' } } 
     ]);
 
-    // Convert the results to an array of city names
     const cityList = cities.map(city => city.city);
     console.log(cityList);
     

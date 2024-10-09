@@ -16,110 +16,218 @@
             height: 200px;
             margin-bottom: 20px;
         }
+        body {
+            font-family: 'Matter-Regular', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #f8f9fa;
+        }
+        .dashboard {
+            display: flex;
+            width: 100%;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #F7FAFF;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .sidebar-logo img {
+            width: 170px;
+            height: auto;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar-menu-item {
+            margin: 10px 0;
+        }
+        .sidebar-menu-item a {
+            text-decoration: none;
+            color: #A0AAC8;
+            display: block;
+            padding: 13px;
+            transition: color 0.3s ease;
+        }
+        .sidebar-menu-item a.active,
+        .sidebar-menu-item a:hover {
+            color: #42427D;
+            background-color: transparent;
+        }
+        .sidebar h2 {
+            color: #42427D;
+            margin: 0 0 20px 0;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="date"],
+        input[type="url"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: transparent;
+            color: #42427D;
+            border: 1px solid #42427D;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        button:hover {
+            background-color: #42427D;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="dashboard">
-        <h2>Admin Functions</h2>
-        <ul class="sidebar-menu">
-            <li><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View and Approve Blogs</a></li>
-            <li><a href="/admin/blog" <% if (activePage === 'blog') { %> class="active" <% } %>>Upload Admin Blog</a></li>
-            <li><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>
-            <li><a href="/admin/subscriptions" <% if (activePage === 'subscriptions') { %> class="active" <% } %>>Doctor Subscription Verification Requests</a></li>
-            <li><a href="/admin/insurances" <% if (activePage === 'insurances') { %> class="active" <% } %>>Manage Insurance Providers</a></li>
-            <li><a href="/admin/view-doctors" <% if (activePage === 'view-doctors') { %> class="active" <% } %>>View Doctors</a></li>
-            <li><a href="/admin/view-patients" <% if (activePage === 'view-patients') { %> class="active" <% } %>>View Patients</a></li>
-            <li><a href="/admin/bookings" <% if (activePage === 'bookings') { %> class="active" <% } %>>View Bookings</a></li>
-            <li><a href="/admin/insights" <% if (activePage === 'insights') { %> class="active" <% } %>>View Insights</a></li>
-            <li><a href="/auth/logout" <% if (activePage === 'logout') { %> class="active" <% } %>>Logout</a></li>
-            <li><a href="/admin/specialty/new" class="<%= activePage === 'specialties' ? 'active' : '' %>">Manage Specialties</a></li>
-            <li><a href="/admin/condition/new" class="<%= activePage === 'conditions' ? 'active' : '' %>">Manage Conditions</a></li>  
-            <li><a href="/admin/news-releases" <% if (activePage === 'news-releases') { %> class="active" <% } %>>Manage News Releases</a></li>
-        </ul>
-    </div>
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <img src="/logo.png" alt="Admin Logo">
+            </div>
+            <h2>Admin Functions</h2>
+            <ul class="sidebar-menu">
+                <li class="sidebar-menu-item"><a href="/admin/blogs" class="<%= activePage === 'blogs' ? 'active' : '' %>">View and Approve Blogs</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/blog" class="<%= activePage === 'blog' ? 'active' : '' %>">Upload Admin Blog</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/doctor-profile-requests" class="<%= activePage === 'doctor-profile-requests' ? 'active' : '' %>">Doctor Profile Verification Requests</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/subscriptions" class="<%= activePage === 'subscriptions' ? 'active' : '' %>">Doctor Subscription Verification Requests</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/insurances" class="<%= activePage === 'insurances' ? 'active' : '' %>">Manage Insurance Providers</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/view-doctors" class="<%= activePage === 'view-doctors' ? 'active' : '' %>">View Doctors</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/view-patients" class="<%= activePage === 'view-patients' ? 'active' : '' %>">View Patients</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/bookings" class="<%= activePage === 'bookings' ? 'active' : '' %>">View Bookings</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/insights" class="<%= activePage === 'insights' ? 'active' : '' %>">View Insights</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/manage-payments" class="<%= activePage === 'manage-payments' ? 'active' : '' %>">Manage Payments</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/specialty/new" class="<%= activePage === 'specialties' ? 'active' : '' %>">Manage Specialties</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/condition/new" class="<%= activePage === 'conditions' ? 'active' : '' %>">Manage Conditions</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/news-releases" class="<%= activePage === 'news-releases' ? 'active' : '' %>">Manage News Releases</a></li>
+                <li class="sidebar-menu-item"><a href="/admin/news-logos" class="<%= activePage === 'news-logos' ? 'active' : '' %>">Manage News Logos</a></li>
+                <li class="sidebar-menu-item"><a href="/auth/logout" class="<%= activePage === 'logout' ? 'active' : '' %>">Logout</a></li>
+            </ul>
+        </div>
 
-    <div class="main-content">
-        <div class="container">
-            <h1>Admin Blog Upload Form</h1>
-            <form id="blogForm" action="/admin/blog-all" method="POST" enctype="multipart/form-data">
-                <label for="title">Title:</label><br>
-                <input type="text" id="title" name="title" required><br><br>
-                
-                <label for="author">Select Author (Doctor or Admin):</label>
-                <select name="authorId" id="author" required>
-                    <option value="<%= admin._id %>"><%= admin.name %> (Admin)</option> 
-                    <% doctors.forEach(doctor => { %>
-                        <option value="<%= doctor._id %>"><%= doctor.name %> (Doctor)</option>
-                    <% }); %>
-                </select><br><br>
+        <div class="main-content">
+            <div class="container">
+                <h1>Admin Blog Upload Form</h1>
+                <form id="blogForm" action="/admin/blog-all" method="POST" enctype="multipart/form-data">
+                    <div>
+                        <label for="title">Title:</label>
+                        <input type="text" id="title" name="title" required>
+                    </div>
 
-                <label for="description">Description:</label><br>
-                <div id="editor"></div>
-                <input type="hidden" name="description" id="description"><br><br>
+                    <div>
+                        <label for="author">Select Author (Doctor or Admin):</label>
+                        <select name="authorId" id="author" required>
+                            <option value="<%= admin._id %>"><%= admin.name %> (Admin)</option> 
+                            <% doctors.forEach(doctor => { %>
+                                <option value="<%= doctor._id %>"><%= doctor.name %> (Doctor)</option>
+                            <% }); %>
+                        </select>
+                    </div>
 
-                <label for="image">Upload Image:</label><br>
-                <input type="file" id="image" name="image" accept="image/*" required><br><br>
+                    <div>
+                        <label for="description">Description:</label>
+                        <div id="editor"></div>
+                        <input type="hidden" name="description" id="description">
+                    </div>
 
-                <div class="form-group">
-                    <label for="conditions">Conditions:</label>
-                    <select id="conditions" name="selectedConditions" class="form-control" required>
-                        <% conditions.forEach(condition => { %>
-                        <option value="<%= condition.name %>"><%= condition.name %></option>
-                        <% }) %>
-                    </select>
-                </div>
-                
-                <label for="categories">Category:</label><br>
-                <select id="categories" name="categories" style="width: 100%;" required>
-                    <option value="Signs & Symptoms">Signs & Symptoms</option>
-                    <option value="Causes & Risks">Causes & Risks</option>
-                    <option value="Testing & Diagnosis">Testing & Diagnosis</option>
-                    <option value="Treatment">Treatment</option>
-                    <option value="Living with [condition]">Living with [condition]</option>
-                </select><br><br>
-                
-                <label for="hashtags">Hashtags:</label><br>
-                <select id="hashtags" name="hashtags" multiple="multiple" style="width: 100%;">
-                    <option value="#diabetes">#diabetes</option>
-                    <option value="#type1diabetes">#type1diabetes</option>
-                    <option value="#type2diabetes">#type2diabetes</option>
-                    <option value="#gestationaldiabetes">#gestationaldiabetes</option>
-                    <option value="#diabetesawareness">#diabetesawareness</option>
-                    <option value="#diabeticlife">#diabeticlife</option>
-                    <option value="#diabetesmanagement">#diabetesmanagement</option>
-                    <option value="#insulin">#insulin</option>
-                    <option value="#bloodsugar">#bloodsugar</option>
-                    <option value="#diabetescommunity">#diabetescommunity</option>
-                    <option value="#diabeteswarrior">#diabeteswarrior</option>
-                    <option value="#diabeteseducation">#diabeteseducation</option>
-                    <option value="#diabetesdiet">#diabetesdiet</option>
-                    <option value="#diabetesresearch">#diabetesresearch</option>
-                    <option value="#diabeteslife">#diabeteslife</option>
+                    <div>
+                        <label for="image">Upload Image:</label>
+                        <input type="file" id="image" name="image" accept="image/*" required>
+                    </div>
 
-                    <option value="#asthma">#asthma</option>
-                    <option value="#asthmaawareness">#asthmaawareness</option>
-                    <option value="#asthmaattack">#asthmaattack</option>
-                    <option value="#asthmawarrior">#asthmawarrior</option>
-                    <option value="#asthmatreatment">#asthmatreatment</option>
-                    <option value="#asthmaeducation">#asthmaeducation</option>
-                    <option value="#asthmafriendly">#asthmafriendly</option>
-                    <option value="#asthmalife">#asthmalife</option>
-                    <option value="#asthmarelief">#asthmarelief</option>
-                    <option value="#asthmaresearch">#asthmaresearch</option>
-                    <option value="#asthmaawarenessmonth">#asthmaawarenessmonth</option>
-                    <option value="#asthmajourney">#asthmajourney</option>
-                    <option value="#asthmamanagement">#asthmamanagement</option>
-                    <option value="#doctorsofinstagram">#doctorsofinstagram</option>
-                </select><br><br>
+                    <div class="form-group">
+                        <label for="conditions">Conditions:</label>
+                        <select id="conditions" name="selectedConditions" class="form-control" required>
+                            <% conditions.forEach(condition => { %>
+                            <option value="<%= condition.name %>"><%= condition.name %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="categories">Category:</label>
+                        <select id="categories" name="categories" style="width: 100%;" required>
+                            <option value="Signs & Symptoms">Signs & Symptoms</option>
+                            <option value="Causes & Risks">Causes & Risks</option>
+                            <option value="Testing & Diagnosis">Testing & Diagnosis</option>
+                            <option value="Treatment">Treatment</option>
+                            <option value="Living with [condition]">Living with [condition]</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="hashtags">Hashtags:</label>
+                        <select id="hashtags" name="hashtags" multiple="multiple" style="width: 100%;">
+                            <option value="#diabetes">#diabetes</option>
+                            <option value="#type1diabetes">#type1diabetes</option>
+                            <option value="#type2diabetes">#type2diabetes</option>
+                            <option value="#gestationaldiabetes">#gestationaldiabetes</option>
+                            <option value="#diabetesawareness">#diabetesawareness</option>
+                            <option value="#diabeticlife">#diabeticlife</option>
+                            <option value="#diabetesmanagement">#diabetesmanagement</option>
+                            <option value="#insulin">#insulin</option>
+                            <option value="#bloodsugar">#bloodsugar</option>
+                            <option value="#diabetescommunity">#diabetescommunity</option>
+                            <option value="#diabeteswarrior">#diabeteswarrior</option>
+                            <option value="#diabeteseducation">#diabeteseducation</option>
+                            <option value="#diabetesdiet">#diabetesdiet</option>
+                            <option value="#diabetesresearch">#diabetesresearch</option>
+                            <option value="#diabeteslife">#diabeteslife</option>
+                            <option value="#asthma">#asthma</option>
+                            <option value="#asthmaawareness">#asthmaawareness</option>
+                            <option value="#asthmaattack">#asthmaattack</option>
+                            <option value="#asthmawarrior">#asthmawarrior</option>
+                            <option value="#asthmatreatment">#asthmatreatment</option>
+                            <option value="#asthmaeducation">#asthmaeducation</option>
+                            <option value="#asthmafriendly">#asthmafriendly</option>
+                            <option value="#asthmalife">#asthmalife</option>
+                            <option value="#asthmarelief">#asthmarelief</option>
+                            <option value="#asthmaresearch">#asthmaresearch</option>
+                            <option value="#asthmaawarenessmonth">#asthmaawarenessmonth</option>
+                            <option value="#asthmajourney">#asthmajourney</option>
+                            <option value="#asthmamanagement">#asthmamanagement</option>
+                            <option value="#doctorsofinstagram">#doctorsofinstagram</option>
+                        </select>
+                    </div>
 
-                <label for="priority">Priority:</label><br>
-                <select id="priority" name="priority">
-                    <option value="high">High</option>
-                    <option value="low">Low</option>
-                </select><br><br>
+                    <div>
+                        <label for="priority">Priority:</label>
+                        <select id="priority" name="priority">
+                            <option value="high">High</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
 
-                <button type="submit">Upload Blog</button>
-            </form>
+                    <button type="submit">Upload Blog</button>
+                </form>
+            </div>
         </div>
     </div>
 

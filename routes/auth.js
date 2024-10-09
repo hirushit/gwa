@@ -10,6 +10,9 @@ const Doctor = require('../models/Doctor');
 const Admin = require('../models/Admin');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const axios = require('axios'); 
+const querystring = require('querystring');
+
 
 const router = express.Router();
 
@@ -316,7 +319,6 @@ router.post('/token-login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Find user across Patient, Doctor, and Admin collections
     let user = await Patient.findOne({ email }) ||
                await Doctor.findOne({ email }) ||
                await Admin.findOne({ email });
@@ -325,37 +327,30 @@ router.post('/token-login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Check if password matches
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Create payload for JWT
     const payload = {
       id: user.id,
       email: user.email,
       role: user.role
     };
 
-    // Generate the token
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    // Log the token to the console (use cautiously)
     console.log('Generated Token:', token);
 
-    // Cookie options
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Set to true in production
-      maxAge: 3600000 // 1 hour
+      secure: process.env.NODE_ENV === 'production', 
+      maxAge: 3600000 
     };
 
-    // Set the token in the cookie
     res.cookie('token', token, cookieOptions);
 
-    // Redirect to home after setting the cookie
     return res.redirect('/auth/home');
   } catch (err) {
     console.error('Error in token login:', err);
@@ -365,7 +360,7 @@ router.post('/token-login', async (req, res) => {
 
 
 const verifyToken = (req, res, next) => {
-  const token = req.cookies.token; // Get the token from cookies
+  const token = req.cookies.token; 
 
   if (!token) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
@@ -380,16 +375,60 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// Protected route: /home
 router.get('/home', verifyToken, (req, res) => {
-  // Display the user's data from the decoded token
   res.render('home', {
     user: req.user
   });
 });
 
 
-// Example protected route
+const {
+  OAUTH_CLIENT_ID,
+  OAUTH_CLIENT_SECRET,
+  OAUTH_REDIRECT_URI,
+  OAUTH_AUTHORIZATION_URL,
+  OAUTH_TOKEN_URL,
+  OAUTH_USER_PROFILE_URL,
+  OAUTH_LOGOUT_URL
+} = process.env;
+
+router.get('/authorize', (req, res) => {
+  const authorizationUri = `${OAUTH_AUTHORIZATION_URL}?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${OAUTH_REDIRECT_URI}&response_type=code`;
+  res.redirect(authorizationUri);
+});
+
+router.get('/callback', async (req, res) => {
+  const { code } = req.query;
+  
+  try {
+    const response = await axios.post(OAUTH_TOKEN_URL, querystring.stringify({
+      grant_type: 'authorization_code',
+      code: code,
+      redirect_uri: OAUTH_REDIRECT_URI,
+      client_id: OAUTH_CLIENT_ID,
+      client_secret: OAUTH_CLIENT_SECRET
+    }));
+
+    const accessToken = response.data.access_token;
+
+    const profileResponse = await axios.get(OAUTH_USER_PROFILE_URL, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+
+    const userProfile = profileResponse.data;
+
+
+
+    res.redirect('/');
+  } catch (error) {
+    console.error('Error during callback:', error);
+    res.status(500).send('Authentication failed');
+  }
+});
+
+
 router.get('/protected', verifyToken, (req, res) => {
   res.json({ message: 'You have access to this protected route', user: req.user });
 });

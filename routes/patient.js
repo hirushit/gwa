@@ -32,9 +32,9 @@ const fetchConversionRates = () => {
             hostname: 'currency-conversion-and-exchange-rates.p.rapidapi.com',
             path: '/latest?from=USD&to=INR,GBP,AED',
             headers: {
-                'x-rapidapi-key': '96f2128666msh6c2a99315734957p152189jsn585b9f07df21', 
-                'x-rapidapi-host': 'currency-conversion-and-exchange-rates.p.rapidapi.com'
-            }
+              "x-rapidapi-key": "e7f861ce3emshc756a74c6f16a9ep17c98ejsn86255ac2f58a",
+              "x-rapidapi-host": "currency-conversion-and-exchange-rates.p.rapidapi.com"
+                        }
         };
 
         const req = https.request(options, (res) => {
@@ -589,10 +589,15 @@ router.get('/book/payment-success', async (req, res) => {
       let totalFee = doctor.doctorFee;
       let serviceCharge = 0;
 
-      if (doctor.subscriptionType === 'Standard' && doctor.adminCommission) {
-        serviceCharge = (doctor.adminCommission / 100) * doctor.doctorFee;  
+      if (doctor.subscriptionType === 'Standard' && doctor.adminCommissionFee) {
+        serviceCharge = (doctor.adminCommissionFee / 100) * doctor.doctorFee;
         totalFee -= serviceCharge;
       }
+
+      doctor.serviceCharge = (doctor.serviceCharge || 0) + serviceCharge; 
+      doctor.totalDoctorFee = (doctor.totalDoctorFee || 0) + totalFee; 
+
+      await doctor.save();
 
       const booking = new Booking({
         patient: patientId,

@@ -1120,7 +1120,7 @@ router.post('/subscribe', isLoggedIn, async (req, res) => {
             return res.status(404).send('Doctor not found');
         }
 
-        if (doctor.subscriptionType !== 'Free') {
+        if (doctor.subscriptionType !== 'Free' || "Standard") {
             return res.status(403).send('You already have an active subscription. You cannot subscribe again until the current plan ends.');
         }
         const conversionRates = await fetchConversionRates();

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Update Commission Fee</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            background-color: #42427D;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2b2b6d;
+        }
+        input[type="number"] {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100px;
+        }
+        .current-fee {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Update Commission Fee for Doctors</h1>
+        <form action="/admin/commission-fee" method="POST">
+            <label for="adminCommissionFee">Set Commission Fee for All Doctors (%):</label>
+            <input type="number" name="adminCommissionFee" id="adminCommissionFee" step="0.1" required>
+            <button type="submit">Update Commission Fee</button>
+        </form>
+
+        <div class="current-fee">
+            <h2>Current Commission Fee for Standard Plan:</h2>
+            <p><strong><%= currentCommissionFee !== null ? currentCommissionFee : 'Not set' %> %</strong></p>
+        </div>
+    </div>
+</body>
+</html>

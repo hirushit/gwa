@@ -1634,4 +1634,29 @@ router.post('/news-logos/add', isLoggedIn, upload.single('image'), async (req, r
   }
 });
 
+
+router.get('/commission-fee', async (req, res) => {
+  try {
+      const doctor = await Doctor.findOne({ adminCommissionFee: { $exists: true, $ne: null } }, 'adminCommissionFee');
+      const currentCommissionFee = doctor ? doctor.adminCommissionFee : null; 
+
+      res.render('commission-fee', { currentCommissionFee });
+  } catch (error) {
+      console.error('Error fetching doctor records:', error);
+      res.status(500).send('Server error');
+  }
+});
+
+
+router.post('/commission-fee', async (req, res) => {
+  const { adminCommissionFee } = req.body;
+  try {
+    await Doctor.updateMany({}, { $set: { adminCommissionFee: adminCommissionFee } });
+    res.redirect('/admin/commission-fee');
+  } catch (error) {
+    console.error('Error updating commission fee:', error);
+    res.status(500).send('Server error');
+  }
+});
+
 module.exports = router;

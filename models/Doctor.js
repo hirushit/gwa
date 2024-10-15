@@ -92,7 +92,7 @@ const doctorSchema = new mongoose.Schema({
   profileViews: { type: Number, default: 0 },
   conditions: [String],
   reviews: [reviewSchema], 
-  subscriptionType: { type: String, default: "Free" },
+  subscriptionType: { type: String, default: "Standard" },
   paymentDetails: { type: String },
   documents: {
     licenseProof: { data: Buffer, contentType: String },
@@ -105,7 +105,7 @@ const doctorSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  subscriptionVerification: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' },
+  subscriptionVerification: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Verified' },
   subscriptionDate: {
     type: Date,
   },
@@ -113,6 +113,7 @@ const doctorSchema = new mongoose.Schema({
       type: String, 
       enum: ['monthly', 'annual'],
   },
+  adminCommissionFee: { type: Number, default: 10 },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
   tempDoctorFee: Number,

@@ -20,7 +20,10 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const nodemailer = require('nodemailer');
 const https = require('https');
+const axios = require('axios');
 const { title } = require('process');
+const {  GoogleGenerativeAI,} = require('@google/generative-ai');
+
 
 const fetchConversionRates = () => {
     return new Promise((resolve, reject) => {
@@ -72,6 +75,79 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
+  }
+});
+
+const apiKey = 'AIzaSyBS1-zpzpg9ROzArjn8ocBuU1Cr1poAwkg';
+const genAI = new GoogleGenerativeAI(apiKey);
+
+const model = genAI.getGenerativeModel({
+  model: 'gemini-1.5-flash',
+  systemInstruction: `
+    "You are Afya, the personal assistant for MedxBay (https://medxbay.com). MedxBay has two roles: Patients and Doctors.\n\n"
+    "For Doctors:\nDoctors can register and complete their profile by uploading supporting documents for verification "
+    "(Business Proof, Certification Proof, License Proof). Doctors can add time slots for respective hospitals and offer "
+    "two consultation types: In-Person and Video Call.\nDoctors set their fees, but in-person consultation fees are not "
+    "paid on the platform. Patients book a slot, and once the doctor accepts, they receive a confirmation email.\n"
+    "Doctors can set fees for Video Consultations, with premium users keeping 100% of fees, while standard subscription users "
+    "pay a 3% commission for video consultations. Doctors can add e-prescriptions for patients and contribute blogs to the "
+    "Conditions Library.\nDoctors can access their profile by clicking the profile icon at the right end of the header. From "
+    "their profile page, they can click 'Edit Profile' to update or remove details like specialties, conditions, insurances, "
+    "hospitals, fees, and photos.\nThe doctors' dashboard sidebar includes:\nDashboard\nMy Appointments\nMy Schedule\nMy Patients\n"
+    "Inbox\nReviews\nBlog\nLogout.\nOnce the consultation is completed, doctors can update the status in My Appointments to Completed.\n"
+    "In the My Patients tab, doctors can add a prescription. After adding it, the patient will be notified and will also receive "
+    "a chat message.\nDoctors receive a meeting link for video consultations, which is sent to the respective email addresses.\n\n"
+    "For Patients:\nPatients can register, sign in, and search for doctors by name, condition, specialty, or location.\nPatients "
+    "can view a doctor's profile to find details such as conditions they manage, specialties, insurances, and booking options.\n"
+    "Patients can book an appointment, receive confirmation emails once the doctor accepts, and receive a meeting link in the email "
+    "for video consultations. Patients can download e-prescriptions after the doctor uploads them.\n\n"
+    "Key Features:\nMedxBay is currently a web app, with a mobile app planned for the future.\n"
+    "There is a Conditions Library where doctors can contribute content. It can be accessed at https://medxbay.com/condition-libraries-menu, "
+    "or through the header on the website.\nThere is also a Community Page (https://community.medxbay.com/) that connects healthcare professionals "
+    "and users to interact and share information.\nPatients can find doctors on the 'Find Doctor' page (https://medxbay.com/Filters) or use the search "
+    "bar on the homepage (https://medxbay.com).\nLogin and register buttons are available in the navigation bar.\n"
+    "Password Reset: Users and doctors can reset their password by clicking the Forgot Password link on the sign-up page. They will receive an "
+    "email with a link to the password reset page.\n"
+    "Note: The MedxBay chatbot can currently provide relevant details but cannot perform operations like booking appointments. "
+    "In the future, it will support such operations. The chatbot is designed to answer questions related to MedxBay, various health conditions, "
+    "and navigation links within MedxBay. Additionally, Afya can provide general information about health conditions and their symptoms, "
+    "while always recommending consultation with a medical professional for personalized advice.\n"
+    "You should not respond to anyother reponse other than medxbay website, If they ask anything an other medxbay just say i am here to help you with medxbay and i am not trained for that"
+    "If asked who created you or how have you been trained, respond: 'I am a Language Model created by The MedxBay Team.'"
+
+  `,
+});
+
+const generationConfig = {
+    "temperature": 1,
+    "top_p": 0.95,
+    "top_k": 64,
+    "max_output_tokens": 500,
+  responseMimeType: 'text/plain',
+};
+
+
+router.get('/afya', (req, res) => {
+  res.render('afya'); 
+});
+
+router.post('/afya/send_message', async (req, res) => {
+  const userMessage = req.body.message;
+  
+  if (!userMessage) {
+    return res.status(400).send({ response: 'Message is required.' });
+  }
+
+  try {
+    const chatSession = model.startChat({
+      generationConfig,
+    });
+
+    const result = await chatSession.sendMessage(userMessage);
+    res.send({ response: result.response.text() });
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).send({ response: 'Error: Could not get a response from Afya.' });
   }
 });
 
@@ -513,11 +589,10 @@ router.get('/book/payment-success', async (req, res) => {
       let totalFee = doctor.doctorFee;
       let serviceCharge = 0;
 
-      if (doctor.subscriptionType === 'Standard') {
-        serviceCharge = (3 / 100) * doctor.doctorFee;
+      if (doctor.subscriptionType === 'Standard' && doctor.adminCommission) {
+        serviceCharge = (doctor.adminCommission / 100) * doctor.doctorFee;  
         totalFee -= serviceCharge;
       }
-
 
       const booking = new Booking({
         patient: patientId,

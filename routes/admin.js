@@ -100,7 +100,7 @@ router.get('/view/:id', isLoggedIn, async (req, res) => {
 router.post('/verify/:id', isLoggedIn, async (req, res) => {
   try {
     const doctorId = req.params.id;
-    const { verificationStatus, reason, trialPeriod, maxTimeSlots } = req.body;
+    const { verificationStatus, reason, trialPeriod, maxTimeSlots, commissionFee } = req.body;
 
     if (!['Verified', 'Pending', 'Not Verified'].includes(verificationStatus)) {
       return res.status(400).send('Invalid verification status');
@@ -117,10 +117,13 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     if (verificationStatus === 'Verified') {
       const customTrialPeriod = parseInt(trialPeriod) || 60;
       const customMaxTimeSlots = parseInt(maxTimeSlots) || 3;
+      const adminCommissionFee = parseFloat(commissionFee) || 10; // Default commission fee to 10%
 
       doctor.subscriptionVerification = 'Verified';
       doctor.trialEndDate = new Date(Date.now() + customTrialPeriod * 24 * 60 * 60 * 1000);
       doctor.maxTimeSlots = customMaxTimeSlots;
+      doctor.subscriptionType = 'Standard'; // Update to standard subscription
+      doctor.adminCommissionFee = adminCommissionFee; // Save the commission fee
     }
 
     await doctor.save();
@@ -130,7 +133,7 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     if (verificationStatus === 'Verified') {
       const customTrialPeriod = parseInt(trialPeriod) || 60;
       const customMaxTimeSlots = parseInt(maxTimeSlots) || 3;
-      message = `Your profile has been verified. You have a trial period of ${customTrialPeriod} days and you can add up to ${customMaxTimeSlots} time slots.`;
+      message = `Your profile has been verified. You have a trial period of ${customTrialPeriod} days and you can add up to ${customMaxTimeSlots} time slots. A commission fee of ${doctor.adminCommissionFee}% has been set.`;
     }
 
     if (verificationStatus === 'Not Verified' && reason) {
@@ -164,13 +167,14 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
 
     await transporter.sendMail(mailOptions);
 
-    req.flash('success_msg', 'Doctor verification status updated and email sent.');
+    req.flash('success_msg', 'Doctor verification status updated, commission fee set, and email sent.');
     res.redirect('/admin/doctor-profile-requests');
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
+
 
 
 router.get('/view-doctors', isLoggedIn, async (req, res) => {

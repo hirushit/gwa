@@ -8,16 +8,16 @@ const Patient = require('../models/Patient');
 const oauthModel = require('../models/oauthModel');
 const bcrypt = require('bcrypt');
 
-const CLIENT_ID = '76c6d001-b04d4954df83'; 
-const CLIENT_SECRET = '115eb09508334189b3c5e8cac8ce5191';  
-const REDIRECT_URI = 'https://earth-guardians-713w9xhu.bettermode.io/ssos/redirect';  
+const CLIENT_ID = '76c6d001-b04d4954df83';
+const CLIENT_SECRET = '115eb09508334189b3c5e8cac8ce5191';
+const REDIRECT_URI = 'https://community.medxbay.com/ssos/redirect';
 
 router.get('/login', (req, res) => {
   res.render('loginPage');
 });
 
 router.post('/login', async (req, res) => {
-  const { email, password, client_id, redirect_uri } = req.body;
+  const { email, password, client_id } = req.body;
 
   try {
     let user = await Doctor.findOne({ email });
@@ -38,17 +38,16 @@ router.post('/login', async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
     };
 
-    if (!client_id || !redirect_uri) {
-      return res.status(400).json({ message: 'Missing client_id or redirect_uri parameter' });
-    }
-    if (client_id !== CLIENT_ID) {
-      return res.status(400).json({ message: 'Invalid client_id parameter' });
-    }
+    const code = generateAuthCode();
+    console.log(`Generated Auth Code: ${code}`);
 
-    res.redirect(`/oauth/authorize?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirect_uri)}`);
+    await oauthModel.storeAuthCode(code, req.session.user.id, client_id);
+
+    const redirectUrl = `${REDIRECT_URI}?code=${code}&client_id=${client_id}`;
+    res.redirect(redirectUrl);
   } catch (err) {
     console.error('Error in login:', err);
     res.status(500).json({ message: 'Server error' });
@@ -56,34 +55,27 @@ router.post('/login', async (req, res) => {
 });
 
 router.get('/authorize', async (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/oauth/login');
-  }
-
   const { client_id, redirect_uri } = req.query;
 
-  if (!redirect_uri || client_id !== CLIENT_ID) {
-    return res.status(400).json({ message: 'Invalid redirect_uri or client_id' });
+  if (client_id !== CLIENT_ID || redirect_uri !== REDIRECT_URI) {
+    return res.status(400).json({ error: 'Invalid client_id or redirect_uri' });
   }
 
-  const urlPattern = /^https?:\/\/.+/;
-  if (!urlPattern.test(redirect_uri)) {
-    return res.status(400).json({ message: 'Invalid redirect_uri format' });
+  if (req.session.user) {
+    const code = generateAuthCode();
+    await oauthModel.storeAuthCode(code, req.session.user.id, client_id);
+    const redirectUrl = `${redirect_uri}?code=${code}&client_id=${client_id}`;
+    return res.redirect(redirectUrl);
+  } else {
+    return res.redirect('/oauth/login');
   }
-
-  const code = generateAuthCode();
-  console.log(`Generated Auth Code: ${code}`); 
-
-  await oauthModel.storeAuthCode(code, req.session.user.id, client_id);
-
-  res.redirect(`${redirect_uri}?code=${code}&client_id=${client_id}`);
 });
 
 router.post('/token', async (req, res) => {
-  const { code, client_id, client_secret, redirect_uri } = req.body;
+  const { code, client_id, client_secret } = req.body;
 
-  if (client_id !== CLIENT_ID || client_secret !== CLIENT_SECRET || redirect_uri !== REDIRECT_URI) {
-    return res.status(400).json({ error: 'Invalid client credentials or redirect URI' });
+  if (client_id !== CLIENT_ID || client_secret !== CLIENT_SECRET) {
+    return res.status(400).json({ error: 'Invalid client credentials' });
   }
 
   try {
@@ -99,7 +91,7 @@ router.post('/token', async (req, res) => {
     res.json({
       access_token: accessToken,
       token_type: 'bearer',
-      expires_in: 3600
+      expires_in: 3600,
     });
   } catch (err) {
     console.error('Error in token exchange:', err);
@@ -128,7 +120,7 @@ router.get('/callback', async (req, res) => {
       message: 'Authorization successful',
       access_token: accessToken,
       token_type: 'bearer',
-      expires_in: 3600
+      expires_in: 3600,
     });
   } catch (err) {
     console.error('Error handling callback:', err);

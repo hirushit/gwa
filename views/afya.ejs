@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afya</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<div id="chat-container">
+    <h1>Afya</h1>
+    <div id="chatbox">
+        <div id="messages"></div>
+        <input type="text" id="user-input" placeholder="Type your message here...">
+        <button id="send-btn">Send</button>
+        <button id="start-speech-btn">🎤 Speak</button>
+    </div>
+
+    <!-- New buttons for controlling text-to-speech -->
+    <div id="voice-controls">
+        <button id="pause-voice-btn" disabled>Pause</button>
+        <button id="play-voice-btn" disabled>Play</button>
+        <button id="stop-voice-btn" disabled>Stop</button>
+    </div>
+</div>
+
+<script>
+    let currentUtterance = null;
+    let voices = [];
+    let recognition;
+
+    function loadVoices() {
+        voices = window.speechSynthesis.getVoices();
+        if (voices.length === 0) {
+            setTimeout(loadVoices, 100);
+        }
+    }
+
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    // Initialize speech recognition
+    function initSpeechRecognition() {
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = function(event) {
+            const speechResult = event.results[0][0].transcript;
+            $('#user-input').val(speechResult); // Set the transcribed speech as input text
+            sendMessage(); // Automatically send the message
+        };
+
+        recognition.onerror = function(event) {
+            console.error('Speech recognition error: ', event.error);
+        };
+    }
+
+    function formatResponse(responseText) {
+        return responseText
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n\* (.*?)$/gm, '<li>$1</li>')
+            .replace(/\n/g, '<br>')
+            .replace(/<li>/g, '<ul><li>').replace(/<\/li>/g, '</li></ul>')
+            .replace(/https?:\/\/\S+/g, function(url) {
+                return `<a href="${url}" target="_blank">Click here</a>`;
+            });
+    }
+
+    function scrollToBottom() {
+        $('#messages').scrollTop($('#messages')[0].scrollHeight);
+    }
+
+    function readAloud(text) {
+        if (currentUtterance) {
+            window.speechSynthesis.cancel(); // Stop any ongoing speech
+        }
+
+        let femaleVoices = voices.filter(voice => voice.name.includes('Female') || voice.name === "Microsoft Heera");
+        let selectedVoice = femaleVoices.length > 0 ? femaleVoices[0] : voices[0];
+
+        currentUtterance = new SpeechSynthesisUtterance(text);
+        currentUtterance.voice = selectedVoice;
+        currentUtterance.rate = 1;
+        currentUtterance.pitch = 1.2;
+
+        // Enable the voice control buttons
+        $('#pause-voice-btn').prop('disabled', false);
+        $('#stop-voice-btn').prop('disabled', false);
+
+        // Event listener for when speech ends
+        currentUtterance.onend = function () {
+            $('#pause-voice-btn').prop('disabled', true);
+            $('#play-voice-btn').prop('disabled', true);
+            $('#stop-voice-btn').prop('disabled', true);
+        };
+
+        window.speechSynthesis.speak(currentUtterance);
+    }
+
+    function sendMessage() {
+        var message = $('#user-input').val();
+        if (message) {
+            $('#messages').append('<p class="user-message">You: ' + message + '</p><div class="clearfix"></div>');
+            $('#messages').append('<p class="loading afya-typing">Afya is typing...</p>');
+            $('#user-input').val('');
+
+            scrollToBottom();
+
+            $.ajax({
+                type: 'POST',
+                url: '/patient/afya/send_message', 
+                contentType: 'application/json',
+                data: JSON.stringify({ message: message }),
+                success: function (response) {
+                    $('#messages').find('.loading').remove();
+                    let formattedResponse = formatResponse(response.response);
+                    $('#messages').append('<p class="afya-message">Afya: ' + formattedResponse + '</p><div class="clearfix"></div>');
+                    scrollToBottom();
+
+                    // Automatically read the response aloud
+                    readAloud(response.response);
+                },
+                error: function () {
+                    $('#messages').find('.loading').remove();
+                    $('#messages').append('<p>Error: Could not get a response from Afya.</p><div class="clearfix"></div>');
+                    scrollToBottom();
+                }
+            });
+        }
+    }
+
+    // Control buttons functionality
+    $(document).ready(function () {
+        $('#send-btn').click(function () {
+            sendMessage();
+        });
+
+        $('#user-input').keypress(function (e) {
+            if (e.which == 13) {
+                sendMessage();
+                e.preventDefault();
+            }
+        });
+
+        $('#start-speech-btn').click(function () {
+            recognition.start(); // Start speech recognition on button click
+        });
+
+        // Pause button functionality
+        $('#pause-voice-btn').click(function () {
+            window.speechSynthesis.pause();
+            $('#pause-voice-btn').prop('disabled', true);
+            $('#play-voice-btn').prop('disabled', false);
+        });
+
+        // Play button functionality (resume speech)
+        $('#play-voice-btn').click(function () {
+            window.speechSynthesis.resume();
+            $('#play-voice-btn').prop('disabled', true);
+            $('#pause-voice-btn').prop('disabled', false);
+        });
+
+        // Stop button functionality
+        $('#stop-voice-btn').click(function () {
+            window.speechSynthesis.cancel();
+            $('#pause-voice-btn').prop('disabled', true);
+            $('#play-voice-btn').prop('disabled', true);
+            $('#stop-voice-btn').prop('disabled', true);
+        });
+
+        loadVoices();
+        initSpeechRecognition(); // Initialize speech recognition
+    });
+</script>
+
+</body>
+</html>

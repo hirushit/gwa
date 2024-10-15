@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
+const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const flash = require('connect-flash');
 const passport = require('passport');
@@ -32,6 +33,8 @@ app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(cookieParser()); 
+app.use(bodyParser.json());
+  
 
 app.oauth = new OAuth2Server({
   model: oauthModel,

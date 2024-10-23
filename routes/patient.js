@@ -1079,9 +1079,10 @@ router.get('/blogs/conditions/:condition', isLoggedIn, async (req, res) => {
   try {
       const { condition } = req.params;
 
-      const topPriorityBlogs = await Blog.find({ conditions: condition })
-          .sort({ priority: -1 }) 
-          .limit(5);
+      const featuredBlogs = await Blog.find({ 
+        priority: 'high', 
+        verificationStatus: 'Verified' 
+    }).sort({ createdAt: -1 }).limit(5).lean();
 
     
       const recentBlogs = await Blog.find({ conditions: condition })
@@ -1121,7 +1122,7 @@ router.get('/blogs/conditions/:condition', isLoggedIn, async (req, res) => {
 
       res.render('patient-condition-blogs', {
           condition,
-          topPriorityBlogs,
+          featuredBlogs,
           blogsByCategory,
           topRatedDoctors,
           recentBlogs,

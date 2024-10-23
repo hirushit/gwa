@@ -34,18 +34,20 @@
         <div id="editor"></div>
         <input type="hidden" name="description" id="description"><br><br>
 
+        <label for="image">Cover Image:</label><br>
+        <input type="file" id="image" name="image" accept="image/*"><br><br>
+
+        <label for="images">Additional Images:</label><br>
+        <input type="file" id="images" name="images" accept="image/*" multiple><br><br>
+
         <div class="form-group">
             <label for="conditions">Conditions:</label>
-            <!-- Single condition selection (removed multiple="multiple") -->
             <select id="conditions" name="selectedConditions" class="form-control" required>
                 <% conditions.forEach(condition => { %>
                 <option value="<%= condition.name %>"><%= condition.name %></option>
                 <% }) %>
             </select>
         </div>
-
-        <label for="image">Upload Image:</label><br>
-        <input type="file" id="image" name="image" accept="image/*"><br><br>
 
         <label for="categories">Category:</label><br>
         <select id="categories" name="categories" style="width: 100%;" required>
@@ -59,36 +61,6 @@
         <label for="hashtags">Hashtags:</label><br>
         <select id="hashtags" name="hashtags" multiple="multiple" style="width: 100%;">
             <option value="#diabetes">#diabetes</option>
-            <option value="#type1diabetes">#type1diabetes</option>
-            <option value="#type2diabetes">#type2diabetes</option>
-            <option value="#gestationaldiabetes">#gestationaldiabetes</option>
-            <option value="#diabetesawareness">#diabetesawareness</option>
-            <option value="#diabeticlife">#diabeticlife</option>
-            <option value="#diabetesmanagement">#diabetesmanagement</option>
-            <option value="#insulin">#insulin</option>
-            <option value="#bloodsugar">#bloodsugar</option>
-            <option value="#diabetescommunity">#diabetescommunity</option>
-            <option value="#diabeteswarrior">#diabeteswarrior</option>
-            <option value="#diabeteseducation">#diabeteseducation</option>
-            <option value="#diabetesdiet">#diabetesdiet</option>
-            <option value="#diabetesresearch">#diabetesresearch</option>
-            <option value="#diabeteslife">#diabeteslife</option>
-
-            <option value="#asthma">#asthma</option>
-            <option value="#asthmaawareness">#asthmaawareness</option>
-            <option value="#asthmaattack">#asthmaattack</option>
-            <option value="#asthmawarrior">#asthmawarrior</option>
-            <option value="#asthmatreatment">#asthmatreatment</option>
-            <option value="#asthmaeducation">#asthmaeducation</option>
-            <option value="#asthmafriendly">#asthmafriendly</option>
-            <option value="#asthmaattack">#asthmaattack</option>
-            <option value="#asthmalife">#asthmalife</option>
-            <option value="#asthmarelief">#asthmarelief</option>
-            <option value="#asthmaresearch">#asthmaresearch</option>
-            <option value="#asthmaawarenessmonth">#asthmaawarenessmonth</option>
-            <option value="#asthmajourney">#asthmajourney</option>
-            <option value="#asthmamanagement">#asthmamanagement</option>
-            <option value="#doctorsofinstagram">#doctorsofinstagram</option>
         </select><br><br>
 
         <label for="priority">Priority:</label><br>
@@ -132,25 +104,27 @@
                 }
             });
 
-            $('#categories').change(function () {
-                const selectedCondition = $('#conditions').val();
-                const livingWithOption = $('#categories option[value="Living with [condition]"]');
+            $('#images').on('change', function () {
+                const files = this.files;
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const reader = new FileReader();
 
-                if (selectedCondition) {
-                    livingWithOption.text(`Living with ${selectedCondition}`);
-                } else {
-                    livingWithOption.text("Living with [condition]");
+                    reader.onload = function (e) {
+                        const imageUrl = e.target.result;
+                        const range = quill.getSelection();
+                        quill.insertEmbed(range.index, 'image', imageUrl);
+                    };
+
+                    if (file) {
+                        reader.readAsDataURL(file);
+                    }
                 }
             });
 
-            $('#conditions').on('change', function () {
-                $('#categories').trigger('change');
-            });
-
-            // Handle form submission
             $('#blogForm').on('submit', function (e) {
                 var description = document.querySelector('input[name=description]');
-                description.value = quill.root.innerHTML;
+                description.value = quill.root.innerHTML; 
             });
         });
     </script>

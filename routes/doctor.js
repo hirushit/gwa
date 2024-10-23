@@ -1256,42 +1256,48 @@ router.get('/subscription-failure', (req, res) => {
 
 router.get('/blog', async (req, res) => {
     try {
-        // Fetch all conditions from the database
-        const conditions = await Condition.find(); // Assuming the collection is named "Condition"
-        
-        res.render('blog-upload-form', { conditions }); // Pass conditions to the view
+        const conditions = await Condition.find(); 
+        res.render('blog-upload-form', { conditions }); 
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), async (req, res) => {
+router.post('/blog', upload.fields([
+    { name: 'image', maxCount: 1 }, 
+    { name: 'images', maxCount: 10 }
+]), async (req, res) => {
     try {
         const authorEmail = req.session.user.email;
         const { title, author, description, categories, hashtags, priority, selectedConditions } = req.body;
 
         const doctor = await Doctor.findOne({ email: authorEmail });
+        let authorId = doctor ? doctor._id : null;
 
-        let authorId = null;
-        if (doctor) {
-            authorId = doctor._id; 
-        }
+        const coverImage = req.files['image'] ? req.files['image'][0] : null;
+        const coverImageData = coverImage ? {
+            data: coverImage.buffer,
+            contentType: coverImage.mimetype
+        } : null;
+
+        const images = req.files['images'] ? req.files['images'].map(file => ({
+            data: file.buffer,
+            contentType: file.mimetype
+        })) : [];
 
         const newBlog = new Blog({
             title,
             author,
-            description,
+            description,  
             authorEmail,
             authorId,
-            categories: categories,
-            hashtags: hashtags,
+            categories,
+            hashtags,
             priority,
-            conditions: selectedConditions, 
-            image: {
-                data: req.file.buffer,
-                contentType: req.file.mimetype
-            },
+            conditions: selectedConditions,  
+            image: coverImageData,  
+            images: images, 
             verificationStatus: 'Pending'
         });
 
@@ -1303,6 +1309,7 @@ router.post('/blog', isLoggedIn, checkSubscription, upload.single('image'), asyn
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 router.get('/blogs/conditions', isLoggedIn, isDoctor,async (req, res) => {
     try {
@@ -2013,12 +2020,12 @@ router.get('/blogs/view/:id', isLoggedIn, checkSubscription, async (req, res) =>
 
         if (!req.session.viewedBlogs) {
             req.session.viewedBlogs = [];
-          }
-      
-          if (!req.session.viewedBlogs.includes(blogId)) {
+        }
+
+        if (!req.session.viewedBlogs.includes(blogId)) {
             await Blog.findByIdAndUpdate(blogId, { $inc: { readCount: 1 } });
             req.session.viewedBlogs.push(blogId);
-          }
+        }
 
         const relatedPosts = await Blog.find({
             $or: [
@@ -2031,7 +2038,7 @@ router.get('/blogs/view/:id', isLoggedIn, checkSubscription, async (req, res) =>
 
         const mostReadPosts = await Blog.find({
             _id: { $ne: blog._id },
-            verificationStatus: "Verified" 
+            verificationStatus: "Verified"
         }).sort({ readCount: -1 }).limit(5).lean();
 
         let blogImageBase64 = null;
@@ -2044,11 +2051,16 @@ router.get('/blogs/view/:id', isLoggedIn, checkSubscription, async (req, res) =>
         const encodedTitle = encodeURIComponent(blog.title);
 
         const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedBlogUrl}`;
+        const twitterShareUrl = `https://twitter.com/intent/tweet?url=${encodedBlogUrl}&text=${encodedTitle}`;
 
-        const twitterShareUrl = `https://twitter.com/intent/tweet?url=${encodedBlogUrl}&text=${encodeURIComponent(blog.title)}`;
-
-        res.render('DoctorViewBlog', { blog, relatedPosts, mostReadPosts,facebookShareUrl, blogImageBase64,
-            twitterShareUrl });
+        res.render('DoctorViewBlog', {
+            blog, 
+            relatedPosts, 
+            mostReadPosts,
+            facebookShareUrl,
+            blogImageBase64,
+            twitterShareUrl
+        });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -2056,7 +2068,6 @@ router.get('/blogs/view/:id', isLoggedIn, checkSubscription, async (req, res) =>
 });
 
 
-  
 router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
     try {
         const { comment } = req.body;

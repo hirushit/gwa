@@ -19,12 +19,12 @@
     </style>
 </head>
 <body>
-    <h1><%= condition %></h1>
+    <h1>Condition: <%= condition %></h1>
 
     <h2>Featured Blogs</h2>
     <ul>
-        <% if (topPriorityBlogs.length > 0) { %>
-            <% topPriorityBlogs.forEach(blog => { %>
+        <% if (featuredBlogs.length > 0) { %>
+            <% featuredBlogs.forEach(blog => { %>
                 <li class="blog-card">
                     <% if (blog.image && blog.image.data) { %>
                         <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
@@ -35,7 +35,7 @@
                 </li>
             <% }) %>
         <% } else { %>
-            <p>No high-priority blogs found for this condition.</p>
+            <p>No featured blogs found for this condition.</p>
         <% } %>
     </ul>
 
@@ -58,6 +58,7 @@
     <% } else { %>
         <p>No blogs found for this condition.</p>
     <% } %>
+
     <h2>Most Read Blogs</h2>
     <ul>
         <% if (mostReadBlogs.length > 0) { %>
@@ -74,6 +75,7 @@
             <p>No most read blogs found for this condition.</p>
         <% } %>
     </ul>
+
     <h2>Recent Blogs</h2>
     <ul>
         <% if (recentBlogs.length > 0) { %>
@@ -83,7 +85,6 @@
                         <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
                     <% } %>
                     <h3><%= blog.title || 'Untitled Blog' %></h3>
-                    
                     <a href="/patient/blogs/view/<%= blog._id %>">Read More</a>
                 </li>
             <% }) %>
@@ -91,20 +92,20 @@
             <p>No recent blogs found for this condition.</p>
         <% } %>
     </ul>
+
     <div class="hashtags">
         <h2>Hashtags</h2>
         <ul>
             <% hashtags.forEach(hashtag => { %>
                 <li>
-                    <a href="/patient/blogs/conditions/<%= condition %>/hashtag/<%= hashtag._id.substring(1) %>"> 
+                    <a href="/patient/blogs/conditions/<%= condition %>/hashtag/<%= hashtag._id.substring(1) %>">
                         <%= hashtag._id %>
                     </a>
-                    <span>(<%= hashtag.count %> posts)</span> <!-- Show the count of posts for each hashtag -->
+                    <span>(<%= hashtag.count %> posts)</span>
                 </li>
             <% }) %>
         </ul>
     </div>
-    
-    
+
 </body>
 </html>

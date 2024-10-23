@@ -1,49 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blogs for <%= condition %></title>
-    <style>
-        .blog-card {
-            border: 1px solid #ccc;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 5px;
-        }
-        .blog-card img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
-    <h1><%= condition %></h1>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Blogs for <%= condition %></title>
+        <style>
+            .blog-card {
+                border: 1px solid #ccc;
+                padding: 15px;
+                margin: 10px 0;
+                border-radius: 5px;
+            }
+            .blog-card img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1><%= condition %></h1>
 
-    <h2>Featured Blogs</h2>
-    <ul>
-        <% if (topPriorityBlogs.length > 0) { %>
-            <% topPriorityBlogs.forEach(blog => { %>
-                <li class="blog-card">
-                    <% if (blog.image && blog.image.data) { %>
-                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
-                    <% } %>
-                    <h3><%= blog.title %></h3>
-                    <p><%= blog.content %></p>
-                    <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
-                </li>
-            <% }) %>
-        <% } else { %>
-            <p>No high-priority blogs found for this condition.</p>
-        <% } %>
-    </ul>
-
-    <% if (blogsByCategory.length > 0) { %>
-        <% blogsByCategory.forEach(categoryGroup => { %>
-            <h3>Category: <%= categoryGroup._id %></h3>
-            <ul>
-                <% categoryGroup.blogs.forEach(blog => { %>
+        <h2>Featured Blogs</h2>
+        <ul>
+            <% if (featuredBlogs.length > 0) { %>
+                <% featuredBlogs.forEach(blog => { %>
                     <li class="blog-card">
                         <% if (blog.image && blog.image.data) { %>
                             <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
@@ -53,64 +34,79 @@
                         <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
                     </li>
                 <% }) %>
-            </ul>
-            <% if (categoryGroup.showAll) { %> 
-                <a href="/doctor/blogs/conditions/<%= condition %>/category/<%= categoryGroup._id %>">Show All</a>
+            <% } else { %>
+                <p>No high-priority blogs found for this condition.</p>
             <% } %>
-        <% }) %>
-    <% } else { %>
-        <p>No blogs found for this condition.</p>
-    <% } %>
-    
+        </ul>
 
-    
-    <h2>Recent Blogs</h2>
-    <ul>
-        <% recentBlogs.forEach(blog => { %>
-            <li>
-                <h3><%= blog.title %></h3>
-                <% if (blog.image && blog.image.data) { %>
-                    <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+        <% if (blogsByCategory.length > 0) { %>
+            <% blogsByCategory.forEach(categoryGroup => { %>
+                <h3>Category: <%= categoryGroup._id %></h3>
+                <ul>
+                    <% categoryGroup.blogs.forEach(blog => { %>
+                        <li class="blog-card">
+                            <% if (blog.image && blog.image.data) { %>
+                                <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                            <% } %>
+                            <h3><%= blog.title %></h3>
+                            <p><%= blog.content %></p>
+                            <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                        </li>
+                    <% }) %>
+                </ul>
+                <% if (categoryGroup.showAll) { %> 
+                    <a href="/doctor/blogs/conditions/<%= condition %>/category/<%= categoryGroup._id %>">Show All</a>
                 <% } %>
-                <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
-            </li>
-        <% }) %>
-    </ul>
-    <% if (showAllRecent) { %>
-        <a href="/doctor/blogs/conditions/<%= condition %>/recent-blogs">Show All Recent Blogs</a>
-    <% } %>
+            <% }) %>
+        <% } else { %>
+            <p>No blogs found for this condition.</p>
+        <% } %>
 
-    <!-- Most Read Blogs Section -->
-    <h2>Most Read Blogs</h2>
-    <ul>
-        <% mostReadBlogs.forEach(blog => { %>
-            <li>
-                <h3><%= blog.title %></h3>
-                <% if (blog.image && blog.image.data) { %>
-                    <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
-                <% } %>
-                <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
-            </li>
-        <% }) %>
-    </ul>
-    <% if (showAllMostRead) { %>
-        <a href="/doctor/blogs/conditions/<%= condition %>/most-read-blogs">Show All Most Read Blogs</a>
-    <% } %>
-    <div class="hashtags">
-        <h2>Hashtags</h2>
+        <h2>Recent Blogs</h2>
         <ul>
-            <% hashtags.forEach(hashtag => { %>
+            <% recentBlogs.forEach(blog => { %>
                 <li>
-                    <a href="/doctor/blogs/conditions/<%= condition %>/hashtag/<%= hashtag._id.substring(1) %>"> 
-                        <%= hashtag._id %>
-                    </a>
-                    <span>(<%= hashtag.count %> posts)</span> <!-- Show the count of posts for each hashtag -->
+                    <h3><%= blog.title %></h3>
+                    <% if (blog.image && blog.image.data) { %>
+                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                    <% } %>
+                    <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
                 </li>
             <% }) %>
         </ul>
-    </div>
-    <a href="/doctor/blogs/conditions/<%= condition %>/all" class="btn btn-primary">Show All</a>
+        <% if (showAllRecent) { %>
+            <a href="/doctor/blogs/conditions/<%= condition %>/recent-blogs">Show All Recent Blogs</a>
+        <% } %>
 
-    
-</body>
-</html>
+        <h2>Most Read Blogs</h2>
+        <ul>
+            <% mostReadBlogs.forEach(blog => { %>
+                <li>
+                    <h3><%= blog.title %></h3>
+                    <% if (blog.image && blog.image.data) { %>
+                        <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image">
+                    <% } %>
+                    <a href="/doctor/blogs/view/<%= blog._id %>">Read More</a>
+                </li>
+            <% }) %>
+        </ul>
+        <% if (showAllMostRead) { %>
+            <a href="/doctor/blogs/conditions/<%= condition %>/most-read-blogs">Show All Most Read Blogs</a>
+        <% } %>
+        
+        <div class="hashtags">
+            <h2>Hashtags</h2>
+            <ul>
+                <% hashtags.forEach(hashtag => { %>
+                    <li>
+                        <a href="/doctor/blogs/conditions/<%= condition %>/hashtag/<%= hashtag._id.substring(1) %>"> 
+                            <%= hashtag._id %>
+                        </a>
+                        <span>(<%= hashtag.count %> posts)</span> 
+                    </li>
+                <% }) %>
+            </ul>
+        </div>
+        <a href="/doctor/blogs/conditions/<%= condition %>/all" class="btn btn-primary">Show All</a>
+    </body>
+    </html>

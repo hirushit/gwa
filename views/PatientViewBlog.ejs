@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blog Details</title>
+    <title>Blog Details - <%= blog.title %></title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -63,8 +63,10 @@
     <p><strong>Author:</strong> <%= blog.author %></p>
     <p><strong>Author Email:</strong> <%= blog.authorEmail %></p>
     <a href="/patient/author/<%= blog.authorId %>">View Author Info</a>
+    
     <h2>Description</h2>
-    <p><%= blog.description %></p>
+    <div><%- blog.description %></div>
+    
     <h2>Summary</h2>
     <p><%= blog.summary %></p>
 
@@ -84,7 +86,7 @@
     
     <section class="comments-section">
         <h2>Comments</h2>
-        <% if (blog.comments && Array.isArray(blog.comments)) { %>
+        <% if (blog.comments && Array.isArray(blog.comments) && blog.comments.length > 0) { %>
             <% blog.comments.forEach(comment => { %>
                 <div class="comment">
                     <div class="comment-header">

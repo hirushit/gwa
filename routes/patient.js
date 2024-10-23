@@ -784,18 +784,46 @@ router.get('/calendar', isLoggedIn, async (req, res) => {
 router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
   try {
       const blogId = req.params.id;
-      const blog = await Blog.findById(blogId).lean();
 
+      let blog = await Blog.findById(blogId).lean();
       if (!blog) {
           return res.status(404).send('Blog not found');
       }
 
-      res.render('PatientViewBlog', { blog });
+      const relatedPosts = await Blog.find({
+          $or: [
+              { categories: { $in: blog.categories } },
+              { hashtags: { $in: blog.hashtags } }
+          ],
+          _id: { $ne: blog._id },
+          verificationStatus: "Verified"
+      }).limit(5).lean();
+
+      const mostReadPosts = await Blog.find({
+          _id: { $ne: blog._id },
+          verificationStatus: "Verified"
+      }).sort({ readCount: -1 }).limit(5).lean();
+
+      const blogUrl = `http://medxbay.com/patient/blogs/view/${blogId}`;
+      const encodedBlogUrl = encodeURIComponent(blogUrl);
+      const encodedTitle = encodeURIComponent(blog.title);
+
+      const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedBlogUrl}`;
+      const twitterShareUrl = `https://twitter.com/intent/tweet?url=${encodedBlogUrl}&text=${encodedTitle}`;
+
+      res.render('PatientViewBlog', {
+          blog,
+          relatedPosts,
+          mostReadPosts,
+          facebookShareUrl,
+          twitterShareUrl
+      });
   } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');
   }
 });
+
 
 router.post('/blogs/comment/:id', isLoggedIn, async (req, res) => {
   try {
@@ -1146,13 +1174,18 @@ router.get('/blogs/conditions/:condition/hashtag/:hashtag', async (req, res) => 
           hashtags: tag 
       }).sort({ createdAt: -1 });
 
-      const topPriorityBlogs = await Blog.find({ 
-          conditions: condition,
-          hashtags: tag  
-      })
-          .sort({ priority: -1 }) 
-          .limit(5);
-      console.log(topPriorityBlogs);
+      // const topPriorityBlogs = await Blog.find({ 
+      //     conditions: condition,
+      //     hashtags: tag  
+      // })
+      //     .sort({ priority: -1 }) 
+      //     .limit(5);
+      // console.log(topPriorityBlogs);
+
+      const featuredBlogs = await Blog.find({ 
+        priority: 'high', 
+        verificationStatus: 'Verified' 
+    }).sort({ createdAt: -1 }).limit(5).lean();
 
       const recentBlogs = await Blog.find({ 
           conditions: condition,
@@ -1202,11 +1235,12 @@ router.get('/blogs/conditions/:condition/hashtag/:hashtag', async (req, res) => 
           condition,
           hashtag,
           blogs,
-          topPriorityBlogs,
+          // topPriorityBlogs,
           recentBlogs,
           mostReadBlogs,
           blogsByCategory,
           topRatedDoctors,
+          featuredBlogs,
           hashtags
       });
   } catch (err) {

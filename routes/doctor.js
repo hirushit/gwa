@@ -1365,10 +1365,14 @@ router.get('/blogs/conditions/:condition', isLoggedIn, isDoctor, async (req, res
     try {
         const { condition } = req.params;
 
-        // Fetch top 5 priority blogs for the given condition
-        const topPriorityBlogs = await Blog.find({ conditions: condition })
-            .sort({ priority: -1 })
-            .limit(5);
+        // const topPriorityBlogs = await Blog.find({ conditions: condition })
+        //     .sort({ priority: -1 })
+        //     .limit(5);
+
+        const featuredBlogs = await Blog.find({ 
+            priority: 'high', 
+            verificationStatus: 'Verified' 
+        }).sort({ createdAt: -1 }).limit(5).lean();
 
         // Fetch first 5 recent blogs
         const recentBlogs = await Blog.find({ conditions: condition })
@@ -1411,7 +1415,8 @@ router.get('/blogs/conditions/:condition', isLoggedIn, isDoctor, async (req, res
 
         res.render('condition-blogs', {
             condition,
-            topPriorityBlogs,
+            // topPriorityBlogs,
+            featuredBlogs,
             recentBlogs,
             mostReadBlogs,
             blogsByCategory,
@@ -1477,25 +1482,20 @@ router.get('/blogs/conditions/:condition/category/:category', isLoggedIn, isDoct
     }
 });
 
-  router.get('/blogs/conditions/:condition/hashtag/:hashtag', isLoggedIn, isDoctor,async (req, res) => {
+router.get('/blogs/conditions/:condition/hashtag/:hashtag', isLoggedIn, isDoctor, async (req, res) => {
     try {
         const { condition, hashtag } = req.params;
-        console.log(hashtag);
         const tag = `#${hashtag}`; 
-        console.log(tag);
 
         const blogs = await Blog.find({ 
             conditions: condition,
             hashtags: tag
         }).sort({ createdAt: -1 });
 
-        const topPriorityBlogs = await Blog.find({ 
-            conditions: condition,
-            hashtags: tag 
-        })
-            .sort({ priority: -1 }) 
-            .limit(5);
-        console.log(topPriorityBlogs);
+        const featuredBlogs = await Blog.find({ 
+            priority: 'high', 
+            verificationStatus: 'Verified' 
+        }).sort({ createdAt: -1 }).limit(5).lean();
 
         const recentBlogs = await Blog.find({ 
             conditions: condition,
@@ -1503,7 +1503,7 @@ router.get('/blogs/conditions/:condition/category/:category', isLoggedIn, isDoct
         })
             .sort({ createdAt: -1 })
             .limit(5);
-  
+
         const mostReadBlogs = await Blog.find({ 
             conditions: condition,
             hashtags: tag  
@@ -1530,7 +1530,6 @@ router.get('/blogs/conditions/:condition/category/:category', isLoggedIn, isDoct
             }
         ]);
 
-
         const hashtags = await Blog.aggregate([
             { $match: { conditions: condition } },
             { $unwind: "$hashtags" },
@@ -1538,15 +1537,21 @@ router.get('/blogs/conditions/:condition/category/:category', isLoggedIn, isDoct
             { $sort: { count: -1 } }
         ]);
 
+        // Flags to control visibility of "Show All" links
+        const showAllRecent = recentBlogs.length > 5;  // Change this condition based on your logic
+        const showAllMostRead = mostReadBlogs.length > 5; // Adjust if you have specific logic
+
         res.render('condition-blogs', {
             condition,
             hashtag,
             blogs,
-            topPriorityBlogs,
+            featuredBlogs,
             recentBlogs,
             mostReadBlogs,
             blogsByCategory,
-            hashtags
+            hashtags,
+            showAllRecent,     // Add this line
+            showAllMostRead    // Add this line if you want to use it
         });
     } catch (err) {
         console.error(err);

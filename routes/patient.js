@@ -1108,21 +1108,27 @@ router.get('/blogs/conditions/:condition', isLoggedIn, async (req, res) => {
       const { condition } = req.params;
 
       const featuredBlogs = await Blog.find({ 
-        priority: 'high', 
-        verificationStatus: 'Verified' 
-    }).sort({ createdAt: -1 }).limit(5).lean();
+          priority: 'high', 
+          verificationStatus: 'Verified' 
+      }).sort({ createdAt: -1 }).limit(5).lean();
 
-    
-      const recentBlogs = await Blog.find({ conditions: condition })
-          .sort({ createdAt: -1 })
-          .limit(5);
+      const recentBlogs = await Blog.find({ 
+          conditions: condition,
+          verificationStatus: 'Verified' 
+      }).sort({ createdAt: -1 }).limit(5);
 
-      const mostReadBlogs = await Blog.find({ conditions: condition })
-          .sort({ readCount: -1 }) 
-          .limit(5);
+      const mostReadBlogs = await Blog.find({ 
+          conditions: condition,
+          verificationStatus: 'Verified' 
+      }).sort({ readCount: -1 }).limit(5);
 
       const blogsByCategory = await Blog.aggregate([
-          { $match: { conditions: condition } },
+          { 
+              $match: { 
+                  conditions: condition,
+                  verificationStatus: 'Verified' 
+              } 
+          },
           {
               $group: {
                   _id: "$categories",
@@ -1138,7 +1144,12 @@ router.get('/blogs/conditions/:condition', isLoggedIn, async (req, res) => {
       ]);
 
       const hashtags = await Blog.aggregate([
-          { $match: { conditions: condition } },
+          { 
+              $match: { 
+                  conditions: condition,
+                  verificationStatus: 'Verified' 
+              } 
+          },
           { $unwind: "$hashtags" },
           { $group: { _id: "$hashtags", count: { $sum: 1 } } },
           { $sort: { count: -1 } }
@@ -1162,6 +1173,7 @@ router.get('/blogs/conditions/:condition', isLoggedIn, async (req, res) => {
       res.status(500).send('Server Error');
   }
 });
+
 router.get('/blogs/conditions/:condition/hashtag/:hashtag', async (req, res) => {
   try {
       const { condition, hashtag } = req.params;

@@ -711,7 +711,7 @@ router.get('/blog', isLoggedIn, async (req, res) => {
   }
 });
 
-router.post('/blog-all', upload.single('image'), async (req, res) => {
+router.post('/blog-all', upload.fields([ { name: 'image', maxCount: 1 }, { name: 'images', maxCount: 5 }]), async (req, res) => {
   try {
       const { title, description, categories, hashtags, priority, authorId, selectedConditions } = req.body;
 
@@ -734,26 +734,38 @@ router.post('/blog-all', upload.single('image'), async (req, res) => {
           return res.status(400).send('Invalid author selection');
       }
 
-      const newBlog = new Blog({
+      const blogData = {
           title,
           author,
           description,
           authorEmail,
-          authorId, 
+          authorId,
           categories,
           conditions: selectedConditions,
           hashtags,
           priority,
-          image: {
-              data: req.file.buffer,
-              contentType: req.file.mimetype
-          },
-          verificationStatus: 'Verified' 
-      });
+          verificationStatus: 'Verified'  
+      };
 
+      if (req.files['image']) {
+        blogData.image = {
+            data: req.files['image'][0].buffer,
+            contentType: req.files['image'][0].mimetype
+        };
+    }
+
+      if (req.files['images']) {
+          blogData.additionalImages = req.files['images'].map(file => ({
+              data: file.buffer,
+              contentType: file.mimetype
+          }));
+      }
+
+      const newBlog = new Blog(blogData);
       await newBlog.save();
 
       res.render('admin-blog-success', { message: 'Blog uploaded successfully' });
+
   } catch (err) {
       console.error(err);
       res.status(500).json({ message: 'Server error' });

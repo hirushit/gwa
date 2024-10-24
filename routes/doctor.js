@@ -1270,10 +1270,13 @@ router.post('/blog', upload.fields([
 ]), async (req, res) => {
     try {
         const authorEmail = req.session.user.email;
-        const { title, author, description, categories, hashtags, priority, selectedConditions } = req.body;
 
         const doctor = await Doctor.findOne({ email: authorEmail });
+
         let authorId = doctor ? doctor._id : null;
+        let authorName = doctor ? doctor.name : 'Unknown';
+
+        const { title, description, categories, hashtags, priority, selectedConditions } = req.body;
 
         const coverImage = req.files['image'] ? req.files['image'][0] : null;
         const coverImageData = coverImage ? {
@@ -1288,16 +1291,16 @@ router.post('/blog', upload.fields([
 
         const newBlog = new Blog({
             title,
-            author,
-            description,  
+            author: authorName,   
+            description,
             authorEmail,
-            authorId,
+            authorId,            
             categories,
             hashtags,
             priority,
-            conditions: selectedConditions,  
-            image: coverImageData,  
-            images: images, 
+            conditions: selectedConditions,
+            image: coverImageData,
+            images: images,
             verificationStatus: 'Pending'
         });
 
@@ -1309,7 +1312,6 @@ router.post('/blog', upload.fields([
         res.status(500).json({ message: 'Server error' });
     }
 });
-
 
 router.get('/blogs/conditions', isLoggedIn, isDoctor,async (req, res) => {
     try {

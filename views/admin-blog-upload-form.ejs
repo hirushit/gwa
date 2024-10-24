@@ -156,10 +156,15 @@
                         <div id="editor"></div>
                         <input type="hidden" name="description" id="description">
                     </div>
-
+        
                     <div>
-                        <label for="image">Upload Image:</label>
+                        <label for="image">Upload Cover Image:</label>
                         <input type="file" id="image" name="image" accept="image/*" required>
+                    </div>
+        
+                    <div>
+                        <label for="images">Additional Images:</label>
+                        <input type="file" id="images" name="images" accept="image/*" multiple>
                     </div>
 
                     <div class="form-group">
@@ -236,19 +241,11 @@
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
         $(document).ready(function () {
-            $('#categories').select2({
-                placeholder: "Select category",
+            $('#categories, #hashtags, #conditions').select2({
+                placeholder: "Select",
                 allowClear: true
             });
-            $('#hashtags').select2({
-                placeholder: "Select hashtags",
-                allowClear: true
-            });
-            $('#conditions').select2({
-                placeholder: "Search for conditions",
-                allowClear: true
-            });
-
+    
             const quill = new Quill('#editor', {
                 theme: 'snow',
                 modules: {
@@ -262,26 +259,28 @@
                     ]
                 }
             });
-
-            $('#categories').change(function () {
-                const selectedCondition = $('#conditions').val();
-                const livingWithOption = $('#categories option[value="Living with [condition]"]');
-
-                if (selectedCondition) {
-                    livingWithOption.text(`Living with ${selectedCondition}`);
-                } else {
-                    livingWithOption.text("Living with [condition]");
+    
+            $('#images').on('change', function () {
+                const files = this.files;
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const reader = new FileReader();
+    
+                    reader.onload = function (e) {
+                        const imageUrl = e.target.result;
+                        const range = quill.getSelection();
+                        quill.insertEmbed(range.index, 'image', imageUrl);
+                    };
+    
+                    if (file) {
+                        reader.readAsDataURL(file);
+                    }
                 }
             });
-
-            $('#conditions').on('change', function () {
-                $('#categories').trigger('change');
-            });
-
-            // Handle form submission
+    
             $('#blogForm').on('submit', function (e) {
                 var description = document.querySelector('input[name=description]');
-                description.value = quill.root.innerHTML;
+                description.value = quill.root.innerHTML; 
             });
         });
     </script>

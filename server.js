@@ -112,6 +112,7 @@ app.use('/patient', require('./routes/patient'));
 app.use('/doctor', require('./routes/doctor'));
 app.use('/admin', require('./routes/admin'));
 app.use('/oauth', require('./routes/oauth'));
+app.use('/supplier', require('./routes/supplier'));
 
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) {

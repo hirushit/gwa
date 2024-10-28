@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile</title>
+    <link rel="stylesheet" href="/path/to/bootstrap.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Edit Profile</h2>
+
+        <p><strong>Current Profile Image:</strong></p>
+        <% if (supplier.profilePicture && supplier.profilePicture.data && supplier.profilePicture.contentType) { %>
+            <img src="data:<%= supplier.profilePicture.contentType %>;base64,<%= supplier.profilePicture.data.toString('base64') %>" alt="Profile Image" class="img-fluid" style="max-width: 200px;"/>
+        <% } else { %>
+            <p>No profile image uploaded.</p>
+        <% } %>
+
+        <form action="/supplier/update-profile" method="POST" enctype="multipart/form-data">
+            <div class="form-group mt-3">
+                <label for="name">Name:</label>
+                <input type="text" class="form-control" id="name" name="name" value="<%= supplier.name %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="contactEmail">Email:</label>
+                <input type="email" class="form-control" id="contactEmail" name="contactEmail" value="<%= supplier.contactEmail %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="text" class="form-control" id="phone" name="phone" value="<%= supplier.phone %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="alternateContactNumber">Alternate Contact Number:</label>
+                <input type="text" class="form-control" id="alternateContactNumber" name="alternateContactNumber" value="<%= supplier.alternateContactNumber || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="companyName">Company Name:</label>
+                <input type="text" class="form-control" id="companyName" name="companyName" value="<%= supplier.companyName || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="businessRegistrationNumber">Business Registration Number:</label>
+                <input type="text" class="form-control" id="businessRegistrationNumber" name="businessRegistrationNumber" value="<%= supplier.businessRegistrationNumber || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="taxIdentificationNumber">Tax Identification Number (TIN):</label>
+                <input type="text" class="form-control" id="taxIdentificationNumber" name="taxIdentificationNumber" value="<%= supplier.taxIdentificationNumber || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="businessType">Business Type:</label>
+                <select class="form-control" id="businessType" name="businessType" required>
+                    <option value="" disabled <%= !supplier.businessType ? 'selected' : '' %>>Select Business Type</option>
+                    <option value="Individual" <%= supplier.businessType === 'Individual' ? 'selected' : '' %>>Individual</option>
+                    <option value="Small Business" <%= supplier.businessType === 'Small Business' ? 'selected' : '' %>>Small Business</option>
+                    <option value="Enterprise" <%= supplier.businessType === 'Enterprise' ? 'selected' : '' %>>Enterprise</option>
+                </select>
+                
+            </div>
+
+
+
+            <h5>Address</h5>
+            <div class="form-group">
+                <label for="street">Street:</label>
+                <input type="text" class="form-control" id="street" name="street" value="<%= supplier.address.street %>">
+            </div>
+
+            <div class="form-group">
+                <label for="city">City:</label>
+                <input type="text" class="form-control" id="city" name="city" value="<%= supplier.address.city %>">
+            </div>
+
+            <div class="form-group">
+                <label for="state">State:</label>
+                <input type="text" class="form-control" id="state" name="state" value="<%= supplier.address.state %>">
+            </div>
+
+            <div class="form-group">
+                <label for="zipCode">Zip Code:</label>
+                <input type="text" class="form-control" id="zipCode" name="zipCode" value="<%= supplier.address.zipCode %>">
+            </div>
+
+            <div class="form-group">
+                <label for="country">Country:</label>
+                <input type="text" class="form-control" id="country" name="country" value="<%= supplier.address.country %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="profileImage">Profile Image:</label>
+                <input type="file" class="form-control-file" id="profileImage" name="profileImage" accept="image/*">
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">Update Profile</button>
+        </form>
+
+        <a href="/supplier/manage-profile" class="btn btn-secondary mt-3">Back to Profile</a>
+    </div>
+</body>
+</html>

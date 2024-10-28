@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product</title>
+    <link rel="stylesheet" href="/path/to/bootstrap.css">
+    <style>
+        .image-preview {
+            display: inline-block;
+            position: relative;
+            margin: 5px;
+        }
+        .image-preview img {
+            max-width: 100px;
+            max-height: 100px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .remove-image {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 14px;
+        }
+    </style>
+    <script>
+        let imageCount = 0; 
+
+        function previewImages(input, previewContainer) {
+            const files = input.files;
+
+            if (files && files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.classList.add('image-preview');
+
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+
+                    const removeButton = document.createElement('button');
+                    removeButton.classList.add('remove-image');
+                    removeButton.innerText = 'X';
+                    removeButton.onclick = function() {
+                        imgDiv.remove();
+                        input.value = ''; 
+                        imageCount--;
+                    };
+
+                    imgDiv.appendChild(img);
+                    imgDiv.appendChild(removeButton);
+                    previewContainer.appendChild(imgDiv);
+                };
+                reader.readAsDataURL(files[0]);
+            }
+        }
+
+        function addImageField() {
+            if (imageCount < 5) { 
+                const container = document.createElement('div');
+                container.classList.add('form-group');
+
+                const label = document.createElement('label');
+                label.innerText = `Upload Image ${imageCount + 1}:`;
+                container.appendChild(label);
+
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.classList.add('form-control');
+                input.name = 'images';
+                input.accept = 'image/*';
+                input.required = imageCount === 0; 
+
+                const previewContainer = document.createElement('div');
+                previewContainer.classList.add('preview-container');
+
+                input.onchange = function() {
+                    previewImages(input, previewContainer);
+                };
+
+                const removeButton = document.createElement('button');
+                removeButton.classList.add('remove-image');
+                removeButton.innerText = 'Remove';
+                removeButton.onclick = function(e) {
+                    e.preventDefault();
+                    container.remove(); 
+                    imageCount--; 
+                };
+
+                container.appendChild(input);
+                container.appendChild(previewContainer);
+                document.getElementById('imageFields').appendChild(container);
+                imageCount++;
+            } else {
+                alert('You can upload up to 5 images.');
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Add New Product</h2>
+        <form action="/supplier/add-product" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Product Name:</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea class="form-control" id="description" name="description" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="price">Price:</label>
+                <input type="number" class="form-control" id="price" name="price" min="0" required>
+            </div>
+
+            <div class="form-group">
+                <label for="countInStock">Count in Stock:</label>
+                <input type="number" class="form-control" id="countInStock" name="countInStock" min="0" required>
+            </div>
+
+            <div class="form-group">
+                <label for="category">Category:</label>
+                <select class="form-control" id="category" name="category" required>
+                    <option value="">Select a category</option>
+                    <option value="Medical Equipment">Medical Equipment</option>
+                    <option value="Surgical Instruments">Surgical Instruments</option>
+                    <option value="Diagnostic Equipment">Diagnostic Equipment</option>
+                    <option value="Pharmaceuticals">Pharmaceuticals</option>
+                    <option value="Personal Protective Equipment (PPE)">Personal Protective Equipment (PPE)</option>
+                    <option value="Hospital Furniture">Hospital Furniture</option>
+                    <option value="Laboratory Equipment">Laboratory Equipment</option>
+                    <option value="Orthopedic Products">Orthopedic Products</option>
+                    <option value="Dental Products">Dental Products</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="subCategory">Sub-category (optional):</label>
+                <input type="text" class="form-control" id="subCategory" name="subCategory">
+            </div>
+
+            <div id="imageFields">
+                <button type="button" class="btn btn-secondary" onclick="addImageField()">Add Image</button>
+            </div>
+
+            <hr>
+            <button type="submit" class="btn btn-primary">Add Product</button>
+        </form>
+
+        <a href="/supplier/dashboard" class="btn btn-secondary mt-3">Back to Dashboard</a>
+
+        <a href="/supplier/manage-products" class="btn btn-secondary">Back to Manage Products</a>
+
+    </div>
+</body>
+</html>

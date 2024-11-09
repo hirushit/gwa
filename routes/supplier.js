@@ -228,10 +228,21 @@ router.get('/dashboard', isLoggedIn, (req, res) => {
     res.render('supplierIndex'); 
 });
 
-router.get('/manage-profile', isLoggedIn, async (req, res) => {
+router.get('/profile', isLoggedIn, async (req, res) => {
     try {
         const supplier = await Supplier.findById(req.session.supplierId); 
-        res.render('manageProfile', { supplier });
+        
+        // Filter products by category if provided
+        const category = req.query.category;
+        let products = [];
+
+        if (category) {
+            products = await Product.find({ uploadedBy: req.session.supplierId, category: category, countInStock: { $gt: 0 } });
+        } else {
+            products = await Product.find({ uploadedBy: req.session.supplierId, countInStock: { $gt: 0 } });
+        }
+
+        res.render('supplierProfile', { supplier, products });
     } catch (err) {
         console.error('Error fetching supplier data:', err);
         req.flash('error_msg', 'Failed to fetch profile data');
@@ -240,13 +251,17 @@ router.get('/manage-profile', isLoggedIn, async (req, res) => {
 });
 
 
+
+
 router.get('/edit-profile', isLoggedIn, async (req, res) => {
     const supplier = await Supplier.findById(req.session.supplierId);
-    res.render('editProfile', { supplier });
+    res.render('editSupplierProfile', { supplier });
 });
 
-router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async (req, res) => {
-    const { name, contactEmail, phone, alternateContactNumber, companyName, businessRegistrationNumber, taxIdentificationNumber, businessType, street, city, state, zipCode, country } = req.body;
+router.post('/update-profile', isLoggedIn, upload.fields([{ name: 'profileImage' }, { name: 'coverPhoto' }]), async (req, res) => {
+    const { name, contactEmail, phone, alternateContactNumber, companyName, businessRegistrationNumber, taxIdentificationNumber, businessType, street, city, state, zipCode, country, province, tagline, overview } = req.body;
+    
+    const productCategories = Array.isArray(req.body.productCategories) ? req.body.productCategories : [req.body.productCategories];
 
     const updateData = {
         name,
@@ -257,21 +272,30 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
         businessRegistrationNumber,
         taxIdentificationNumber,
         businessType,
+        tagline,
+        overview,
+        productCategories,
         address: { street, city, state, zipCode, country }
     };
 
-    if (req.file) {
+    if (req.files['profileImage']) {
         updateData.profilePicture = {
-            data: req.file.buffer,           
-            contentType: req.file.mimetype  
+            data: req.files['profileImage'][0].buffer,
+            contentType: req.files['profileImage'][0].mimetype
+        };
+    }
+
+    if (req.files['coverPhoto']) {
+        updateData.coverPhoto = {
+            data: req.files['coverPhoto'][0].buffer,
+            contentType: req.files['coverPhoto'][0].mimetype
         };
     }
 
     try {
         await Supplier.findByIdAndUpdate(req.session.supplierId, updateData);
-        
         req.flash('success_msg', 'Profile updated successfully');
-        res.redirect('/supplier/manage-profile');
+        res.redirect('/supplier/profile');
     } catch (err) {
         console.error('Error updating profile:', err);
         req.flash('error_msg', 'Failed to update profile');
@@ -415,6 +439,32 @@ router.delete('/delete-image/:imageId', isLoggedIn, async (req, res) => {
 router.get('/manage-orders', isLoggedIn, (req, res) => {
     res.render('manageOrders'); 
 });
+
+
+// routes/supplier.js
+router.get('/all-suppliers', async (req, res) => {
+    try {
+        const suppliers = await Supplier.find();
+        res.render('allSuppliers', { suppliers });
+    } catch (err) {
+        console.error('Error fetching suppliers:', err);
+        res.redirect('/');
+    }
+});
+
+
+// routes/supplier.js
+router.get('/supplier/:id', async (req, res) => {
+    try {
+        const supplier = await Supplier.findById(req.params.id);
+        const products = await Product.find({ uploadedBy: req.params.id, countInStock: { $gt: 0 } });
+        res.render('supplierDetails', { supplier, products });
+    } catch (err) {
+        console.error('Error fetching supplier details:', err);
+        res.redirect('/supplier/all-suppliers');
+    }
+});
+
 
 
 router.get('/logout', (req, res) => {

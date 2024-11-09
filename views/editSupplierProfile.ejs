@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile</title>
+    <link rel="stylesheet" href="/path/to/bootstrap.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Edit Profile</h2>
+
+        <p><strong>Current Profile Image:</strong></p>
+        <% if (supplier.profilePicture && supplier.profilePicture.data && supplier.profilePicture.contentType) { %>
+            <img src="data:<%= supplier.profilePicture.contentType %>;base64,<%= supplier.profilePicture.data.toString('base64') %>" alt="Profile Image" class="img-fluid" style="max-width: 200px;"/>
+        <% } else { %>
+            <p>No profile image uploaded.</p>
+        <% } %>
+
+        <p><strong>Current Cover Image:</strong></p>
+<% if (supplier.coverPhoto && supplier.coverPhoto.data && supplier.coverPhoto.contentType) { %>
+    <img src="data:<%= supplier.coverPhoto.contentType %>;base64,<%= supplier.coverPhoto.data.toString('base64') %>" alt="Cover Image" class="img-fluid" style="max-width: 100%; height: auto; max-height: 300px;"/>
+<% } else { %>
+    <p>No cover image uploaded.</p>
+<% } %>
+
+        <form action="/supplier/update-profile" method="POST" enctype="multipart/form-data">
+            <!-- Personal and Contact Information -->
+            <div class="form-group mt-3">
+                <label for="name">Name:</label>
+                <input type="text" class="form-control" id="name" name="name" value="<%= supplier.name %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="contactEmail">Email:</label>
+                <input type="email" class="form-control" id="contactEmail" name="contactEmail" value="<%= supplier.contactEmail %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="text" class="form-control" id="phone" name="phone" value="<%= supplier.phone %>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="alternateContactNumber">Alternate Contact Number:</label>
+                <input type="text" class="form-control" id="alternateContactNumber" name="alternateContactNumber" value="<%= supplier.alternateContactNumber || '' %>">
+            </div>
+
+            <!-- Company Information -->
+            <div class="form-group">
+                <label for="companyName">Company Name:</label>
+                <input type="text" class="form-control" id="companyName" name="companyName" value="<%= supplier.companyName || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="businessRegistrationNumber">Business Registration Number:</label>
+                <input type="text" class="form-control" id="businessRegistrationNumber" name="businessRegistrationNumber" value="<%= supplier.businessRegistrationNumber || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="taxIdentificationNumber">Tax Identification Number (TIN):</label>
+                <input type="text" class="form-control" id="taxIdentificationNumber" name="taxIdentificationNumber" value="<%= supplier.taxIdentificationNumber || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="businessType">Business Type:</label>
+                <select class="form-control" id="businessType" name="businessType" required>
+                    <option value="" disabled <%= !supplier.businessType ? 'selected' : '' %>>Select Business Type</option>
+                    <option value="Individual" <%= supplier.businessType === 'Individual' ? 'selected' : '' %>>Individual</option>
+                    <option value="Small Business" <%= supplier.businessType === 'Small Business' ? 'selected' : '' %>>Small Business</option>
+                    <option value="Enterprise" <%= supplier.businessType === 'Enterprise' ? 'selected' : '' %>>Enterprise</option>
+                </select>
+            </div>
+
+            <!-- Address Information -->
+            <h5>Address</h5>
+            <div class="form-group">
+                <label for="street">Street:</label>
+                <input type="text" class="form-control" id="street" name="street" value="<%= supplier.address.street %>">
+            </div>
+
+            <div class="form-group">
+                <label for="city">City:</label>
+                <input type="text" class="form-control" id="city" name="city" value="<%= supplier.address.city %>">
+            </div>
+
+            <div class="form-group">
+                <label for="state">State:</label>
+                <input type="text" class="form-control" id="state" name="state" value="<%= supplier.address.state %>">
+            </div>
+
+            <div class="form-group">
+                <label for="zipCode">Zip Code:</label>
+                <input type="text" class="form-control" id="zipCode" name="zipCode" value="<%= supplier.address.zipCode %>">
+            </div>
+
+            <div class="form-group">
+                <label for="country">Country:</label>
+                <input type="text" class="form-control" id="country" name="country" value="<%= supplier.address.country %>" required>
+            </div>
+
+            <!-- Profile Information -->
+            <div class="form-group">
+                <label for="tagline">Tagline:</label>
+                <input type="text" class="form-control" id="tagline" name="tagline" value="<%= supplier.tagline || '' %>">
+            </div>
+
+            <div class="form-group">
+                <label for="overview">Overview:</label>
+                <textarea class="form-control" id="overview" name="overview"><%= supplier.overview || '' %></textarea>
+            </div>
+
+            <!-- Product Categories -->
+            <div class="form-group">
+                <label>Product Categories:</label>
+                <div id="categoryContainer">
+                    <% supplier.productCategories.forEach(function(category, index) { %>
+                        <div class="input-group mb-2 category-input">
+                            <select class="form-control" name="productCategories[]" required>
+                                <option value="" disabled <%= !category ? 'selected' : '' %>>Select a Category</option>
+                                <option value="Medical Equipment" <%= category === 'Medical Equipment' ? 'selected' : '' %>>Medical Equipment</option>
+                                <option value="Surgical Instruments" <%= category === 'Surgical Instruments' ? 'selected' : '' %>>Surgical Instruments</option>
+                                <option value="Diagnostic Equipment" <%= category === 'Diagnostic Equipment' ? 'selected' : '' %>>Diagnostic Equipment</option>
+                                <option value="Pharmaceuticals" <%= category === 'Pharmaceuticals' ? 'selected' : '' %>>Pharmaceuticals</option>
+                                <option value="Personal Protective Equipment (PPE)" <%= category === 'Personal Protective Equipment (PPE)' ? 'selected' : '' %>>Personal Protective Equipment (PPE)</option>
+                                <option value="Hospital Furniture" <%= category === 'Hospital Furniture' ? 'selected' : '' %>>Hospital Furniture</option>
+                                <option value="Laboratory Equipment" <%= category === 'Laboratory Equipment' ? 'selected' : '' %>>Laboratory Equipment</option>
+                                <option value="Orthopedic Products" <%= category === 'Orthopedic Products' ? 'selected' : '' %>>Orthopedic Products</option>
+                                <option value="Dental Products" <%= category === 'Dental Products' ? 'selected' : '' %>>Dental Products</option>
+                            </select>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-danger" onclick="removeCategory(this)">Remove</button>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+                <button type="button" class="btn btn-primary mt-2" onclick="addCategory()">Add Category</button>
+            </div>
+
+            <!-- Images -->
+            <div class="form-group">
+                <label for="profileImage">Profile Image:</label>
+                <input type="file" class="form-control-file" id="profileImage" name="profileImage" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label for="coverPhoto">Cover Photo:</label>
+                <input type="file" class="form-control-file" id="coverPhoto" name="coverPhoto" accept="image/*">
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">Update Profile</button>
+        </form>
+
+        <a href="/supplier/profile" class="btn btn-secondary mt-3">Back to Profile</a>
+    </div>
+
+    <script>
+        function addCategory() {
+            const container = document.getElementById('categoryContainer');
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'input-group mb-2 category-input';
+
+            const select = document.createElement('select');
+            select.className = 'form-control';
+            select.name = 'productCategories[]';
+            select.required = true;
+
+            const options = [
+                { value: '', text: 'Select a Category', disabled: true },
+                { value: 'Medical Equipment', text: 'Medical Equipment' },
+                { value: 'Surgical Instruments', text: 'Surgical Instruments' },
+                { value: 'Diagnostic Equipment', text: 'Diagnostic Equipment' },
+                { value: 'Pharmaceuticals', text: 'Pharmaceuticals' },
+                { value: 'Personal Protective Equipment (PPE)', text: 'Personal Protective Equipment (PPE)' },
+                { value: 'Hospital Furniture', text: 'Hospital Furniture' },
+                { value: 'Laboratory Equipment', text: 'Laboratory Equipment' },
+                { value: 'Orthopedic Products', text: 'Orthopedic Products' },
+                { value: 'Dental Products', text: 'Dental Products' }
+            ];
+
+            options.forEach(optionData => {
+                const option = document.createElement('option');
+                option.value = optionData.value;
+                option.textContent = optionData.text;
+                option.disabled = optionData.disabled || false;
+                select.appendChild(option);
+            });
+
+            const removeBtnDiv = document.createElement('div');
+            removeBtnDiv.className = 'input-group-append';
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-danger';
+            removeBtn.textContent = 'Remove';
+            removeBtn.onclick = () => categoryDiv.remove();
+
+            removeBtnDiv.appendChild(removeBtn);
+            categoryDiv.appendChild(select);
+            categoryDiv.appendChild(removeBtnDiv);
+            container.appendChild(categoryDiv);
+        }
+
+        function removeCategory(button) {
+            button.closest('.category-input').remove();
+        }
+    </script>
+</body>
+</html>

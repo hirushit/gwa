@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Profile</title>
+    <link rel="stylesheet" href="/path/to/bootstrap.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Your Profile</h2>
+
+        <!-- Profile Image -->
+        <p><strong>Profile Image:</strong></p>
+        <% if (supplier.profilePicture && supplier.profilePicture.data) { %>
+            <img src="data:<%= supplier.profilePicture.contentType %>;base64,<%= supplier.profilePicture.data.toString('base64') %>" alt="Profile Image" class="img-fluid" style="max-width: 200px;"/>
+        <% } else { %>
+            <p>No profile image uploaded.</p>
+        <% } %>
+
+        <!-- Cover Image -->
+        <p class="mt-4"><strong>Cover Image:</strong></p>
+        <% if (supplier.coverPhoto && supplier.coverPhoto.data) { %>
+            <img src="data:<%= supplier.coverPhoto.contentType %>;base64,<%= supplier.coverPhoto.data.toString('base64') %>" alt="Cover Image" class="img-fluid" style="max-width: 100%; height: auto; max-height: 300px;"/>
+        <% } else { %>
+            <p>No cover image uploaded.</p>
+        <% } %>
+
+        <!-- Supplier Details -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title"><%= supplier.name %></h5>
+                <p><strong>Email:</strong> <%= supplier.contactEmail %></p>
+                <p><strong>Phone:</strong> <%= supplier.phone %></p>
+                <p><strong>Alternate Contact Number:</strong> <%= supplier.alternateContactNumber || 'Not provided' %></p>
+                <p><strong>Company:</strong> <%= supplier.companyName || 'Not provided' %></p>
+                <p><strong>Business Registration Number:</strong> <%= supplier.businessRegistrationNumber || 'Not provided' %></p>
+                <p><strong>Tax Identification Number (TIN):</strong> <%= supplier.taxIdentificationNumber || 'Not provided' %></p>
+                <p><strong>Business Type:</strong> <%= supplier.businessType || 'Not provided' %></p>
+                <p><strong>Address:</strong> <%= supplier.address.street %>, <%= supplier.address.city %>, <%= supplier.address.state %>, <%= supplier.address.zipCode %>, <%= supplier.address.country %></p>
+                <p><strong>Tagline:</strong> <%= supplier.tagline || 'Not provided' %></p>
+                <p><strong>Overview:</strong> <%= supplier.overview || 'Not provided' %></p>
+
+                <!-- Product Categories -->
+                <p><strong>Product Categories:</strong></p>
+                <% if (supplier.productCategories && supplier.productCategories.length > 0) { %>
+                    <ul>
+                        <% supplier.productCategories.forEach(function(category) { %>
+                            <li><a href="#" class="category-link" data-category="<%= category %>"><%= category %></a></li>
+                        <% }) %>
+                    </ul>
+                <% } else { %>
+                    <p>No product categories provided.</p>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Display Products -->
+        <h3 class="mt-5">Our Products</h3>
+        <div id="product-container">
+            <% if (products && products.length > 0) { %>
+                <div class="row">
+                    <% products.forEach(function(product) { %>
+                        <div class="col-md-4 product-item" data-category="<%= product.category %>">
+                            <div class="card mb-3">
+                                <img src="data:<%= product.images[0].contentType %>;base64,<%= product.images[0].data.toString('base64') %>" class="card-img-top" alt="<%= product.name %>" style="height: 200px; object-fit: cover;">
+                                <div class="card-body">
+                                    <h5 class="card-title"><%= product.name %></h5>
+                                    <p class="card-text"><%= product.description.substring(0, 100) %>...</p>
+                                    <p><strong>Price:</strong> ₹<%= product.price %></p>
+                                    <p><strong>In Stock:</strong> <%= product.countInStock %></p>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <p>No products in stock to display.</p>
+            <% } %>
+        </div>
+
+        <a href="/supplier/edit-profile" class="btn btn-primary mt-3">Edit Profile</a>
+        <a href="/supplier/dashboard" class="btn btn-info">Back to Dashboard</a><br>
+
+    </div>
+
+    <!-- JavaScript for category filtering -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const categoryLinks = document.querySelectorAll('.category-link');
+            const productItems = document.querySelectorAll('.product-item');
+
+            categoryLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const selectedCategory = this.getAttribute('data-category');
+
+                    // Hide all products initially
+                    productItems.forEach(function(item) {
+                        item.style.display = 'none';
+                    });
+
+                    // Show only products that match the selected category
+                    productItems.forEach(function(item) {
+                        if (item.getAttribute('data-category') === selectedCategory) {
+                            item.style.display = 'block';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

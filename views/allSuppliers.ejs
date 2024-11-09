@@ -1,0 +1,34 @@
+<!-- views/allSuppliers.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Suppliers</title>
+    <link rel="stylesheet" href="/path/to/bootstrap.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>All Suppliers</h2>
+
+        <div class="row">
+            <% suppliers.forEach(function(supplier) { %>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <% if (supplier.profilePicture && supplier.profilePicture.data) { %>
+                            <img src="data:<%= supplier.profilePicture.contentType %>;base64,<%= supplier.profilePicture.data.toString('base64') %>" class="card-img-top" alt="<%= supplier.name %>" style="height: 200px; object-fit: cover;">
+                        <% } else { %>
+                            <img src="/path/to/default-image.jpg" class="card-img-top" alt="<%= supplier.name %>" style="height: 200px; object-fit: cover;">
+                        <% } %>
+                        <div class="card-body">
+                            <h5 class="card-title"><%= supplier.name %></h5>
+                            <p><strong>Tagline:</strong> <%= supplier.tagline || 'Not provided' %></p>
+                            <a href="/supplier/supplier/<%= supplier._id %>" class="btn btn-primary">View Supplier</a>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+</body>
+</html>

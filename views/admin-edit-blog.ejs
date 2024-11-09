@@ -114,7 +114,7 @@
                 }
             });
 
-            quill.root.innerHTML = `<%= blog.description %>`;
+            quill.root.innerHTML = `<%- blog.description %>`;
 
             $('#editBlogForm').on('submit', function (e) {
                 var description = document.querySelector('input[name=description]');

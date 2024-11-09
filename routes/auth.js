@@ -297,7 +297,10 @@ router.post('/login', async (req, res) => {
       return res.redirect('/doctor/doctor-index'); 
     } else if (user.role === 'admin') {
       return res.redirect('/admin/doctor-profile-requests'); 
-    } else {
+    } else if (user.role === 'supplier'){
+      return res.redirect('/supplier/profile');
+    } 
+    else {
       req.flash('error_msg', 'Invalid role');
       return res.redirect('/auth/login');
     }

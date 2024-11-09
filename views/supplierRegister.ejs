@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supplier Registration</title>
-    <link rel="stylesheet" href="path/to/bootstrap.css">
+    <link rel="stylesheet" href="/path/to/bootstrap.css">
 </head>
 <body>
     <div class="container">
@@ -13,7 +13,6 @@
         <% if (success_msg) { %>
             <p style="color: green;"><%= success_msg %></p>
         <% } %>
-  
         <% if (error_msg) { %>
             <p style="color: red;"><%= error_msg %></p>
         <% } %>
@@ -61,6 +60,11 @@
             </div>
             <button type="submit" class="btn btn-primary">Register</button>
         </form>
+
+        <hr>
+
+        <!-- Sign up with Medxbay Account Button, with role=supplier parameter -->
+        <button onclick="window.location.href='/auth/register?role=supplier'" class="btn btn-outline-primary mt-3">Sign up with Medxbay Account</button>
     </div>
 </body>
 </html>

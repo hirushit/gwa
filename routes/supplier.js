@@ -3,12 +3,13 @@ const bcrypt = require('bcrypt');
 const router = express.Router();
 const Supplier = require('../models/Supplier'); 
 const Product = require('../models/Product'); 
+const Doctor = require('../models/Doctor');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-
+const Order = require('../models/Order');
 
 function isLoggedIn(req, res, next) {
     if (req.session && req.session.supplierId) {
@@ -98,17 +99,25 @@ router.get('/marketplace', (req, res) => {
 router.get('/register', (req, res) => {
     res.render('supplierRegister', { success_msg: req.flash('success_msg'), error_msg: req.flash('error_msg') }); 
 });
-
 router.post('/register', async (req, res) => {
     const { name, email, password, phone, companyName, street, city, state, zipCode, country } = req.body;
 
     try {
+        // Check if email exists in Supplier collection
         const existingSupplier = await Supplier.findOne({ contactEmail: email });
         if (existingSupplier) {
             req.flash('error_msg', 'Supplier already exists');
             return res.redirect('/supplier/register');
         }
 
+        // Check if email exists in Doctor collection
+        const existingDoctor = await Doctor.findOne({ email });
+        if (existingDoctor) {
+            req.flash('success_msg', 'An account with Medxbay as a doctor already exists. You can sign in using the same credentials.');
+            return res.redirect('/supplier/login'); // Redirect to login page for shared credentials
+        }
+
+        // Create verification token and save supplier details
         const token = generateVerificationToken();
         const tokenExpires = Date.now() + 3600000; 
         await sendVerificationEmail(name, email, token, 'supplier');
@@ -135,7 +144,6 @@ router.post('/register', async (req, res) => {
         res.redirect('/supplier/register');
     }
 });
-
 
 router.get('/verify-email', async (req, res) => {
     const { token } = req.query;
@@ -180,9 +188,23 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        // Check if email exists in Supplier collection
         const supplier = await Supplier.findOne({ contactEmail: email });
 
-        if (!supplier || !await bcrypt.compare(password, supplier.password)) {
+        // If no Supplier account, check in Doctor collection
+        if (!supplier) {
+            const doctor = await Doctor.findOne({ email });
+            if (doctor && await bcrypt.compare(password, doctor.password)) {
+                req.flash('success_msg', 'Logged in with your Medxbay doctor account!');
+                req.session.supplierId = doctor._id; 
+                return res.redirect('/supplier/dashboard'); // Redirect to supplier dashboard
+            }
+            req.flash('error_msg', 'Invalid email or password');
+            return res.redirect('/supplier/login');
+        }
+
+        // Check password for supplier and verification status
+        if (!await bcrypt.compare(password, supplier.password)) {
             req.flash('error_msg', 'Invalid email or password');
             return res.redirect('/supplier/login');
         }
@@ -404,6 +426,8 @@ router.get('/logout', (req, res) => {
         res.redirect('/supplier/marketplace'); 
     });
 });
+
+
 
 
 module.exports = router;

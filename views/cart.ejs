@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <link rel="stylesheet" href="/path/to/bootstrap.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Your Cart</h2>
+        <% if (items.length > 0) { %>
+            <form action="/doctor/checkout" method="POST" id="checkout-form">
+                <% items.forEach(item => { %>
+                    <div class="cart-item">
+                        <h4><%= item.product.name %></h4>
+                        <p>Price: $<%= item.product.price %></p>
+                        <% if (item.product.images && item.product.images.length > 0) { %>
+                            <img src="data:<%= item.product.images[0].contentType %>;base64,<%= item.product.images[0].data.toString('base64') %>" 
+                                 alt="<%= item.product.name %> Image" 
+                                 class="img-thumbnail" 
+                                 style="width:150px; height:150px;">
+                        <% } else { %>
+                            <p>No image available.</p>
+                        <% } %>
+                        <input type="checkbox" name="products[]" value="<%= item.product._id %>" checked>
+                        <label for="quantity-<%= item.product._id %>">Quantity:</label>
+                        <input type="number" name="quantities[<%= item.product._id %>]" value="<%= item.quantity %>" min="1" style="width: 60px; margin-left: 5px;">
+                    </div>
+                    <hr>
+                <% }); %>
+                <button type="submit" class="btn btn-success">Checkout Selected</button>
+            </form>
+        <% } else { %>
+            <p>Your cart is empty.</p>
+        <% } %>
+    </div>
+</body>
+</html>

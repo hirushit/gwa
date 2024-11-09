@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Order Dashboard</title>
+    <link rel="stylesheet" href="/styles.css"> <!-- Link to your CSS file -->
+</head>
+<body>
+    <header>
+        <h1>Welcome, Dr. <%= doctor.name %>!</h1>
+        <p>Your Order Chats with Suppliers</p>
+    </header>
+
+    <section>
+        <% if (orderChats.length > 0) { %>
+            <ul class="chat-list">
+                <% orderChats.forEach(chat => { %>
+                    <li class="chat-item">
+                        <h3>Supplier: <%= chat.supplierId.name %></h3>
+
+                        <p>
+                            <strong>Last Message:</strong> 
+                            <%= chat.messages.length > 0 ? chat.messages[chat.messages.length - 1].text : "No messages yet" %>
+                        </p>
+
+                        <% if (chat.unreadCount > 0) { %>
+                            <p class="unread">Unread Messages: <%= chat.unreadCount %></p>
+                        <% } %>
+
+                        <a href="/doctor/orderchat/<%= chat._id %>">Open Chat</a> <!-- Link to the individual order chat -->
+                    </li>
+                <% }) %>
+            </ul>
+        <% } else { %>
+            <p>No chats with suppliers yet.</p>
+        <% } %>
+    </section>
+</body>
+</html>

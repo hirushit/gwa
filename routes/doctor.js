@@ -18,6 +18,12 @@ const Notification = require('../models/Notification');
 const mongoose = require('mongoose');
 const Specialty = require('../models/Specialty');
 const Condition = require('../models/Condition');
+const Cart = require('../models/Cart');
+const Product = require('../models/Product');
+const Order = require('../models/Order'); 
+const Supplier = require('../models/Supplier');
+const OrderChat = require('../models/OrderChat');
+
 
 require('dotenv').config();
 
@@ -1539,7 +1545,6 @@ router.get('/blogs/conditions/:condition/hashtag/:hashtag', isLoggedIn, isDoctor
             { $sort: { count: -1 } }
         ]);
 
-        // Flags to control visibility of "Show All" links
         const showAllRecent = recentBlogs.length > 5;  // Change this condition based on your logic
         const showAllMostRead = mostReadBlogs.length > 5; // Adjust if you have specific logic
 
@@ -1774,7 +1779,7 @@ router.get('/profile/blogs', isLoggedIn, checkSubscription,async (req, res) => {
     }
   });
 
-router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
+  router.get('/blogs/edit/:id', isLoggedIn, async (req, res) => {
     try {
         const blog = await Blog.findById(req.params.id);
 
@@ -2410,6 +2415,578 @@ router.post('/notifications/:id/delete', isLoggedIn, async (req, res) => {
     }
 });
 
+router.get('/products', async (req, res) => {
+    try {
+        const products = await Product.find();
+        
+        res.render('productList', { products }); // Render view to display products
+    } catch (err) {
+        console.error('Error fetching products:', err);
+        res.status(500).send('Server error');
+    }
+});
+
+router.post('/add-to-cart/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const userId = req.session.user._id;  // Assuming user info is available in req.session
+    const { quantity } = req.body;
+
+    try {
+        // Check if the product exists
+        const product = await Product.findById(productId);
+        if (!product) {
+            req.flash('error_msg', 'Product not found');
+            return res.redirect('/products');
+        }
+
+        // Check if the user already has a cart
+        let cart = await Cart.findOne({ userId });
+
+        if (cart) {
+            // If the cart exists, update it by adding the product
+            const existingProductIndex = cart.items.findIndex(item => item.product.toString() === productId);
+
+            if (existingProductIndex >= 0) {
+                // If the product is already in the cart, update the quantity
+                cart.items[existingProductIndex].quantity += parseInt(quantity, 10);
+            } else {
+                // If the product is not in the cart, add it as a new item
+                cart.items.push({ product: productId, quantity: parseInt(quantity, 10) });
+            }
+        } else {
+            // If no cart exists, create a new one
+            cart = new Cart({
+                userId,
+                items: [{ product: productId, quantity: parseInt(quantity, 10) }]
+            });
+        }
+
+        await cart.save(); // Save cart after modifying items
+
+        req.flash('success_msg', 'Product added to cart');
+        res.redirect('/doctor/products');
+    } catch (err) {
+        console.error('Error adding to cart:', err);
+        req.flash('error_msg', 'Could not add product to cart');
+        res.redirect('/doctor/products');
+    }
+});
+
+
+router.post('/buy-now/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const { quantity } = req.body; // Accessing quantity from request body
+
+    try {
+        const product = await Product.findById(productId).populate('uploadedBy');
+        if (!product) {
+            req.flash('error_msg', 'Product not found');
+            return res.redirect('/doctor/products');
+        }
+
+        // Redirect to the final checkout page with product and quantity details
+        res.redirect(`/doctor/final-checkout?productId=${productId}&quantity=${quantity}`);
+    } catch (err) {
+        console.error('Error in Buy Now process:', err);
+        req.flash('error_msg', 'Could not proceed to checkout');
+        res.redirect('/doctor/products');
+    }
+});
+
+router.get('/final-checkout', async (req, res) => {
+    const { productId, quantity } = req.query;
+
+    try {
+        const product = await Product.findById(productId).populate('uploadedBy');
+        if (!product) {
+            req.flash('error_msg', 'Product not found');
+            return res.redirect('/doctor/products');
+        }
+
+        res.render('final-checkout', {
+            product,
+            quantity
+        });
+    } catch (err) {
+        console.error('Error loading final checkout:', err);
+        req.flash('error_msg', 'Could not load final checkout page');
+        res.redirect('/doctor/products');
+    }
+});
+
+router.post('/send-enquiry', async (req, res) => {
+    const { productId, quantity } = req.body;
+    const buyerEmail = req.session.user.email;  // Assuming the user's email is available in `req.session.user`
+
+    try {
+        // Find the product and populate the supplier info
+        const product = await Product.findById(productId).populate('uploadedBy');
+        if (!product) {
+            req.flash('error_msg', 'Product not found');
+            return res.redirect('/doctor/products');
+        }
+
+        // Find the supplier's email from the Supplier collection
+        const supplier = await Supplier.findById(product.uploadedBy);
+        if (!supplier) {
+            req.flash('error_msg', 'Supplier not found');
+            return res.redirect('/doctor/products');
+        }
+
+        const expectedDeliveryDate = new Date();
+        expectedDeliveryDate.setDate(expectedDeliveryDate.getDate() + 7); // Set to 7 days later
+
+        // Create an order entry in the Order collection
+        const newOrder = new Order({
+            buyerEmail: buyerEmail,
+            supplierEmail: supplier.contactEmail, // Get the supplier email from the Supplier schema
+            products: [{
+                productId: product._id,
+                quantity: quantity,
+            }],
+            totalAmount: product.price * quantity, // Assuming the product has a price field
+            orderStatus: 'Processed',
+            expectedDeliveryDate: expectedDeliveryDate
+        });
+
+        await newOrder.save();  // Save the order to the database
+
+        // Create or find the chat associated with this order
+        let orderChat = await OrderChat.findOne({ 
+            buyerId: req.session.user._id, 
+            supplierId: supplier._id // Check for an existing chat with the same supplier
+        });
+
+        if (!orderChat) {
+            // If no chat exists, create a new one
+            orderChat = new OrderChat({
+                orderId: newOrder._id,
+                buyerId: req.session.user._id,
+                supplierId: supplier._id,
+                messages: []
+            });
+            await orderChat.save();
+        }
+
+        // Add the enquiry message to the chat
+        orderChat.messages.push({
+            senderId: req.session.user._id, // The buyer's ID
+            text: `I would like to enquire about ${product.name}. Quantity: ${quantity}.`,
+            timestamp: new Date(),
+            read: false
+        });
+
+        await orderChat.save(); // Save the updated chat
+
+        // Configure nodemailer
+        const transporter = nodemailer.createTransport({
+            service: 'gmail', // Example service, configure based on your email provider
+            auth: {
+                user: 'hirushit@gmail.com',  // Use environment variables for security
+                pass: 'daqfszghisxzgyvf' // Store your email password securely
+            }
+        });
+
+        // Email content for the buyer
+        const buyerMailOptions = {
+            from: process.env.EMAIL,
+            to: buyerEmail,
+            subject: 'Enquiry Confirmation',
+            text: `Thank you for your enquiry about ${product.name}. Your enquiry has been recorded. Contact the supplier at ${supplier.contactEmail}`
+        };
+
+        // Email content for the supplier
+        const supplierMailOptions = {
+            from: process.env.EMAIL,
+            to: supplier.contactEmail,
+            subject: 'New Product Enquiry',
+            text: `You have a new enquiry for ${product.name}. Quantity: ${quantity}. Contact the buyer at ${buyerEmail}.`
+        };
+
+        // Send emails to both the buyer and supplier
+        await transporter.sendMail(buyerMailOptions);
+        await transporter.sendMail(supplierMailOptions);
+
+        req.flash('success_msg', 'Enquiry sent successfully, order recorded, and emails sent!');
+        res.redirect('/doctor/products');
+    } catch (err) {
+        console.error('Error in send enquiry:', err);
+        req.flash('error_msg', 'Could not send enquiry and record order');
+        res.redirect('/doctor/final-checkout');
+    }
+});
+
+
+
+
+
+router.get('/cart', async (req, res) => {
+    try {
+        const userId = req.session.user._id; // Replace with actual session management
+        const cart = await Cart.findOne({ userId }).populate('items.product');
+        
+        if (!cart) {
+            return res.render('cart', { items: [] });
+        }
+
+        res.render('cart', { items: cart.items });
+    } catch (err) {
+        console.error('Error displaying cart:', err);
+        res.status(500).send('Server error');
+    }
+});
+
+router.post('/checkout', async (req, res) => {
+    const { products, quantities } = req.body; 
+
+    try {
+        // Ensure products is an array of IDs, not a comma-separated string
+        const productIdArray = products; // products should already be an array from the form
+        const quantityArray = Object.values(quantities); // Extract quantities as an array
+
+        const foundProducts = await Product.find({ _id: { $in: productIdArray } });
+
+        if (!foundProducts || foundProducts.length === 0) {
+            req.flash('error_msg', 'No products found for checkout');
+            return res.redirect('/doctor/products');
+        }
+
+        // Create cart items based on found products and their quantities
+        const cartItems = foundProducts.map((product, index) => ({
+            product,
+            quantity: parseInt(quantityArray[index], 10) 
+        }));
+
+        // Render the checkout view with the cart items
+        res.render('checkout', {
+            items: cartItems
+        });
+    } catch (err) {
+        console.error('Error during checkout:', err);
+        req.flash('error_msg', 'Could not process checkout');
+        res.redirect('/doctor/cart');
+    }
+});
+
+router.post('/confirm-purchase', async (req, res) => {
+    const { products: rawProducts, quantities: rawQuantities, totalAmount } = req.body;
+    const buyerEmail = req.session.user._id;
+
+    // Ensure products is an array
+    const products = Array.isArray(rawProducts) ? rawProducts : JSON.parse(rawProducts);
+    
+    // Parse quantities and ensure they are valid numbers
+    const quantities = Array.isArray(rawQuantities) ? rawQuantities : JSON.parse(rawQuantities);
+    const orderProducts = products.map((productId, index) => {
+        const quantity = parseInt(quantities[index], 10);
+        if (isNaN(quantity) || quantity <= 0) {
+            throw new Error(`Invalid quantity for product ${productId}: ${quantities[index]}`);
+        }
+        return {
+            productId,
+            quantity
+        };
+    });
+
+    try {
+        // Retrieve product names based on product IDs
+        const foundProducts = await Product.find({ _id: { $in: orderProducts.map(item => item.productId) } });
+
+        // Create a mapping of product IDs to their names
+        const productNameMap = {};
+        foundProducts.forEach(product => {
+            productNameMap[product._id] = product.name;
+        });
+
+        // Assuming there's only one supplier for all products; adjust as necessary
+        const supplier = await Supplier.findById(foundProducts[0]?.uploadedBy); // Use the first product's supplier
+        if (!supplier) {
+            req.flash('error_msg', 'Supplier not found');
+            return res.redirect('/doctor/products');
+        }
+
+        // Prepare the email content
+        const productDetails = orderProducts.map(item => {
+            const productName = productNameMap[item.productId] || 'Unknown Product';
+            return `${productName}: Quantity ${item.quantity}`;
+        }).join('\n');
+
+        // Setup Nodemailer
+        const transporter = nodemailer.createTransport({
+            service: 'Gmail',
+            auth: {
+                user: 'kousik0840@gmail.com',
+                pass: 'zjrvcifbdyfbqjmk'
+            }
+        });
+
+        // Email to buyer
+        const buyerMailOptions = {
+            from: 'hirushit@gmail.com',
+            to: buyerEmail,
+            subject: 'Order Confirmation',
+            text: `Thank you for your purchase!\n\nYour order details:\n${productDetails}\n\nTotal Amount: $${totalAmount}. Contact at ${supplier.contactEmail}`
+        };
+
+        // Email to supplier
+        const supplierMailOptions = {
+            from: 'hirushit@gmail.com',
+            to: supplier.contactEmail,
+            subject: 'New Order Received',
+            text: `You have received a new order from ${buyerEmail}.\n\nOrder Details:\n${productDetails}\n\nTotal Amount: $${totalAmount}.`
+        };
+
+        // Save the order to the database
+        const order = new Order({
+            buyerEmail,
+            supplierEmail: supplier.contactEmail,
+            products: orderProducts,
+            totalAmount,
+            orderStatus: 'Pending', // Default status
+        });
+        await order.save();
+
+        // Send emails
+        await transporter.sendMail(buyerMailOptions);
+        await transporter.sendMail(supplierMailOptions);
+
+        // Redirect or render a success page
+        req.flash('success_msg', 'Order confirmed and email sent!');
+        res.redirect('/doctor/orders');
+    } catch (err) {
+        console.error('Error during order confirmation:', err);
+        req.flash('error_msg', 'Could not confirm your order. Please try again.');
+        res.redirect('/doctor/cart');
+    }
+});
+
+
+
+
+
+// // Add to Cart
+// router.post('/add/:productId', async (req, res) => {
+//     const { productId } = req.params;
+//     const { quantity } = req.body;
+//     const userId = req.session.user._id;
+
+//     try {
+//         let cart = await Cart.findOne({ userId });
+
+//         if (!cart) {
+//             cart = new Cart({ userId, items: [] });
+//         }
+
+//         const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+
+//         if (itemIndex > -1) {
+//             // If item exists, update the quantity
+//             cart.items[itemIndex].quantity += parseInt(quantity, 10);
+//         } else {
+//             // Else add the new item to cart
+//             cart.items.push({ product: productId, quantity });
+//         }
+
+//         await cart.save();
+//         res.redirect('/doctor/cart');
+//     } catch (err) {
+//         console.error('Error adding to cart:', err);
+//         res.status(500).send('Server error');
+//     }
+// });
+
+// Update Quantity
+router.post('/update/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+    const userId = req.session.userId;
+
+    try {
+        const cart = await Cart.findOne({ userId });
+        if (!cart) return res.redirect('/cart');
+
+        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+
+        if (itemIndex > -1) {
+            cart.items[itemIndex].quantity = parseInt(quantity, 10);
+            await cart.save();
+        }
+        res.redirect('/doctor/cart');
+    } catch (err) {
+        console.error('Error updating cart:', err);
+        res.status(500).send('Server error');
+    }
+});
+
+// Delete Item from Cart
+router.post('/delete/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const userId = req.session.userId;
+
+    try {
+        const cart = await Cart.findOne({ userId });
+        if (!cart) return res.redirect('/cart');
+
+        cart.items = cart.items.filter(item => item.product.toString() !== productId);
+        await cart.save();
+        
+        res.redirect('/doctor/cart');
+    } catch (err) {
+        console.error('Error deleting from cart:', err);
+        res.status(500).send('Server error');
+    }
+});
+
+router.get('/order-dashboard', isLoggedIn, checkSubscription, async (req, res) => {
+    try {
+        // Find the doctor based on the logged-in user's email
+        const doctor = await Doctor.findOne({ email: req.session.user.email }).lean();
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+        console.log(doctor);
+
+        // Retrieve order chats related to this doctor
+        const orderChats = await OrderChat.find({ buyerId: doctor._id })
+            .populate('supplierId', 'name') // Populate supplier details to show in the chat list
+            .sort({ updatedAt: -1 }) // Sort by latest updated chat
+            .lean();
+
+        console.log('Retrieved orderChats:', orderChats); // Debugging line
+
+        // Calculate unread messages for each chat
+        orderChats.forEach(chat => {
+            chat.unreadCount = chat.messages.filter(message =>
+                !message.read && message.senderId.toString() !== doctor._id.toString()
+            ).length;
+        });
+
+        // Render the dashboard view with doctor info and order chats
+        res.render('doctorOrderDashboard', { doctor, orderChats });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+
+router.post('/orderchat/:chatId/send-message', async (req, res) => {
+    try {
+        const { message } = req.body;
+        const senderEmail = req.session.user.email;
+        const chatId = req.params.chatId;
+
+        // Find the sender (either supplier or doctor) and identify their role
+        const supplier = await Supplier.findOne({ email: senderEmail });
+        const doctor = await Doctor.findOne({ email: senderEmail });
+        
+        if (!supplier && !doctor) {
+            return res.status(404).send('User not found');
+        }
+
+        const senderId = supplier ? supplier._id : doctor._id;
+        const chat = await OrderChat.findById(chatId);
+
+        if (!chat) {
+            return res.status(404).send('Chat not found');
+        }
+
+        // Update chat with the new message
+        chat.messages.push({
+            senderId,
+            text: message,
+            timestamp: new Date(),
+            read: false
+        });
+        await chat.save();
+
+        res.redirect(`/orderchat/${chat._id}`);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+router.get('/orderchat/:id', async (req, res) => {
+    try {
+        const chatId = req.params.id;
+
+        // Log the request details, including req.user
+        console.log('Request Details:', {
+            method: req.method,
+            url: req.url,
+            params: req.params,
+            user: req.user // Log req.user instead of req.session.user
+        });
+
+        // Check if req.user exists
+        if (!req.session.user) { // Change this to check req.user
+            return res.status(401).json({ error: 'Unauthorized access, please log in.' });
+        }
+
+        const chat = await OrderChat.findById(chatId)
+            .populate('supplierId', 'name email') // Populate supplier details
+            .lean();
+
+        console.log(chat);
+
+        if (!chat) {
+            return res.status(404).json({ error: 'Chat not found' });
+        }
+
+        // Mark unread messages as read if they are not sent by the current user
+        chat.messages.forEach(message => {
+            if (message.senderId.toString() !== req.session.user._id.toString() && !message.read) {
+                message.read = true;
+            }
+        });
+
+        await OrderChat.findByIdAndUpdate(chatId, { $set: { messages: chat.messages } });
+
+        res.render('orderChat', { chat, doctor: req.session.user }); // Render orderChat view with chat data
+    } catch (err) {
+        console.error('Error:', err.message);
+        res.status(500).json({ error: 'Server Error' });
+    }
+});
+
+
+
+
+// try {
+//     const chatId = req.params.id;
+
+//     console.log('Request Details:', {
+//         method: req.method,
+//         url: req.url,
+//         params: req.params,
+//         query: req.query,
+//         user: req.user
+//     });
+
+//     const chat = await Chat.findById(chatId)
+//         .populate('patientId', 'name email profilePicture') 
+//         .lean();
+
+//     if (!chat) {
+//         console.log('Chat not found');
+//         return res.status(404).json({ error: 'Chat not found' });
+//     }
+
+//     chat.messages.forEach(message => {
+//         if (!message.text) {
+//             console.error(`Message missing text found: ${message._id}`);
+//         }
+
+//         if (message.senderId.toString() !== req.user._id.toString() && !message.read) {
+//             message.read = true;
+//         }
+//     });
+
+//     await Chat.findByIdAndUpdate(chatId, { $set: { messages: chat.messages } });
+
+//     console.log('Updated Chat Data:', chat);
 
 
 module.exports = router;

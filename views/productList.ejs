@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products</title>
+    <link rel="stylesheet" href="/path/to/bootstrap.css">
+</head>
+<body>
+    <div class="container">
+        <h2>All Products</h2>
+        <a href="/doctor/cart">view cart</a>
+
+        <% products.forEach(product => { %>
+            <div class="product-item">
+                <h4><%= product.name %></h4>
+                
+                <!-- Display product image if available -->
+                <% if (product.images && product.images.length > 0) { %>
+                    <img src="data:<%= product.images[0].contentType %>;base64,<%= product.images[0].data.toString('base64') %>" 
+                         alt="<%= product.name %> Image" 
+                         class="img-thumbnail" 
+                         style="width:150px; height:150px;">
+                <% } %>
+
+                <p><%= product.description %></p>
+                <p>Price: $<%= product.price %></p>
+                
+                <!-- Display average rating (out of 5) -->
+                <p>Rating: 
+                    <% for (let i = 1; i <= 5; i++) { %>
+                        <% if (i <= Math.round(product.rating)) { %>
+                            <span style="color: gold;">&#9733;</span>
+                        <% } else { %>
+                            <span style="color: lightgray;">&#9733;</span>
+                        <% } %>
+                    <% } %>
+                    (<%= product.rating %>/5)
+                </p>
+
+                <form action="/doctor/add-to-cart/<%= product._id %>" method="POST">
+                    <input type="number" name="quantity" value="1" min="1" class="form-control" style="width:80px;">
+                    <button type="submit" class="btn btn-primary">Add to Cart</button>
+                </form>
+                
+                <form action="/doctor/buy-now/<%= product._id %>" method="POST" style="display:inline;">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="btn btn-success">Buy Now</button>
+                </form>
+            </div>
+            <hr>
+        <% }); %>
+    </div>
+</body>
+</html>

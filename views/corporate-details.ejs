@@ -9,33 +9,70 @@
   <h1><%= corporates.corporateName %></h1>
   <p>Follower Count: <%= followerCount %></p>
 
+  <!-- Cover Image -->
+  <div class="cover-image">
+    <% if (corporates.coverPhoto && corporates.coverPhoto.data) { %>
+      <img src="data:<%= corporates.coverPhoto.contentType %>;base64,<%= corporates.coverPhoto.data.toString('base64') %>" alt="Cover Photo" style="width:100%; height:auto; max-height: 300px;">
+    <% } else { %>
+      <p>No cover photo available</p>
+    <% } %>
+  </div>
+
+  <!-- Profile Image -->
+  <div class="profile-image">
+    <% if (corporates.profilePicture && corporates.profilePicture.data) { %>
+      <img src="data:<%= corporates.profilePicture.contentType %>;base64,<%= corporates.profilePicture.data.toString('base64') %>" alt="Profile Image" style="width:150px; height:auto;">
+    <% } else { %>
+      <p>No profile image available</p>
+    <% } %>
+  </div>
+
+  <!-- Tagline -->
+  <p><strong>Tagline:</strong> <%= corporates.tagline || 'Not provided' %></p>
+
+  <!-- Overview -->
+  <p><strong>Overview:</strong> <%= corporates.overview || 'Not provided' %></p>
+
+  <!-- Address -->
+  <div class="address">
+    <p><strong>Address:</strong> 
+      <% if (corporates.address) { %>
+        <%= corporates.address.street %>, <%= corporates.address.city %>, <%= corporates.address.state %>, <%= corporates.address.zipCode %>, <%= corporates.address.country %>
+      <% } else { %>
+        Not provided
+      <% } %>
+    </p>
+  </div>
+
+  <!-- Business Type -->
+  <p><strong>Business Type:</strong> <%= corporates.businessType || 'Not provided' %></p>
+
   <!-- Corporate Specialties -->
   <h3>Our Specialties:</h3>
-<% if (doctors && doctors.length > 0) { %>
-  <div class="corporate-specialities">
-    <% 
-      // Create a Set to hold unique specialties
-      let uniqueSpecialties = new Set();
-      doctors.forEach(doctor => {
-        if (doctor.speciality && doctor.speciality.length > 0) {
-          doctor.speciality.forEach(speciality => {
-            uniqueSpecialties.add(speciality);
-          });
-        }
-      });
+  <% if (doctors && doctors.length > 0) { %>
+    <div class="corporate-specialities">
+      <% 
+        let uniqueSpecialties = new Set();
+        doctors.forEach(doctor => {
+          if (doctor.speciality && doctor.speciality.length > 0) {
+            doctor.speciality.forEach(speciality => {
+              uniqueSpecialties.add(speciality);
+            });
+          }
+        });
 
-      // Render each unique speciality as a link
-      uniqueSpecialties.forEach(speciality => { 
-    %>
-      <div class="speciality-item">
-        <a href="/patient/doctors?what=<%= encodeURIComponent(speciality) %>&where="><%= speciality %></a>
-      </div>
-    <% }) %>
-  </div>
-<% } else { %>
-  <p>No specialties available.</p>
-<% } %>
-
+        uniqueSpecialties.forEach(speciality => { 
+      %>
+        <div class="speciality-item">
+          <a href="#" class="speciality-link" data-speciality="<%= speciality %>"><%= speciality %></a>
+        </div>
+      <% }) %>
+      <!-- Reset Button -->
+      <button id="reset-button" style="margin-top: 10px;">Reset</button>
+    </div>
+  <% } else { %>
+    <p>No specialties available.</p>
+  <% } %>
 
   <!-- Follow/Unfollow Button -->
   <form action="/patient/corporate/<%= corporates._id %>/follow" method="POST">
@@ -44,9 +81,9 @@
 
   <h2>Doctors in <%= corporates.corporateName %></h2>
   <% if (doctors.length > 0) { %>
-    <ul>
+    <ul id="doctor-list">
       <% doctors.forEach(doctor => { %>
-        <li>
+        <li class="doctor-item" data-speciality="<%= doctor.speciality.join(', ') %>">
           <div class="doctor-profile">
             <h3>Doctor Name: <%= doctor.name %></h3>
 
@@ -71,5 +108,41 @@
   <% } %>
 
   <a href="/patient/corporate-list">Back to Corporate List</a>
+
+  <!-- JavaScript for specialty filtering and reset functionality -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const specialityLinks = document.querySelectorAll('.speciality-link');
+      const doctorItems = document.querySelectorAll('.doctor-item');
+      const resetButton = document.getElementById('reset-button');
+
+      specialityLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const selectedSpeciality = this.getAttribute('data-speciality');
+
+          // Hide all doctors initially
+          doctorItems.forEach(function(item) {
+            item.style.display = 'none';
+          });
+
+          // Show only doctors that match the selected speciality
+          doctorItems.forEach(function(item) {
+            if (item.getAttribute('data-speciality').includes(selectedSpeciality)) {
+              item.style.display = 'block';
+            }
+          });
+        });
+      });
+
+      // Reset button functionality
+      resetButton.addEventListener('click', function() {
+        // Show all doctors
+        doctorItems.forEach(function(item) {
+          item.style.display = 'block';
+        });
+      });
+    });
+  </script>
 </body>
 </html>

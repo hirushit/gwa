@@ -95,7 +95,6 @@ router.get('/marketplace', (req, res) => {
     res.render('marketplace');
 });
 
-
 router.get('/register', (req, res) => {
     res.render('supplierRegister', { success_msg: req.flash('success_msg'), error_msg: req.flash('error_msg') }); 
 });
@@ -103,21 +102,17 @@ router.post('/register', async (req, res) => {
     const { name, email, password, phone, companyName, street, city, state, zipCode, country } = req.body;
 
     try {
-        // Check if email exists in Supplier collection
         const existingSupplier = await Supplier.findOne({ contactEmail: email });
         if (existingSupplier) {
             req.flash('error_msg', 'Supplier already exists');
             return res.redirect('/supplier/register');
         }
-
-        // Check if email exists in Doctor collection
         const existingDoctor = await Doctor.findOne({ email });
         if (existingDoctor) {
             req.flash('success_msg', 'An account with Medxbay as a doctor already exists. You can sign in using the same credentials.');
-            return res.redirect('/supplier/login'); // Redirect to login page for shared credentials
+            return res.redirect('/supplier/login'); 
         }
 
-        // Create verification token and save supplier details
         const token = generateVerificationToken();
         const tokenExpires = Date.now() + 3600000; 
         await sendVerificationEmail(name, email, token, 'supplier');
@@ -188,22 +183,19 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // Check if email exists in Supplier collection
         const supplier = await Supplier.findOne({ contactEmail: email });
 
-        // If no Supplier account, check in Doctor collection
         if (!supplier) {
             const doctor = await Doctor.findOne({ email });
             if (doctor && await bcrypt.compare(password, doctor.password)) {
                 req.flash('success_msg', 'Logged in with your Medxbay doctor account!');
                 req.session.supplierId = doctor._id; 
-                return res.redirect('/supplier/dashboard'); // Redirect to supplier dashboard
+                return res.redirect('/supplier/dashboard'); 
             }
             req.flash('error_msg', 'Invalid email or password');
             return res.redirect('/supplier/login');
         }
 
-        // Check password for supplier and verification status
         if (!await bcrypt.compare(password, supplier.password)) {
             req.flash('error_msg', 'Invalid email or password');
             return res.redirect('/supplier/login');
@@ -232,7 +224,6 @@ router.get('/profile', isLoggedIn, async (req, res) => {
     try {
         const supplier = await Supplier.findById(req.session.supplierId); 
         
-        // Filter products by category if provided
         const category = req.query.category;
         let products = [];
 
@@ -441,7 +432,6 @@ router.get('/manage-orders', isLoggedIn, (req, res) => {
 });
 
 
-// routes/supplier.js
 router.get('/all-suppliers', async (req, res) => {
     try {
         const suppliers = await Supplier.find();
@@ -453,7 +443,6 @@ router.get('/all-suppliers', async (req, res) => {
 });
 
 
-// routes/supplier.js
 router.get('/supplier/:id', async (req, res) => {
     try {
         const supplier = await Supplier.findById(req.params.id);

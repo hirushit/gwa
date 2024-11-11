@@ -10,7 +10,6 @@
     <div class="container mt-5">
         <h2>Your Profile</h2>
 
-        <!-- Profile Image -->
         <p><strong>Profile Image:</strong></p>
         <% if (supplier.profilePicture && supplier.profilePicture.data) { %>
             <img src="data:<%= supplier.profilePicture.contentType %>;base64,<%= supplier.profilePicture.data.toString('base64') %>" alt="Profile Image" class="img-fluid" style="max-width: 200px;"/>
@@ -18,15 +17,12 @@
             <p>No profile image uploaded.</p>
         <% } %>
 
-        <!-- Cover Image -->
         <p class="mt-4"><strong>Cover Image:</strong></p>
         <% if (supplier.coverPhoto && supplier.coverPhoto.data) { %>
             <img src="data:<%= supplier.coverPhoto.contentType %>;base64,<%= supplier.coverPhoto.data.toString('base64') %>" alt="Cover Image" class="img-fluid" style="max-width: 100%; height: auto; max-height: 300px;"/>
         <% } else { %>
             <p>No cover image uploaded.</p>
         <% } %>
-
-        <!-- Supplier Details -->
         <div class="card mt-3">
             <div class="card-body">
                 <h5 class="card-title"><%= supplier.name %></h5>
@@ -41,7 +37,6 @@
                 <p><strong>Tagline:</strong> <%= supplier.tagline || 'Not provided' %></p>
                 <p><strong>Overview:</strong> <%= supplier.overview || 'Not provided' %></p>
 
-                <!-- Product Categories -->
                 <p><strong>Product Categories:</strong></p>
                 <% if (supplier.productCategories && supplier.productCategories.length > 0) { %>
                     <ul>
@@ -55,7 +50,6 @@
             </div>
         </div>
 
-        <!-- Display Products -->
         <h3 class="mt-5">Our Products</h3>
         <div id="product-container">
             <% if (products && products.length > 0) { %>
@@ -84,7 +78,6 @@
 
     </div>
 
-    <!-- JavaScript for category filtering -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const categoryLinks = document.querySelectorAll('.category-link');
@@ -95,12 +88,10 @@
                     e.preventDefault();
                     const selectedCategory = this.getAttribute('data-category');
 
-                    // Hide all products initially
                     productItems.forEach(function(item) {
                         item.style.display = 'none';
                     });
 
-                    // Show only products that match the selected category
                     productItems.forEach(function(item) {
                         if (item.getAttribute('data-category') === selectedCategory) {
                             item.style.display = 'block';

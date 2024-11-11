@@ -18,15 +18,12 @@
             <p>No profile image uploaded.</p>
         <% } %>
 
-        <!-- Cover Image -->
         <p class="mt-4"><strong>Cover Image:</strong></p>
         <% if (corporate.coverPhoto && corporate.coverPhoto.data) { %>
             <img src="data:<%= corporate.coverPhoto.contentType %>;base64,<%= corporate.coverPhoto.data.toString('base64') %>" alt="Cover Image" class="img-fluid" style="max-width: 100%; height: auto; max-height: 300px;"/>
         <% } else { %>
             <p>No cover image uploaded.</p>
         <% } %>
-
-        <!-- Display corporate profile information -->
         <div class="profile-section">
             <h2>Profile Details</h2>
             <p><strong>Corporate Name:</strong> <%= corporate.corporateName %></p>
@@ -49,9 +46,86 @@
         </div>
         <p><strong>Verification Status:</strong> <%= corporate.verificationStatus %></p>
 
-        <!-- Button to edit profile -->
-        <a href="/corporate/edit-profile" class="btn btn-primary">Edit Profile</a>
+        <h2>Our Doctors</h2>
+        <h3>Specialties</h3>
+        <% if (corporate.doctors && corporate.doctors.length > 0) { %>
+            <div class="specialities">
+                <% 
+                  // Create a Set to hold unique specialties
+                  let uniqueSpecialties = new Set();
+                  corporate.doctors.forEach(doctor => {
+                    if (doctor.speciality && doctor.speciality.length > 0) {
+                      doctor.speciality.forEach(speciality => {
+                        uniqueSpecialties.add(speciality);
+                      });
+                    }
+                  });
+
+                  // Render each unique specialty as a link
+                  uniqueSpecialties.forEach(speciality => { 
+                %>
+                  <div class="speciality-item">
+                    <a href="#" class="speciality-link" data-speciality="<%= speciality %>"><%= speciality %></a>
+                  </div>
+                <% }) %>
+                <button id="reset-button" style="margin-top: 10px;">Reset</button>
+            </div>
+        <% } else { %>
+            <p>No specialties available.</p>
+        <% } %>
+
+        <ul id="doctor-list">
+          <% corporate.doctors.forEach(doctor => { %>
+            <li class="doctor-item" data-speciality="<%= Array.isArray(doctor.speciality) ? doctor.speciality.join(', ') : '' %>">
+                <div class="doctor-profile">
+                <h3>Doctor Name: <%= doctor.name %></h3>
+
+                <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
+                  <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Doctor Profile Picture" width="150" height="180">
+                <% } else { %>
+                  <p>No profile picture available</p>
+                <% } %>
+
+                <p><strong>Specialties:</strong> <%= doctor.speciality.join(', ') %></p>
+              </div>
+              <hr>
+            </li>
+          <% }) %>
+        </ul>
     </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const specialityLinks = document.querySelectorAll('.speciality-link');
+        const doctorItems = document.querySelectorAll('.doctor-item');
+        const resetButton = document.getElementById('reset-button');
+
+        specialityLinks.forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const selectedSpeciality = this.getAttribute('data-speciality');
+
+            doctorItems.forEach(function(item) {
+              item.style.display = 'none';
+            });
+
+            doctorItems.forEach(function(item) {
+              if (item.getAttribute('data-speciality').includes(selectedSpeciality)) {
+                item.style.display = 'block';
+              }
+            });
+          });
+        });
+
+        resetButton.addEventListener('click', function() {
+          doctorItems.forEach(function(item) {
+            item.style.display = 'block';
+          });
+        });
+      });
+    </script>
+
+<a href="/corporate/corporate-home">Back to Home</a>
 
 </body>
 </html>

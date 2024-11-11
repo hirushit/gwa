@@ -21,13 +21,13 @@ const supplierSchema = new Schema({
         data: Buffer,
         contentType: String
     },
-    coverPhoto: { // new field for cover photo
+    coverPhoto: { 
         data: Buffer,
         contentType: String
     },
-    tagline: { type: String }, // new field
-    overview: { type: String }, // new field
-    productCategories: [{ type: String }], // new field for categories array
+    tagline: { type: String },
+    overview: { type: String }, 
+    productCategories: [{ type: String }],
     password: { type: String, required: true },
     rating: { type: Number, default: 0 },
     totalReviews: { type: Number, default: 0 },
@@ -37,7 +37,6 @@ const supplierSchema = new Schema({
     verificationTokenExpires: { type: Date },
     isVerified: { type: Boolean, default: false },
 
-    // New fields for followers and following
     followers: [{ type: Schema.Types.ObjectId, ref: 'Supplier' }], 
     following: [{ type: Schema.Types.ObjectId, ref: 'Supplier' }] 
 });

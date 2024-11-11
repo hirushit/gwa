@@ -1,4 +1,3 @@
-<!-- views/supplierDetails.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,7 +10,6 @@
     <div class="container mt-5">
         <h2><%= supplier.name %>'s Profile</h2>
 
-        <!-- Profile Image -->
         <p><strong>Profile Image:</strong></p>
         <% if (supplier.profilePicture && supplier.profilePicture.data) { %>
             <img src="data:<%= supplier.profilePicture.contentType %>;base64,<%= supplier.profilePicture.data.toString('base64') %>" alt="Profile Image" class="img-fluid" style="max-width: 200px;"/>
@@ -19,7 +17,6 @@
             <p>No profile image uploaded.</p>
         <% } %>
 
-        <!-- Cover Image -->
         <p class="mt-4"><strong>Cover Image:</strong></p>
         <% if (supplier.coverPhoto && supplier.coverPhoto.data) { %>
             <img src="data:<%= supplier.coverPhoto.contentType %>;base64,<%= supplier.coverPhoto.data.toString('base64') %>" alt="Cover Image" class="img-fluid" style="max-width: 100%; height: auto; max-height: 300px;"/>
@@ -27,7 +24,6 @@
             <p>No cover image uploaded.</p>
         <% } %>
 
-        <!-- Supplier Details -->
         <div class="card mt-3">
             <div class="card-body">
                 <h5 class="card-title"><%= supplier.name %></h5>
@@ -41,7 +37,7 @@
                 <% if (supplier.productCategories && supplier.productCategories.length > 0) { %>
                     <ul>
                         <% supplier.productCategories.forEach(function(category) { %>
-                            <li><%= category %></li>
+                            <li><a href="#" class="category-link" data-category="<%= category %>"><%= category %></a></li>
                         <% }) %>
                     </ul>
                 <% } else { %>
@@ -50,12 +46,11 @@
             </div>
         </div>
 
-        <!-- Display Products -->
         <h3 class="mt-5">Our Products</h3>
         <% if (products && products.length > 0) { %>
-            <div class="row">
+            <div class="row" id="product-container">
                 <% products.forEach(function(product) { %>
-                    <div class="col-md-4">
+                    <div class="col-md-4 product-item" data-category="<%= product.category %>">
                         <div class="card mb-3">
                             <img src="data:<%= product.images[0].contentType %>;base64,<%= product.images[0].data.toString('base64') %>" class="card-img-top" alt="<%= product.name %>" style="height: 200px; object-fit: cover;">
                             <div class="card-body">
@@ -74,5 +69,27 @@
 
         <a href="/supplier/all-suppliers" class="btn btn-info mt-3">Back to All Suppliers</a>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const categoryLinks = document.querySelectorAll('.category-link');
+            const productItems = document.querySelectorAll('.product-item');
+
+            categoryLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const selectedCategory = this.getAttribute('data-category');
+                    productItems.forEach(function(item) {
+                        item.style.display = 'none';
+                    });
+
+                    productItems.forEach(function(item) {
+                        if (item.getAttribute('data-category') === selectedCategory) {
+                            item.style.display = 'block';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 </body>
 </html>

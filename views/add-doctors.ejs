@@ -6,7 +6,6 @@
     <title>Add Doctor</title>
 </head>
 <body>
-    <!-- add-doctors.ejs -->
 <form action="/corporate/add-doctors" method="get">
     <input type="text" name="email" value="<%= searchEmail %>" placeholder="Search by email" />
     <button type="submit">Search</button>
@@ -23,6 +22,7 @@
     <% }); %>
   </ul>
   
-    
+  <a href="/corporate/corporate-home">Back to Home</a>
+
 </body>
 </html>

@@ -57,11 +57,11 @@ const corporateSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false } ,
   followers: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // This could be Patient, Doctor, or Supplier model
+    ref: 'User', 
   }],
   following: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Supplier', // Supplier model reference
+    ref: 'Supplier',
   }],
   doctors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Doctor' }],
 });

@@ -113,10 +113,9 @@ router.get('/verify-email', async (req, res) => {
     const { token } = req.query;
 
     try {
-        // Find the user based on the token and check if it has not expired
         const user = await Corporate.findOne({
             verificationToken: token,
-            verificationTokenExpires: { $gt: Date.now() } // Ensure token has not expired
+            verificationTokenExpires: { $gt: Date.now() } 
         });
         console.log(token);
 
@@ -125,13 +124,11 @@ router.get('/verify-email', async (req, res) => {
             return res.redirect('/corporate/signup');
         }
 
-        // Update user details
         user.isVerified = true;
         user.verificationToken = undefined;
         user.verificationTokenExpires = undefined;
         await user.save();
 
-        // Send welcome email
         await sendWelcomeEmail(user.corporateName, user.email, 'corporate');
 
         req.flash('success_msg', 'Your account has been verified. You can now log in.');
@@ -144,27 +141,23 @@ router.get('/verify-email', async (req, res) => {
 });
 
   router.get('/signup', (req, res) => {
-    res.render('corporateSignup'); // Renders the 'corporateSignup' template
+    res.render('corporateSignup'); 
   });
   
   router.post('/signup', async (req, res) => {
     const { corporateName, email, mobileNumber, password } = req.body;
   
     try {
-      // Check if the email is already registered
       const existingCorporate = await Corporate.findOne({ email });
       if (existingCorporate) {
         return res.status(400).json({ message: 'Email already registered' });
       }
   
-      // Hash the password
       const hashedPassword = await bcrypt.hash(password, 10);
   
-      // Generate a verification token
       const token = generateVerificationToken();
       const tokenExpires = Date.now() + 3600000; 
   
-      // Create a new corporate profile
       const newCorporate = new Corporate({
         corporateName,
         email,
@@ -176,7 +169,6 @@ router.get('/verify-email', async (req, res) => {
         role: 'corporate',
       });
   
-      // Save to the database
       await newCorporate.save();
   
       
@@ -199,16 +191,13 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // Check if email exists in Supplier collection
         const corporate = await Corporate.findOne({ email: email });
 
-        // If no Supplier account, check in Doctor collection
         if (!corporate) {
             req.flash('error_msg', 'Invalid email or password');
             return res.redirect('/corporate/login');
         }
 
-        // Check password for supplier and verification status
         if (!await bcrypt.compare(password, corporate.password)) {
             req.flash('error_msg', 'Invalid email or password');
             return res.redirect('/corporate/login');
@@ -232,22 +221,19 @@ router.post('/login', async (req, res) => {
 
 router.get('/corporate-home', async (req, res) => {
   try {
-    // Replace `corporateId` with the actual ID from the session or request as needed
-    const corporateId = req.session.corporateId; // Assuming the corporate user is logged in and stored in session
+    const corporateId = req.session.corporateId; 
     console.log(req.session.corporateId);
-    // Find the corporate by ID and populate the 'doctors' field
     const corporate = await Corporate.findById(corporateId).populate('doctors');
 
     if (!corporate) {
       req.flash('error_msg', 'Corporate not found');
-      return res.redirect('/corporate/login'); // Redirect to login or another appropriate page
+      return res.redirect('/corporate/login'); 
     }
 
-    // Render the 'corporateHome' template with the corporate and doctor data
     res.render('corporateHome', {
       corporate,
       doctors: corporate.doctors,
-      followerCount: corporate.followers.length // Assuming `followers` is an array of follower IDs
+      followerCount: corporate.followers.length 
     });
   } catch (err) {
     console.error('Error fetching corporate details:', err);
@@ -258,20 +244,18 @@ router.get('/corporate-home', async (req, res) => {
 
 router.get('/profile', async (req, res) => {
   try {
-    // Get the corporate ID from the session
     const corporateId = req.session.corporateId;
 
-    // Find the corporate profile by ID
-    const corporate = await Corporate.findById(corporateId);
+    const corporate = await Corporate.findById(corporateId).populate('doctors');
 
     if (!corporate) {
       req.flash('error_msg', 'Corporate profile not found');
       return res.redirect('/corporate/login');
     }
 
-    // Render the profile view with the corporate data
     res.render('corporateProfile', {
       corporate,
+      doctors: corporate.doctors,
     });
   } catch (err) {
     console.error('Error fetching corporate profile:', err);
@@ -280,13 +264,11 @@ router.get('/profile', async (req, res) => {
   }
 });
 
-// Route to render the edit profile page
+
 router.get('/edit-profile', async (req, res) => {
   try {
-    // Get the corporate ID from the session
     const corporateId = req.session.corporateId;
 
-    // Find the corporate profile
     const corporate = await Corporate.findById(corporateId);
 
     if (!corporate) {
@@ -294,7 +276,6 @@ router.get('/edit-profile', async (req, res) => {
       return res.redirect('/corporate/corporate-home');
     }
 
-    // Render the 'editProfile' view template with the corporate data
     res.render('corporateeditProfile', {
       corporate,
     });
@@ -323,7 +304,6 @@ router.post('/edit-profile', upload.fields([{ name: 'profileImage' }, { name: 'c
       overview
   } = req.body;
 
-  // Update data object for corporate profile
   const updateData = {
       corporateName,
       email,
@@ -338,7 +318,6 @@ router.post('/edit-profile', upload.fields([{ name: 'profileImage' }, { name: 'c
       address: { street, city, state, zipCode, country }
   };
 
-  // Check for uploaded files and add to updateData if present
   if (req.files['profileImage']) {
       updateData.profilePicture = {
           data: req.files['profileImage'][0].buffer,
@@ -354,10 +333,9 @@ router.post('/edit-profile', upload.fields([{ name: 'profileImage' }, { name: 'c
   }
 
   try {
-      // Find and update the corporate profile based on the ID stored in the session
       await Corporate.findByIdAndUpdate(req.session.corporateId, updateData);
       req.flash('success_msg', 'Profile updated successfully');
-      res.redirect('/corporate/profile'); // Redirect to the appropriate profile view
+      res.redirect('/corporate/profile');
   } catch (err) {
       console.error('Error updating profile:', err);
       req.flash('error_msg', 'Failed to update profile');
@@ -365,16 +343,81 @@ router.post('/edit-profile', upload.fields([{ name: 'profileImage' }, { name: 'c
   }
 });
 
-  // Route to show followers of a corporate profile
+router.get('/add-doctors', async (req, res) => {
+  const searchEmail = req.query.email || '';
+
+  try {
+    const doctors = await Doctor.find({
+      email: { $regex: searchEmail, $options: 'i' }, 
+    });
+
+    res.render('add-doctors', {
+      doctors,
+      searchEmail,
+    });
+  } catch (err) {
+    console.error('Error fetching doctors:', err);
+    req.flash('error_msg', 'Error fetching doctors');
+    res.redirect('/corporate/corporate-home');
+  }
+});
+
+router.post('/add-doctor/:doctorId', async (req, res) => {
+  const doctorId = req.params.doctorId;
+  const corporateId = req.session.corporateId; 
+
+  try {
+    const corporate = await Corporate.findById(corporateId);
+    if (!corporate) {
+      req.flash('error_msg', 'Corporate profile not found');
+      return res.redirect('/corporate/corporate-home');
+    }
+
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      req.flash('error_msg', 'Doctor not found');
+      return res.redirect('/corporate/corporate-home');
+    }
+
+    const existingRequest = doctor.corporateRequests.find(
+      request => request.corporateId.toString() === corporateId.toString()
+    );
+
+    if (existingRequest) {
+      req.flash('info_msg', 'Request has already been sent to this doctor');
+      return res.redirect('/corporate/add-doctors');
+    }
+
+    doctor.corporateRequests.push({
+      corporateId: corporate._id,
+      corporateName: corporate.corporateName,
+      requestStatus: 'pending',
+    });
+    doctor.faqs = doctor.faqs || []; 
+
+    doctor.faqs.push({
+      question: 'What is your consultation fee?',
+      answer: 'The consultation fee is $100.',
+    });
+
+    await doctor.save();
+
+    req.flash('success_msg', 'Request has been sent to the doctor');
+    res.redirect('/corporate/add-doctors');
+  } catch (err) {
+    console.error('Error sending corporate request to doctor:', err);
+    req.flash('error_msg', 'Error sending request');
+    res.redirect('/corporate/corporate-home');
+  }
+});
+
 router.get('/followers', async (req, res) => {
   try {
-    // Get the corporate ID from the session
     const corporateId = req.session.corporateId;
 
-    // Find the corporate profile and populate followers' details
     const corporate = await Corporate.findById(corporateId).populate({
       path: 'followers',
-      select: 'name profilePicture', // Select only necessary fields
+      select: 'name profilePicture', 
     });
     console.log(corporate);
 
@@ -383,7 +426,6 @@ router.get('/followers', async (req, res) => {
       return res.redirect('/corporate/login');
     }
 
-    // Render the 'followers' view template with the followers' data
     res.render('followers', {
       followers: corporate.followers,
     });
@@ -393,6 +435,18 @@ router.get('/followers', async (req, res) => {
     res.redirect('/corporate/corporate-home');
   }
 });
+
+
+router.get('/logout', (req, res) => {
+  req.session.destroy(err => {
+      if (err) {
+          console.error("Error destroying session:", err);
+          return res.status(500).send("Failed to log out.");
+      }
+      res.redirect('/corporate/login'); 
+  });
+});
+
 
   
 

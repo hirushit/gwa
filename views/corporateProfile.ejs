@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corporate Profile</title>
+    <link rel="stylesheet" href="/path/to/your/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Corporate Profile</h1>
+
+        <p><strong>Profile Image:</strong></p>
+        <% if (corporate.profilePicture && corporate.profilePicture.data) { %>
+            <img src="data:<%= corporate.profilePicture.contentType %>;base64,<%= corporate.profilePicture.data.toString('base64') %>" alt="Profile Image" class="img-fluid" style="max-width: 200px;"/>
+        <% } else { %>
+            <p>No profile image uploaded.</p>
+        <% } %>
+
+        <!-- Cover Image -->
+        <p class="mt-4"><strong>Cover Image:</strong></p>
+        <% if (corporate.coverPhoto && corporate.coverPhoto.data) { %>
+            <img src="data:<%= corporate.coverPhoto.contentType %>;base64,<%= corporate.coverPhoto.data.toString('base64') %>" alt="Cover Image" class="img-fluid" style="max-width: 100%; height: auto; max-height: 300px;"/>
+        <% } else { %>
+            <p>No cover image uploaded.</p>
+        <% } %>
+
+        <!-- Display corporate profile information -->
+        <div class="profile-section">
+            <h2>Profile Details</h2>
+            <p><strong>Corporate Name:</strong> <%= corporate.corporateName %></p>
+            <p><strong>Email:</strong> <%= corporate.email %></p>
+            <p><strong>Role:</strong> <%= corporate.role %></p>
+            <p><strong>Mobile Number:</strong> <%= corporate.mobileNumber %></p>
+            <p><strong>Alternate Contact Number:</strong> <%= corporate.alternateContactNumber || 'N/A' %></p>
+            <p><strong>Business Registration Number:</strong> <%= corporate.businessRegistrationNumber %></p>
+            <p><strong>Tax Identification Number:</strong> <%= corporate.taxIdentificationNumber %></p>
+            <p><strong>Business Type:</strong> <%= corporate.businessType %></p>
+            <p><strong>Company Name:</strong> <%= corporate.companyName %></p>
+            <p><strong>Tagline:</strong> <%= corporate.tagline %></p>
+            <p><strong>Overview:</strong> <%= corporate.overview %></p>
+            <h3>Address</h3>
+            <p><strong>Street:</strong> <%= corporate.address.street %></p>
+            <p><strong>City:</strong> <%= corporate.address.city %></p>
+            <p><strong>State:</strong> <%= corporate.address.state %></p>
+            <p><strong>Zip Code:</strong> <%= corporate.address.zipCode %></p>
+            <p><strong>Country:</strong> <%= corporate.address.country %></p>
+        </div>
+        <p><strong>Verification Status:</strong> <%= corporate.verificationStatus %></p>
+
+        <!-- Button to edit profile -->
+        <a href="/corporate/edit-profile" class="btn btn-primary">Edit Profile</a>
+    </div>
+
+</body>
+</html>

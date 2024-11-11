@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Corporate Profile</title>
+  <link rel="stylesheet" href="/path/to/your/styles.css"> <!-- Update with actual CSS path -->
+</head>
+<body>
+  <div class="container">
+    <h1>Edit Corporate Profile</h1>
+    
+  
+
+    <form action="/corporate/edit-profile" method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="corporateName">Corporate Name</label>
+        <input type="text" id="corporateName" name="corporateName" value="<%= corporate.corporateName %>" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="<%= corporate.email %>" required>
+      </div>
+
+      <div class="form-group">
+        <label for="role">Role</label>
+        <input type="text" id="role" name="role" value="<%= corporate.role %>" required>
+      </div>
+
+      <div class="form-group">
+        <label for="mobileNumber">Mobile Number</label>
+        <input type="text" id="mobileNumber" name="mobileNumber" value="<%= corporate.mobileNumber %>" required>
+      </div>
+
+      <div class="form-group">
+        <label for="alternateContactNumber">Alternate Contact Number</label>
+        <input type="text" id="alternateContactNumber" name="alternateContactNumber" value="<%= corporate.alternateContactNumber %>">
+      </div>
+
+      <div class="form-group">
+        <label for="businessRegistrationNumber">Business Registration Number</label>
+        <input type="text" id="businessRegistrationNumber" name="businessRegistrationNumber" value="<%= corporate.businessRegistrationNumber %>">
+      </div>
+
+      <div class="form-group">
+        <label for="taxIdentificationNumber">Tax Identification Number</label>
+        <input type="text" id="taxIdentificationNumber" name="taxIdentificationNumber" value="<%= corporate.taxIdentificationNumber %>">
+      </div>
+
+      <div class="form-group">
+        <label for="businessType">Business Type</label>
+        <input type="text" id="businessType" name="businessType" value="<%= corporate.businessType %>">
+      </div>
+
+      <div class="form-group">
+        <label for="street">Street</label>
+        <input type="text" id="street" name="street" value="<%= corporate.address.street %>">
+      </div>
+
+      <div class="form-group">
+        <label for="city">City</label>
+        <input type="text" id="city" name="city" value="<%= corporate.address.city %>">
+      </div>
+
+      <div class="form-group">
+        <label for="state">State</label>
+        <input type="text" id="state" name="state" value="<%= corporate.address.state %>">
+      </div>
+
+      <div class="form-group">
+        <label for="zipCode">Zip Code</label>
+        <input type="text" id="zipCode" name="zipCode" value="<%= corporate.address.zipCode %>">
+      </div>
+
+      <div class="form-group">
+        <label for="country">Country</label>
+        <input type="text" id="country" name="country" value="<%= corporate.address.country %>" required>
+      </div>
+
+      
+
+      <div class="form-group">
+        <label for="tagline">Tagline</label>
+        <input type="text" id="tagline" name="tagline" value="<%= corporate.tagline %>">
+      </div>
+
+      <div class="form-group">
+        <label for="overview">Overview</label>
+        <textarea id="overview" name="overview"><%= corporate.overview %></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="profilePicture">Profile Picture</label>
+        <input type="file" name="profileImage">
+      </div>
+
+      <div class="form-group">
+        <label for="coverPhoto">Cover Photo</label>
+        <input type="file" name="coverPhoto">
+      </div>
+
+      <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corporate List</title>
+</head>
+<body>
+  <h1>Corporate List</h1>
+
+  <% if (corporates.length > 0) { %>
+    <ul>
+      <% corporates.forEach(corporate => { %>
+        <li>
+          <h2><%= corporate.corporateName %></h2>
+          <!-- Add link to corporate details -->
+          <a href="/doctor/corporate/<%= corporate._id %>">View Details</a>
+          <!-- Add more details as necessary -->
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p>No corporates found.</p>
+  <% } %>
+
+  <a href="/doctor/corporate-list">Back to Dashboard</a>
+</body>
+</html>

@@ -3090,6 +3090,100 @@ router.get('/view-corporate-request/:doctorId', async (req, res) => {
       res.redirect('/doctors');
     }
   });
+
+  router.get('/corporate-list', async (req, res) => {
+    try {
+      // Fetch all corporates from the database
+      const corporates = await Corporate.find();
+  
+      // Render a view or return JSON data with the list of corporates
+      res.render('doctor-corporate-list', { corporates }); // Use a view template named 'corporate-list.ejs'
+      
+      // Alternatively, for JSON response:
+      // res.json(corporates);
+    } catch (err) {
+      console.error('Error fetching corporate list:', err);
+      req.flash('error_msg', 'Error retrieving corporate list');
+      res.redirect('/doctor/doctor-index');
+    }
+  });
+  
+  router.get('/corporate/:corporateId', async (req, res) => {
+    const { corporateId } = req.params;
+    const doctorId = req.session.user._id; 
+
+    try {
+        // Find the corporate by ID using the Corporate model and populate the doctors array
+        const corporates = await Corporate.findById(corporateId).populate('doctors');
+        if (!corporates) {
+            req.flash('error_msg', 'Corporate not found');
+            return res.redirect('/doctor/corporate-list');
+        }
+
+        // Check if the logged-in doctor is in the followers list
+        const isFollowing = corporates.followers.some(
+            followerId => followerId.toString() === doctorId.toString()
+        );
+
+        const doctors = corporates.doctors || [];
+        const followerCount = corporates.followers.length;
+
+        // Render the view with corporate details, doctors, and follow/unfollow status
+        res.render('doctor-corporate-details', {
+            corporates,
+            doctors,
+            followerCount,
+            isFollowing
+        });
+    } catch (err) {
+        console.error('Error fetching corporate details:', err);
+        req.flash('error_msg', 'Error fetching corporate details');
+        res.redirect('/doctor/corporate-list');
+    }
+});
+
+
+router.post('/corporate/:corporateId/follow', async (req, res) => {
+    const { corporateId } = req.params;
+    const doctorId = req.session.user._id;
+
+    try {
+        // Find the corporate and doctor by their respective IDs
+        const corporates = await Corporate.findById(corporateId);
+        const doctor = await Doctor.findById(doctorId);
+
+        if (!corporates || !doctor) {
+            req.flash('error_msg', 'Corporate or Doctor not found');
+            return res.redirect(`/doctor/corporate/${corporateId}`);
+        }
+
+        // Check if the doctor is already following the corporate
+        const alreadyFollowing = corporates.followers.some(
+            follower => follower.toString() === doctorId.toString()
+        );
+
+        if (alreadyFollowing) {
+            // Unfollow the corporate by removing the doctor's ID from the followers list
+            corporates.followers = corporates.followers.filter(
+                follower => follower.toString() !== doctorId.toString()
+            );
+            req.flash('success_msg', 'You have unfollowed the corporate');
+        } else {
+            // Follow the corporate by adding the doctor's ID to the followers list
+            corporates.followers.push(doctorId);
+            req.flash('success_msg', 'You have followed the corporate');
+        }
+
+        // Save the changes in the database
+        await corporates.save();
+        res.redirect(`/doctor/corporate/${corporateId}`);
+    } catch (err) {
+        console.error('Error updating follow status:', err);
+        req.flash('error_msg', 'Error updating follow status');
+        res.redirect(`/doctor/corporate/${corporateId}`);
+    }
+});
+
   
   
 module.exports = router;

@@ -18,13 +18,37 @@ const corporateSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  alternateContactNumber: { type: String },
+    businessRegistrationNumber: { type: String },
+    taxIdentificationNumber: { type: String },
+    businessType: { type: String },
+    address: { 
+        street: { type: String },
+        city: { type: String },
+        state: { type: String },
+        zipCode: { type: String },
+        country: { type: String }
+    },
+    companyName: { type: String },
+    profilePicture: {
+        data: Buffer,
+        contentType: String
+    },
+    coverPhoto: { 
+        data: Buffer,
+        contentType: String
+    },
+    tagline: { type: String }, 
+    overview: { type: String }, 
   password: {
     type: String,
     required: true,
   },
+  rating: { type: Number, default: 0 },
+    totalReviews: { type: Number, default: 0 },
   verificationStatus: {
     type: String,
-    default: 'Pending', // Status: Pending, Verified
+    default: 'Pending', 
   },
   verificationToken: {
     type: String,

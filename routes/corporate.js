@@ -13,7 +13,18 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios'); 
 const querystring = require('querystring');
 const Corporate = require('../models/Corporate');
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 const router = express.Router();
+
+function isLoggedIn(req, res, next) {
+  if (req.session.user && req.session.user.role === 'corporate') {
+    req.user = req.session.user;
+    return next();
+  }
+  res.redirect('/corporate/login');
+}
 
 const generateVerificationToken = () => {
     return crypto.randomBytes(20).toString('hex');
@@ -245,85 +256,114 @@ router.get('/corporate-home', async (req, res) => {
   }
 });
 
+router.get('/profile', async (req, res) => {
+  try {
+    // Get the corporate ID from the session
+    const corporateId = req.session.corporateId;
 
-router.get('/add-doctors', async (req, res) => {
-    const searchEmail = req.query.email || ''; // Search by email, default to empty string if no query parameter
-  
-    try {
-      // Find doctors based on search term
-      const doctors = await Doctor.find({
-        email: { $regex: searchEmail, $options: 'i' }, // Search case-insensitively
-      });
-  
-      res.render('add-doctors', {
-        doctors,
-        searchEmail, // Pass search term to the view
-      });
-    } catch (err) {
-      console.error('Error fetching doctors:', err);
-      req.flash('error_msg', 'Error fetching doctors');
-      res.redirect('/corporate/corporate-home');
-    }
-  });
+    // Find the corporate profile by ID
+    const corporate = await Corporate.findById(corporateId);
 
-  
-// Route to add a doctor to corporate's list
-router.post('/add-doctor/:doctorId', async (req, res) => {
-    const doctorId = req.params.doctorId;
-    const corporateId = req.session.corporateId; // Corporate profile ID from session
-  
-    try {
-      // Find the corporate profile
-      const corporate = await Corporate.findById(corporateId);
-      if (!corporate) {
-        req.flash('error_msg', 'Corporate profile not found');
-        return res.redirect('/corporate/corporate-home');
-      }
-  
-      // Find the doctor to send a request
-      const doctor = await Doctor.findById(doctorId);
-      if (!doctor) {
-        req.flash('error_msg', 'Doctor not found');
-        return res.redirect('/corporate/corporate-home');
-      }
-  
-      // Check if the corporate has already sent a request
-      const existingRequest = doctor.corporateRequests.find(
-        request => request.corporateId.toString() === corporateId.toString()
-      );
-  
-      if (existingRequest) {
-        req.flash('info_msg', 'Request has already been sent to this doctor');
-        return res.redirect('/corporate/add-doctors');
-      }
-  
-      // Add a new corporate request to the doctor's profile
-      doctor.corporateRequests.push({
-        corporateId: corporate._id,
-        corporateName: corporate.corporateName,
-        requestStatus: 'pending',
-      });
-  
-      // Ensure faqs is initialized as an empty array if not used
-      doctor.faqs = doctor.faqs || []; // Initialize faqs if not present
-  
-      // Add sample FAQ to the faqs field (ensure it's an object)
-      doctor.faqs.push({
-        question: 'What is your consultation fee?',
-        answer: 'The consultation fee is $100.',
-      });
-  
-      // Save the doctor document
-      await doctor.save();
-  
-      req.flash('success_msg', 'Request has been sent to the doctor');
-      res.redirect('/corporate/add-doctors');
-    } catch (err) {
-      console.error('Error sending corporate request to doctor:', err);
-      req.flash('error_msg', 'Error sending request');
-      res.redirect('/corporate/corporate-home');
+    if (!corporate) {
+      req.flash('error_msg', 'Corporate profile not found');
+      return res.redirect('/corporate/login');
     }
-  });
+
+    // Render the profile view with the corporate data
+    res.render('corporateProfile', {
+      corporate,
+    });
+  } catch (err) {
+    console.error('Error fetching corporate profile:', err);
+    req.flash('error_msg', 'Error fetching profile');
+    res.redirect('/corporate/corporate-home');
+  }
+});
+
+// Route to render the edit profile page
+router.get('/edit-profile', async (req, res) => {
+  try {
+    // Get the corporate ID from the session
+    const corporateId = req.session.corporateId;
+
+    // Find the corporate profile
+    const corporate = await Corporate.findById(corporateId);
+
+    if (!corporate) {
+      req.flash('error_msg', 'Corporate profile not found');
+      return res.redirect('/corporate/corporate-home');
+    }
+
+    // Render the 'editProfile' view template with the corporate data
+    res.render('corporateeditProfile', {
+      corporate,
+    });
+  } catch (err) {
+    console.error('Error fetching corporate profile for editing:', err);
+    req.flash('error_msg', 'Error fetching corporate profile');
+    res.redirect('/corporate/corporate-home');
+  }
+});
+router.post('/edit-profile', upload.fields([{ name: 'profileImage' }, { name: 'coverPhoto' }]), async (req, res) => {
+  const {
+      corporateName,
+      email,
+      mobileNumber,
+      alternateContactNumber,
+      companyName,
+      businessRegistrationNumber,
+      taxIdentificationNumber,
+      businessType,
+      street,
+      city,
+      state,
+      zipCode,
+      country,
+      tagline,
+      overview
+  } = req.body;
+
+  // Update data object for corporate profile
+  const updateData = {
+      corporateName,
+      email,
+      mobileNumber,
+      alternateContactNumber,
+      companyName,
+      businessRegistrationNumber,
+      taxIdentificationNumber,
+      businessType,
+      tagline,
+      overview,
+      address: { street, city, state, zipCode, country }
+  };
+
+  // Check for uploaded files and add to updateData if present
+  if (req.files['profileImage']) {
+      updateData.profilePicture = {
+          data: req.files['profileImage'][0].buffer,
+          contentType: req.files['profileImage'][0].mimetype
+      };
+  }
+
+  if (req.files['coverPhoto']) {
+      updateData.coverPhoto = {
+          data: req.files['coverPhoto'][0].buffer,
+          contentType: req.files['coverPhoto'][0].mimetype
+      };
+  }
+
+  try {
+      // Find and update the corporate profile based on the ID stored in the session
+      await Corporate.findByIdAndUpdate(req.session.corporateId, updateData);
+      req.flash('success_msg', 'Profile updated successfully');
+      res.redirect('/corporate/profile'); // Redirect to the appropriate profile view
+  } catch (err) {
+      console.error('Error updating profile:', err);
+      req.flash('error_msg', 'Failed to update profile');
+      res.redirect('/corporate/edit-profile');
+  }
+});
 
   // Route to show followers of a corporate profile
 router.get('/followers', async (req, res) => {

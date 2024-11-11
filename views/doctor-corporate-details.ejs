@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= corporates.corporateName %> - Details</title>
+</head>
+<body>
+  <h1><%= corporates.corporateName %></h1>
+  <p>Follower Count: <%= followerCount %></p>
+
+  <!-- Corporate Specialties -->
+  <h3>Our Specialties:</h3>
+<% if (doctors && doctors.length > 0) { %>
+  <div class="corporate-specialities">
+    <% 
+      // Create a Set to hold unique specialties
+      let uniqueSpecialties = new Set();
+      doctors.forEach(doctor => {
+        if (doctor.speciality && doctor.speciality.length > 0) {
+          doctor.speciality.forEach(speciality => {
+            uniqueSpecialties.add(speciality);
+          });
+        }
+      });
+
+      // Render each unique speciality as a link
+      uniqueSpecialties.forEach(speciality => { 
+    %>
+      <div class="speciality-item">
+        <p><%= speciality %></p>
+      </div>
+    <% }) %>
+  </div>
+<% } else { %>
+  <p>No specialties available.</p>
+<% } %>
+
+
+  <!-- Follow/Unfollow Button -->
+  <form action="/doctor/corporate/<%= corporates._id %>/follow" method="POST">
+    <button type="submit"><%= isFollowing ? 'Unfollow' : 'Follow' %></button>
+</form>
+
+
+  <h2>Doctors in <%= corporates.corporateName %></h2>
+  <% if (doctors.length > 0) { %>
+    <ul>
+      <% doctors.forEach(doctor => { %>
+        <li>
+          <div class="doctor-profile">
+            <h3>Doctor Name: <%= doctor.name %></h3>
+
+            <!-- Profile Picture -->
+            <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
+              <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Profile Picture" width="150" height="180">
+            <% } else { %>
+              <p>No profile picture available</p>
+            <% } %>
+
+            <!-- Actions -->
+            
+          </div>
+          <hr>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p>No doctors found in this corporate.</p>
+  <% } %>
+
+  <a href="/doctor/corporate-list">Back to Corporate List</a>
+</body>
+</html>

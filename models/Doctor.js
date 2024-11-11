@@ -132,6 +132,11 @@ const doctorSchema = new mongoose.Schema({
       default: 'pending',
     }
   }],
+  followedCorporates: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Corporate', // Referencing the Corporate model
+  }],
+
 });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

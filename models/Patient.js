@@ -51,7 +51,14 @@ const patientSchema = new mongoose.Schema({
         type: String,
         enum: ['Male', 'Female', 'Other'],
         
-    }
-});
+    },
+    followedCorporates: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Corporate', // Referencing the Corporate model
+      }],
+    }, {
+      timestamps: true, // Adds createdAt and updatedAt fields
+    });
+    
 
 module.exports = mongoose.model('Patient', patientSchema);

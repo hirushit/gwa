@@ -12,6 +12,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const axios = require('axios'); 
 const querystring = require('querystring');
+const Corporate = require('../models/Corporate');
 
 
 const router = express.Router();
@@ -237,7 +238,7 @@ router.get('/verify-email', async (req, res) => {
       user = await Patient.findOne({ verificationToken: token });
     } else if (role === 'doctor') {
       user = await Doctor.findOne({ verificationToken: token });
-    }
+    } 
 
     if (!user) {
       req.flash('error_msg', 'Invalid or expired verification link');
@@ -299,7 +300,9 @@ router.post('/login', async (req, res) => {
       return res.redirect('/admin/doctor-profile-requests'); 
     } else if (user.role === 'supplier'){
       return res.redirect('/supplier/profile');
-    } 
+    }  else if (user.role === 'corporate'){
+      return res,redirect('/coporate-home')
+    }
     else {
       req.flash('error_msg', 'Invalid role');
       return res.redirect('/auth/login');
@@ -765,5 +768,8 @@ router.post('/reset-password', async (req, res) => {
     return res.redirect(`/auth/reset-password?token=${token}`);
   }
 });
+
+
+
 
 module.exports = router;

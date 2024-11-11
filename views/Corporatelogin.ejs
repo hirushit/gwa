@@ -42,14 +42,9 @@
 <body>
     <div class="container">
         <h1 class="mt-5">Login</h1>
-        <% if (success_msg) { %>
-            <div class="alert alert-success"><%= success_msg %></div>
-        <% } %>
-        <% if (error_msg) { %>
-            <div class="alert alert-danger"><%= error_msg %></div>
-        <% } %>
+      
 
-        <form id="login-form" action="/auth/login" method="POST">
+        <form id="login-form" action="/corporate/login" method="POST">
             <div class="form-group">
                 <label for="email">Email:</label>
                 <input type="email" class="form-control" id="email" name="email" required>
@@ -80,18 +75,11 @@
             <a href="/auth/signup/patient">Patient Sign Up</a>
         </div>
         <div class="mt-3">
-            <a href="/auth/signup/doctor">Doctor Sign Up</a>
-        </div>
-        <p class="mt-3"><a href="/supplier/register">Supplier Sign Up</a>.</p>
-        <p class="mt-3"><a href="/supplier/login">Supplier Login</a>.</p>
-
-        <div class="mt-3">
             <a href="/corporate/signup">Corporate Signup</a>
         </div>
         <div class="mt-3">
-            <a href="/corporate/login">Corporate Login</a>
+            <a href="/auth/signup/doctor">Doctor Sign Up</a>
         </div>
-
 
         <script>
             grecaptcha.ready(function() {

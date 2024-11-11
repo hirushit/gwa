@@ -23,6 +23,7 @@ const https = require('https');
 const axios = require('axios');
 const { title } = require('process');
 const {  GoogleGenerativeAI,} = require('@google/generative-ai');
+const corporate = require('../models/Corporate');
 
 
 const fetchConversionRates = () => {
@@ -1882,5 +1883,93 @@ router.get('/news-releases', async (req, res) => {
   }
 });
 
+router.get('/corporate-list', async (req, res) => {
+  try {
+    // Fetch all corporates from the database
+    const corporates = await corporate.find();
+
+    // Render a view or return JSON data with the list of corporates
+    res.render('corporate-list', { corporates }); // Use a view template named 'corporate-list.ejs'
+    
+    // Alternatively, for JSON response:
+    // res.json(corporates);
+  } catch (err) {
+    console.error('Error fetching corporate list:', err);
+    req.flash('error_msg', 'Error retrieving corporate list');
+    res.redirect('/patient/patient-index');
+  }
+});
+
+router.get('/corporate/:corporateId', async (req, res) => {
+  const { corporateId } = req.params;
+  const patientId = req.session.user._id; 
+
+  try {
+    // Find the corporate by ID using the Corporate model
+    const corporates = await corporate.findById(corporateId).populate('doctors'); // Populate doctors array
+    if (!corporates) {
+      req.flash('error_msg', 'Corporate not found');
+      return res.redirect('/patient/corporate-list');
+    }
+
+    // Find the patient to check if they are following the corporate
+    const patient = await Patient.findById(patientId);
+
+    const isFollowing = patient.followedCorporates.includes(corporateId);
+
+    // Render a view with corporate details, doctors, and follow/unfollow status
+    res.render('corporate-details', {
+      corporates,
+      doctors: corporates.doctors,
+      isFollowing,
+      followerCount: corporates.followers.length // Assuming `corporate.followers` is an array of follower IDs
+    });
+  } catch (err) {
+    console.error('Error fetching corporate details:', err);
+    req.flash('error_msg', 'Error fetching corporate details');
+    res.redirect('/patient/corporate-list');
+  }
+});
+
+router.post('/corporate/:corporateId/follow', async (req, res) => {
+  const { corporateId } = req.params;
+  const patientId = req.session.user._id;
+
+  try {
+    // Find the corporate and patient
+    const corporates = await Corporate.findById(corporateId);
+    const patient = await Patient.findById(patientId);
+
+    if (!corporates || !patient) {
+      req.flash('error_msg', 'Corporate or patient not found');
+      return res.redirect(`/corporate/${corporateId}`);
+    }
+
+    // Check if the patient is already following the corporate
+    const alreadyFollowing = corporates.followers.some(
+      follower => follower._id.toString() === patientId.toString() && follower.modelType === 'Patient'
+    );
+
+    if (alreadyFollowing) {
+      // Unfollow the corporate
+      corporates.followers = corporates.followers.filter(
+        follower => !(follower._id.toString() === patientId.toString() && follower.modelType === 'Patient')
+      );
+      req.flash('success_msg', 'You have unfollowed the corporate');
+    } else {
+      // Follow the corporate
+      corporates.followers.push({ _id: patientId, modelType: 'Patient' });
+      req.flash('success_msg', 'You have followed the corporate');
+    }
+
+    // Save the changes
+    await corporates.save();
+    res.redirect(`/patient/corporate/${corporateId}`);
+  } catch (err) {
+    console.error('Error updating follow status:', err);
+    req.flash('error_msg', 'Error updating follow status');
+    res.redirect(`/patient/corporate/${corporateId}`);
+  }
+});
 
 module.exports = router;

@@ -23,7 +23,7 @@ const Product = require('../models/Product');
 const Order = require('../models/Order'); 
 const Supplier = require('../models/Supplier');
 const OrderChat = require('../models/OrderChat');
-
+const Corporate = require('../models/Corporate');
 
 require('dotenv').config();
 
@@ -2988,5 +2988,108 @@ router.get('/orderchat/:id', async (req, res) => {
 
 //     console.log('Updated Chat Data:', chat);
 
-
+router.get('/view-corporate-request/:doctorId', async (req, res) => {
+    const doctorId = req.params.doctorId;
+  
+    try {
+      // Find the doctor
+      const doctor = await Doctor.findById(doctorId);
+      if (!doctor) {
+        req.flash('error_msg', 'Doctor not found');
+        return res.redirect('/doctors');
+      }
+  
+      // Find all corporate requests for this doctor
+      const corporateRequests = doctor.corporateRequests;
+  
+      if (corporateRequests.length === 0) {
+        req.flash('error_msg', 'No corporate requests found');
+        return res.redirect('/doctors');
+      }
+  
+      // Find all corporates that have made requests
+      const corporates = await Corporate.find({
+        _id: { $in: corporateRequests.map(request => request.corporateId) }
+      });
+  
+      // Map the corporates to the requests
+      const requestsWithCorporate = corporateRequests.map(request => {
+        const corporate = corporates.find(corp => corp._id.toString() === request.corporateId.toString());
+        return { ...request.toObject(), corporate }; // Add corporate info to the request
+      });
+  
+      // Render the view to show all corporate requests and their statuses
+      res.render('corporate-requests', {
+        doctor,
+        corporateRequests: requestsWithCorporate, // Pass the updated request list
+        pageTitle: 'View Corporate Requests'
+      });
+    } catch (err) {
+      console.error('Error viewing corporate request:', err);
+      req.flash('error_msg', 'Error fetching corporate requests');
+      res.redirect('/doctors');
+    }
+  });
+  
+  router.post('/update-corporate-request-status/:doctorId/:corporateId/:requestId', async (req, res) => {
+    const doctorId = req.params.doctorId;
+    const corporateId = req.params.corporateId;
+    const requestId = req.params.requestId;  // Get the requestId from the URL
+    const { newStatus } = req.body; // The new status comes from the form
+  
+    try {
+      // Find the doctor
+      const doctor = await Doctor.findById(doctorId);
+      if (!doctor) {
+        req.flash('error_msg', 'Doctor not found');
+        return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
+      }
+  
+      // Find the corporate request by ID
+      const request = doctor.corporateRequests.id(requestId);
+      if (!request || request.corporateId.toString() !== corporateId.toString()) {
+        req.flash('error_msg', 'Request not found');
+        return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
+      }
+  
+      // Update the status of the request
+      request.requestStatus = newStatus;
+  
+      // If the request status is 'accepted', add the doctor to the corporate database
+      if (newStatus === 'accepted') {
+        // Find the corporate document and update it to include this doctor
+        const corporate = await Corporate.findById(corporateId);
+        if (!corporate) {
+          req.flash('error_msg', 'Corporate not found');
+          return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
+        }
+  
+        // Add the doctor to the corporate's list of approved doctors
+        if (!corporate.doctors) {
+          corporate.doctors = [];  // Initialize if not already set
+        }
+        
+        // Check if the doctor is already added
+        if (!corporate.doctors.includes(doctor._id)) {
+          corporate.doctors.push(doctor._id);
+        }
+  
+        // Save the corporate document after adding the doctor
+        await corporate.save();
+        req.flash('success_msg', 'Doctor added to corporate successfully');
+      }
+  
+      // Save the updated doctor document
+      await doctor.save();
+  
+      req.flash('success_msg', 'Request status updated successfully');
+      res.redirect(`/doctor/view-corporate-request/${doctorId}`);
+    } catch (err) {
+      console.error('Error updating corporate request status:', err);
+      req.flash('error_msg', 'Error updating request status');
+      res.redirect('/doctors');
+    }
+  });
+  
+  
 module.exports = router;

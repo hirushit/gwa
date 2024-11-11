@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Followers</title>
+  <link rel="stylesheet" href="/styles/main.css"> <!-- Include your CSS -->
+</head>
+<body>
+  <h1>Followers</h1>
+
+  <% if (followers.length > 0) { %>
+    <ul>
+      <% followers.forEach(follower => { %>
+        <li>
+          <img src="<%= follower.profilePicture %>" alt="<%= follower.name %>'s picture" style="width: 50px; height: 50px; border-radius: 50%;">
+          <span><%= follower.name %></span>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p>No followers to display.</p>
+  <% } %>
+
+  <a href="/corporate/corporate-home">Back to Corporate Home</a>
+</body>
+</html>

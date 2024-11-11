@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Doctor</title>
+</head>
+<body>
+    <!-- add-doctors.ejs -->
+<form action="/corporate/add-doctors" method="get">
+    <input type="text" name="email" value="<%= searchEmail %>" placeholder="Search by email" />
+    <button type="submit">Search</button>
+  </form>
+  
+  <ul>
+    <% doctors.forEach(function(doctor) { %>
+      <li>
+        <p><%= doctor.name %> (<%= doctor.email %>)</p>
+        <form action="/corporate/add-doctor/<%= doctor._id %>" method="post">
+          <button type="submit">Add Doctor</button>
+        </form>
+      </li>
+    <% }); %>
+  </ul>
+  
+    
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %></title>
+</head>
+<body>
+  
+
+  <h1><%= pageTitle %></h1>
+
+  <% corporateRequests.forEach(request => { %>
+    <div>
+      <!-- Assuming corporate information is inside request -->
+      <p>Request from Corporate: <%= request.corporateName %></p> <!-- Access corporate info from request -->
+      <p>Status: <%= request.requestStatus %></p>
+      
+      <!-- Form to update request status -->
+      <form action="/doctor/update-corporate-request-status/<%= doctor._id %>/<%= request.corporateId %>/<%= request._id %>" method="POST">
+        <select name="newStatus">
+          <option value="accepted" <%= request.requestStatus === 'accepted' ? 'selected' : '' %>>Accepted</option>
+          <option value="pending" <%= request.requestStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+          <option value="rejected" <%= request.requestStatus === 'rejected' ? 'selected' : '' %>>Rejected</option>
+        </select>
+        <button type="submit">Update Status</button>
+      </form>      
+    </div>
+  <% }) %>
+
+  <a href="/doctor/dashboard">Back to Doctor List</a>
+</body>
+</html>

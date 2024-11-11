@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corporate Home</title>
+</head>
+<body>
+  <h1>Welcome, <%= corporate.corporateName %></h1>
+  <p>Total Followers: <%= followerCount %></p>
+
+  <h2>Doctors in Your Corporate</h2>
+  <% if (doctors.length > 0) { %>
+    <ul>
+      <% doctors.forEach(doctor => { %>
+        <li>
+          <h3><%= doctor.name %></h3>
+          <p>Specialties:
+            <% if (doctor.speciality && doctor.speciality.length > 0) { %>
+              <%= doctor.speciality.join(', ') %>
+            <% } else { %>
+              No specialties available
+            <% } %>
+          </p>
+          <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
+            <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Profile Picture" width="150" height="180">
+          <% } else { %>
+            <p>No profile picture available</p>
+          <% } %>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p>No doctors added to your corporate yet.</p>
+  <% } %>
+  <a href="/corporate/add-doctors"> Add Doctors</a>
+  <a href="/corporate/followers">View Followers</a>
+
+</body>
+</html>

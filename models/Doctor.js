@@ -70,7 +70,7 @@ const doctorSchema = new mongoose.Schema({
     consultation: { 
         type: String, 
         enum: ['In-person', 'Video call'], 
-        required: true 
+        
     },
     hospital: {
         type: String,
@@ -120,6 +120,18 @@ const doctorSchema = new mongoose.Schema({
   totalDoctorFee: Number,
   serviceCharge: Number,
   tempDoctorFeeStatus: { type: String, enum: ['Pending', 'Not Paid', 'Paid', "Partially Paid"], default: 'Pending' },
+  corporateRequests: [{
+    corporateId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Corporate',
+    },
+    corporateName: String,
+    requestStatus: {
+      type: String,
+      enum: ['pending', 'accepted', 'rejected'],
+      default: 'pending',
+    }
+  }],
 });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

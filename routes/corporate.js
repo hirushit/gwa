@@ -13,6 +13,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios'); 
 const querystring = require('querystring');
 const Corporate = require('../models/Corporate');
+const Blog = require('../models/Blog');
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -253,9 +254,21 @@ router.get('/profile', async (req, res) => {
       return res.redirect('/corporate/login');
     }
 
+    const verifiedBlogs = await Blog.find({
+      authorId: { $in: corporate.doctors.map(doctor => doctor._id) },
+      verificationStatus: "Verified"
+    })
+      .select('title description image conditions authorId') 
+      .populate({
+        path: 'authorId',
+        model: 'Doctor',
+        select: 'name profilePicture', 
+      });
+
     res.render('corporateProfile', {
       corporate,
       doctors: corporate.doctors,
+      blogs: verifiedBlogs,
     });
   } catch (err) {
     console.error('Error fetching corporate profile:', err);

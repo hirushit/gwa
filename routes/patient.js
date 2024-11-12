@@ -782,7 +782,7 @@ router.get('/calendar', isLoggedIn, async (req, res) => {
   }
 });
 
-router.get('/blogs/view/:id', isLoggedIn, async (req, res) => {
+router.get('/blogs/view/:id', async (req, res) => {
   try {
       const blogId = req.params.id;
 

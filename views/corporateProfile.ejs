@@ -94,6 +94,36 @@
         </ul>
     </div>
 
+    <div class="blog-section">
+      <% blogs.forEach(blog => { %>
+        <div class="blog-item">
+          <% if (blog.image && blog.image.data) { %>
+            <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image" style="max-width: 200px; height: auto;">
+          <% } else { %>
+            <p>No image available</p>
+          <% } %>
+    
+          <h3><%= blog.title %></h3>
+    
+          <div><%- blog.description.slice(0, 150) + '...' %></div>
+    
+          <p><strong>Conditions:</strong> <%= blog.conditions ? blog.conditions.join(', ') : 'N/A' %></p>
+    
+          <div class="author-info">
+            <% if (blog.authorId && blog.authorId.profilePicture && blog.authorId.profilePicture.data) { %>
+              <img src="data:<%= blog.authorId.profilePicture.contentType %>;base64,<%= blog.authorId.profilePicture.data.toString('base64') %>" alt="Author Image" style="width: 50px; height: 50px; border-radius: 50%;">
+            <% } else { %>
+              <p>No author image available</p>
+            <% } %>
+            <p><strong>Author:</strong> <%= blog.authorId ? blog.authorId.name : 'Unknown' %></p>
+          </div>
+    
+          <a href="/patient/blogs/view/<%= blog._id %>" class="read-more">Read More</a>
+        </div>
+      <% }) %>
+    </div>
+    
+
     <script>
       document.addEventListener('DOMContentLoaded', function () {
         const specialityLinks = document.querySelectorAll('.speciality-link');

@@ -242,12 +242,22 @@ router.get('/corporate-home', async (req, res) => {
     res.redirect('/corporate/login');
   }
 });
-
 router.get('/profile', async (req, res) => {
   try {
     const corporateId = req.session.corporateId;
 
-    const corporate = await Corporate.findById(corporateId).populate('doctors');
+    const corporate = await Corporate.findById(corporateId)
+      .populate('doctors')
+      .populate({
+        path: 'patientReviews.patientId', 
+        model: 'Patient',
+        select: 'name profilePicture',
+      })
+      .populate({
+        path: 'doctorReviews.doctorId', 
+        model: 'Doctor',
+        select: 'name profilePicture',
+      });
 
     if (!corporate) {
       req.flash('error_msg', 'Corporate profile not found');
@@ -262,13 +272,18 @@ router.get('/profile', async (req, res) => {
       .populate({
         path: 'authorId',
         model: 'Doctor',
-        select: 'name profilePicture', 
+        select: 'name profilePicture',
       });
+
+    const doctorReviews = corporate.doctorReviews || [];
+    const patientReviews = corporate.patientReviews || [];
 
     res.render('corporateProfile', {
       corporate,
       doctors: corporate.doctors,
       blogs: verifiedBlogs,
+      doctorReviews,
+      patientReviews,
     });
   } catch (err) {
     console.error('Error fetching corporate profile:', err);
@@ -276,6 +291,7 @@ router.get('/profile', async (req, res) => {
     res.redirect('/corporate/corporate-home');
   }
 });
+
 
 
 router.get('/edit-profile', async (req, res) => {
@@ -424,6 +440,46 @@ router.post('/add-doctor/:doctorId', async (req, res) => {
   }
 });
 
+router.post('/update-doctor-review-visibility', async (req, res) => {
+  try {
+    const { reviewId, showOnPage } = req.body;
+
+    const showOnPageBool = showOnPage === 'true';
+
+    await Corporate.updateOne(
+      { 'doctorReviews._id': reviewId },
+      { $set: { 'doctorReviews.$.showOnPage': showOnPageBool } }
+    );
+
+    res.redirect('/corporate/profile');  
+  } catch (err) {
+    console.error('Error updating doctor review visibility:', err);
+    req.flash('error_msg', 'Error updating doctor review visibility');
+    res.redirect('/corporate/profile');
+  }
+});
+
+router.post('/update-patient-review-visibility', async (req, res) => {
+  try {
+    const { reviewId, showOnPage } = req.body;
+
+    const showOnPageBool = showOnPage === 'true';
+
+    await Corporate.updateOne(
+      { 'patientReviews._id': reviewId },
+      { $set: { 'patientReviews.$.showOnPage': showOnPageBool } }
+    );
+
+    res.redirect('/corporate/profile');  
+  } catch (err) {
+    console.error('Error updating patient review visibility:', err);
+    req.flash('error_msg', 'Error updating patient review visibility');
+    res.redirect('/corporate/profile');
+  }
+});
+
+
+
 router.get('/followers', async (req, res) => {
   try {
     const corporateId = req.session.corporateId;
@@ -460,7 +516,5 @@ router.get('/logout', (req, res) => {
   });
 });
 
-
-  
 
 module.exports = router;

@@ -9,7 +9,6 @@
   <h1><%= corporates.corporateName %></h1>
   <p>Follower Count: <%= followerCount %></p>
 
-  <!-- Cover Image -->
   <div class="cover-image">
     <% if (corporates.coverPhoto && corporates.coverPhoto.data) { %>
       <img src="data:<%= corporates.coverPhoto.contentType %>;base64,<%= corporates.coverPhoto.data.toString('base64') %>" alt="Cover Photo" style="width:100%; height:auto; max-height: 300px;">
@@ -18,7 +17,6 @@
     <% } %>
   </div>
 
-  <!-- Profile Image -->
   <div class="profile-image">
     <% if (corporates.profilePicture && corporates.profilePicture.data) { %>
       <img src="data:<%= corporates.profilePicture.contentType %>;base64,<%= corporates.profilePicture.data.toString('base64') %>" alt="Profile Image" style="width:150px; height:auto;">
@@ -27,13 +25,10 @@
     <% } %>
   </div>
 
-  <!-- Tagline -->
   <p><strong>Tagline:</strong> <%= corporates.tagline || 'Not provided' %></p>
 
-  <!-- Overview -->
   <p><strong>Overview:</strong> <%= corporates.overview || 'Not provided' %></p>
 
-  <!-- Address -->
   <div class="address">
     <p><strong>Address:</strong> 
       <% if (corporates.address) { %>
@@ -44,10 +39,8 @@
     </p>
   </div>
 
-  <!-- Business Type -->
   <p><strong>Business Type:</strong> <%= corporates.businessType || 'Not provided' %></p>
 
-  <!-- Corporate Specialties -->
   <h3>Our Specialties:</h3>
   <% if (doctors && doctors.length > 0) { %>
     <div class="corporate-specialities">
@@ -67,14 +60,12 @@
           <a href="#" class="speciality-link" data-speciality="<%= speciality %>"><%= speciality %></a>
         </div>
       <% }) %>
-      <!-- Reset Button -->
       <button id="reset-button" style="margin-top: 10px;">Reset</button>
     </div>
   <% } else { %>
     <p>No specialties available.</p>
   <% } %>
 
-  <!-- Follow/Unfollow Button -->
   <form action="/patient/corporate/<%= corporates._id %>/follow" method="POST">
     <button type="submit"><%= isFollowing ? 'Unfollow' : 'Follow' %></button>
   </form>
@@ -87,14 +78,12 @@
           <div class="doctor-profile">
             <h3>Doctor Name: <%= doctor.name %></h3>
 
-            <!-- Profile Picture -->
             <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
               <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Profile Picture" width="150" height="180">
             <% } else { %>
               <p>No profile picture available</p>
             <% } %>
 
-            <!-- Actions -->
             <div class="actions">
               <a href="/patient/doctors/<%= doctor._id %>/slots">Book Appointment</a>
             </div>
@@ -107,9 +96,106 @@
     <p>No doctors found in this corporate.</p>
   <% } %>
 
+  <h2>Blogs by Doctors in <%= corporates.corporateName %></h2>
+
+
+  <div class="blog-section">
+    <% blogs.forEach(blog => { %>
+      <div class="blog-item">
+        <% if (blog.image && blog.image.data) { %>
+          <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" alt="Blog Image" style="max-width: 200px; height: auto;">
+        <% } else { %>
+          <p>No image available</p>
+        <% } %>
+  
+        <h3><%= blog.title %></h3>
+  
+        <div><%- blog.description.slice(0, 150) + '...' %></div>
+  
+        <p><strong>Conditions:</strong> <%= blog.conditions ? blog.conditions.join(', ') : 'N/A' %></p>
+  
+        <div class="author-info">
+          <% if (blog.authorId && blog.authorId.profilePicture && blog.authorId.profilePicture.data) { %>
+            <img src="data:<%= blog.authorId.profilePicture.contentType %>;base64,<%= blog.authorId.profilePicture.data.toString('base64') %>" alt="Author Image" style="width: 50px; height: 50px; border-radius: 50%;">
+          <% } else { %>
+            <p>No author image available</p>
+          <% } %>
+          <p><strong>Author:</strong> <%= blog.authorId ? blog.authorId.name : 'Unknown' %></p>
+        </div>
+  
+        <a href="/patient/blogs/view/<%= blog._id %>" class="read-more">Read More</a>
+      </div>
+    <% }) %>
+  </div>
+
+
+<h2>Reviews by Doctors</h2>
+<div class="reviews-section">
+  <% if (corporates.doctorReviews.length > 0) { %>
+    <% corporates.doctorReviews.forEach(review => { %>
+      <div class="review-item">
+        
+        <div class="doctor-info">
+          <% if (review.doctorId && review.doctorId.profilePicture && review.doctorId.profilePicture.data) { %>
+            <img src="data:<%= review.doctorId.profilePicture.contentType %>;base64,<%= review.doctorId.profilePicture.data.toString('base64') %>" alt="Doctor Image" style="width: 50px; height: 50px; border-radius: 50%;">
+          <% } else { %>
+            <img src="/images/placeholder-profile.jpg" alt="Doctor Placeholder" style="width: 50px; height: 50px; border-radius: 50%;">
+          <% } %>
+          <p><strong>Doctor:</strong> <%= review.doctorId ? review.doctorId.name : 'Unknown' %></p>
+        </div>
+        
+
+        <p><strong>Rating:</strong> <%= review.rating %> ★</p>
+        <p><strong>Review:</strong> <%= review.reviewText %></p>
+        <p><strong>Date:</strong> <%= review.createdAt.toLocaleDateString() %> at <%= review.createdAt.toLocaleTimeString() %></p>
+      </div>
+    <% }) %>
+  <% } else { %>
+    <p>No reviews from doctors yet.</p>
+  <% } %>
+</div>
+
+<h2>Reviews by Patients</h2>
+<div class="reviews-section">
+  <% if (corporates.patientReviews.length > 0) { %>
+    <% corporates.patientReviews.forEach(review => { %>
+      <div class="review-item">
+        
+        <div class="patient-info">
+          <% if (review.patientId && review.patientId.profilePicture && review.patientId.profilePicture.data) { %>
+            <img src="data:<%= review.patientId.profilePicture.contentType %>;base64,<%= review.patientId.profilePicture.data.toString('base64') %>" alt="Patient Image" style="width: 50px; height: 50px; border-radius: 50%;">
+          <% } else { %>
+            <img src="/images/placeholder-profile.jpg" alt="Patient Placeholder" style="width: 50px; height: 50px; border-radius: 50%;">
+          <% } %>
+          <p><strong>Patient:</strong> <%= review.patientId ? review.patientId.name : 'Unknown' %></p>
+        </div>
+        
+
+        <p><strong>Rating:</strong> <%= review.rating %> ★</p>
+        <p><strong>Review:</strong> <%= review.reviewText %></p>
+        <p><strong>Date:</strong> <%= review.createdAt.toLocaleDateString() %> at <%= review.createdAt.toLocaleTimeString() %></p>
+      </div>
+    <% }) %>
+  <% } else { %>
+    <p>No reviews from patients yet.</p>
+  <% } %>
+</div>
+
+<h2>Write a Review</h2>
+<form action="/patient/corporate/<%= corporates._id %>/review" method="POST">
+  <div>
+    <label for="rating">Rating (1 to 5 stars):</label>
+    <input type="number" id="rating" name="rating" min="1" max="5" required>
+  </div>
+  <div>
+    <label for="reviewText">Review:</label>
+    <textarea id="reviewText" name="reviewText" required></textarea>
+  </div>
+  <button type="submit">Submit Review</button>
+</form>
+
   <a href="/patient/corporate-list">Back to Corporate List</a>
 
-  <!-- JavaScript for specialty filtering and reset functionality -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const specialityLinks = document.querySelectorAll('.speciality-link');
@@ -121,12 +207,10 @@
           e.preventDefault();
           const selectedSpeciality = this.getAttribute('data-speciality');
 
-          // Hide all doctors initially
           doctorItems.forEach(function(item) {
             item.style.display = 'none';
           });
 
-          // Show only doctors that match the selected speciality
           doctorItems.forEach(function(item) {
             if (item.getAttribute('data-speciality').includes(selectedSpeciality)) {
               item.style.display = 'block';
@@ -135,9 +219,7 @@
         });
       });
 
-      // Reset button functionality
       resetButton.addEventListener('click', function() {
-        // Show all doctors
         doctorItems.forEach(function(item) {
           item.style.display = 'block';
         });

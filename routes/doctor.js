@@ -2419,7 +2419,7 @@ router.get('/products', async (req, res) => {
     try {
         const products = await Product.find();
         
-        res.render('productList', { products }); // Render view to display products
+        res.render('productList', { products }); 
     } catch (err) {
         console.error('Error fetching products:', err);
         res.status(500).send('Server error');
@@ -2428,40 +2428,34 @@ router.get('/products', async (req, res) => {
 
 router.post('/add-to-cart/:productId', async (req, res) => {
     const { productId } = req.params;
-    const userId = req.session.user._id;  // Assuming user info is available in req.session
+    const userId = req.session.user._id;  
     const { quantity } = req.body;
 
     try {
-        // Check if the product exists
         const product = await Product.findById(productId);
         if (!product) {
             req.flash('error_msg', 'Product not found');
             return res.redirect('/products');
         }
 
-        // Check if the user already has a cart
         let cart = await Cart.findOne({ userId });
 
         if (cart) {
-            // If the cart exists, update it by adding the product
             const existingProductIndex = cart.items.findIndex(item => item.product.toString() === productId);
 
             if (existingProductIndex >= 0) {
-                // If the product is already in the cart, update the quantity
                 cart.items[existingProductIndex].quantity += parseInt(quantity, 10);
             } else {
-                // If the product is not in the cart, add it as a new item
                 cart.items.push({ product: productId, quantity: parseInt(quantity, 10) });
             }
         } else {
-            // If no cart exists, create a new one
             cart = new Cart({
                 userId,
                 items: [{ product: productId, quantity: parseInt(quantity, 10) }]
             });
         }
 
-        await cart.save(); // Save cart after modifying items
+        await cart.save();
 
         req.flash('success_msg', 'Product added to cart');
         res.redirect('/doctor/products');
@@ -2475,7 +2469,7 @@ router.post('/add-to-cart/:productId', async (req, res) => {
 
 router.post('/buy-now/:productId', async (req, res) => {
     const { productId } = req.params;
-    const { quantity } = req.body; // Accessing quantity from request body
+    const { quantity } = req.body;
 
     try {
         const product = await Product.findById(productId).populate('uploadedBy');
@@ -2484,7 +2478,6 @@ router.post('/buy-now/:productId', async (req, res) => {
             return res.redirect('/doctor/products');
         }
 
-        // Redirect to the final checkout page with product and quantity details
         res.redirect(`/doctor/final-checkout?productId=${productId}&quantity=${quantity}`);
     } catch (err) {
         console.error('Error in Buy Now process:', err);
@@ -2516,17 +2509,14 @@ router.get('/final-checkout', async (req, res) => {
 
 router.post('/send-enquiry', async (req, res) => {
     const { productId, quantity } = req.body;
-    const buyerEmail = req.session.user.email;  // Assuming the user's email is available in `req.session.user`
-
+    const buyerEmail = req.session.user.email;  
     try {
-        // Find the product and populate the supplier info
         const product = await Product.findById(productId).populate('uploadedBy');
         if (!product) {
             req.flash('error_msg', 'Product not found');
             return res.redirect('/doctor/products');
         }
 
-        // Find the supplier's email from the Supplier collection
         const supplier = await Supplier.findById(product.uploadedBy);
         if (!supplier) {
             req.flash('error_msg', 'Supplier not found');
@@ -2534,31 +2524,28 @@ router.post('/send-enquiry', async (req, res) => {
         }
 
         const expectedDeliveryDate = new Date();
-        expectedDeliveryDate.setDate(expectedDeliveryDate.getDate() + 7); // Set to 7 days later
+        expectedDeliveryDate.setDate(expectedDeliveryDate.getDate() + 7); 
 
-        // Create an order entry in the Order collection
         const newOrder = new Order({
             buyerEmail: buyerEmail,
-            supplierEmail: supplier.contactEmail, // Get the supplier email from the Supplier schema
+            supplierEmail: supplier.contactEmail, 
             products: [{
                 productId: product._id,
                 quantity: quantity,
             }],
-            totalAmount: product.price * quantity, // Assuming the product has a price field
+            totalAmount: product.price * quantity, 
             orderStatus: 'Processed',
             expectedDeliveryDate: expectedDeliveryDate
         });
 
-        await newOrder.save();  // Save the order to the database
+        await newOrder.save();  
 
-        // Create or find the chat associated with this order
         let orderChat = await OrderChat.findOne({ 
             buyerId: req.session.user._id, 
-            supplierId: supplier._id // Check for an existing chat with the same supplier
+            supplierId: supplier._id 
         });
 
         if (!orderChat) {
-            // If no chat exists, create a new one
             orderChat = new OrderChat({
                 orderId: newOrder._id,
                 buyerId: req.session.user._id,
@@ -2568,26 +2555,23 @@ router.post('/send-enquiry', async (req, res) => {
             await orderChat.save();
         }
 
-        // Add the enquiry message to the chat
         orderChat.messages.push({
-            senderId: req.session.user._id, // The buyer's ID
+            senderId: req.session.user._id, 
             text: `I would like to enquire about ${product.name}. Quantity: ${quantity}.`,
             timestamp: new Date(),
             read: false
         });
 
-        await orderChat.save(); // Save the updated chat
+        await orderChat.save(); 
 
-        // Configure nodemailer
         const transporter = nodemailer.createTransport({
-            service: 'gmail', // Example service, configure based on your email provider
+            service: 'gmail', 
             auth: {
-                user: 'hirushit@gmail.com',  // Use environment variables for security
-                pass: 'daqfszghisxzgyvf' // Store your email password securely
+                user: 'hirushit@gmail.com',  
+                pass: 'daqfszghisxzgyvf' 
             }
         });
 
-        // Email content for the buyer
         const buyerMailOptions = {
             from: process.env.EMAIL,
             to: buyerEmail,
@@ -2595,7 +2579,6 @@ router.post('/send-enquiry', async (req, res) => {
             text: `Thank you for your enquiry about ${product.name}. Your enquiry has been recorded. Contact the supplier at ${supplier.contactEmail}`
         };
 
-        // Email content for the supplier
         const supplierMailOptions = {
             from: process.env.EMAIL,
             to: supplier.contactEmail,
@@ -2603,7 +2586,6 @@ router.post('/send-enquiry', async (req, res) => {
             text: `You have a new enquiry for ${product.name}. Quantity: ${quantity}. Contact the buyer at ${buyerEmail}.`
         };
 
-        // Send emails to both the buyer and supplier
         await transporter.sendMail(buyerMailOptions);
         await transporter.sendMail(supplierMailOptions);
 
@@ -2622,7 +2604,7 @@ router.post('/send-enquiry', async (req, res) => {
 
 router.get('/cart', async (req, res) => {
     try {
-        const userId = req.session.user._id; // Replace with actual session management
+        const userId = req.session.user._id; 
         const cart = await Cart.findOne({ userId }).populate('items.product');
         
         if (!cart) {
@@ -2640,9 +2622,8 @@ router.post('/checkout', async (req, res) => {
     const { products, quantities } = req.body; 
 
     try {
-        // Ensure products is an array of IDs, not a comma-separated string
-        const productIdArray = products; // products should already be an array from the form
-        const quantityArray = Object.values(quantities); // Extract quantities as an array
+        const productIdArray = products; 
+        const quantityArray = Object.values(quantities);
 
         const foundProducts = await Product.find({ _id: { $in: productIdArray } });
 
@@ -2651,13 +2632,11 @@ router.post('/checkout', async (req, res) => {
             return res.redirect('/doctor/products');
         }
 
-        // Create cart items based on found products and their quantities
         const cartItems = foundProducts.map((product, index) => ({
             product,
             quantity: parseInt(quantityArray[index], 10) 
         }));
 
-        // Render the checkout view with the cart items
         res.render('checkout', {
             items: cartItems
         });
@@ -2672,10 +2651,8 @@ router.post('/confirm-purchase', async (req, res) => {
     const { products: rawProducts, quantities: rawQuantities, totalAmount } = req.body;
     const buyerEmail = req.session.user._id;
 
-    // Ensure products is an array
     const products = Array.isArray(rawProducts) ? rawProducts : JSON.parse(rawProducts);
     
-    // Parse quantities and ensure they are valid numbers
     const quantities = Array.isArray(rawQuantities) ? rawQuantities : JSON.parse(rawQuantities);
     const orderProducts = products.map((productId, index) => {
         const quantity = parseInt(quantities[index], 10);
@@ -2689,29 +2666,24 @@ router.post('/confirm-purchase', async (req, res) => {
     });
 
     try {
-        // Retrieve product names based on product IDs
         const foundProducts = await Product.find({ _id: { $in: orderProducts.map(item => item.productId) } });
 
-        // Create a mapping of product IDs to their names
         const productNameMap = {};
         foundProducts.forEach(product => {
             productNameMap[product._id] = product.name;
         });
 
-        // Assuming there's only one supplier for all products; adjust as necessary
-        const supplier = await Supplier.findById(foundProducts[0]?.uploadedBy); // Use the first product's supplier
+        const supplier = await Supplier.findById(foundProducts[0]?.uploadedBy); 
         if (!supplier) {
             req.flash('error_msg', 'Supplier not found');
             return res.redirect('/doctor/products');
         }
 
-        // Prepare the email content
         const productDetails = orderProducts.map(item => {
             const productName = productNameMap[item.productId] || 'Unknown Product';
             return `${productName}: Quantity ${item.quantity}`;
         }).join('\n');
 
-        // Setup Nodemailer
         const transporter = nodemailer.createTransport({
             service: 'Gmail',
             auth: {
@@ -2720,7 +2692,6 @@ router.post('/confirm-purchase', async (req, res) => {
             }
         });
 
-        // Email to buyer
         const buyerMailOptions = {
             from: 'hirushit@gmail.com',
             to: buyerEmail,
@@ -2728,7 +2699,6 @@ router.post('/confirm-purchase', async (req, res) => {
             text: `Thank you for your purchase!\n\nYour order details:\n${productDetails}\n\nTotal Amount: $${totalAmount}. Contact at ${supplier.contactEmail}`
         };
 
-        // Email to supplier
         const supplierMailOptions = {
             from: 'hirushit@gmail.com',
             to: supplier.contactEmail,
@@ -2736,21 +2706,18 @@ router.post('/confirm-purchase', async (req, res) => {
             text: `You have received a new order from ${buyerEmail}.\n\nOrder Details:\n${productDetails}\n\nTotal Amount: $${totalAmount}.`
         };
 
-        // Save the order to the database
         const order = new Order({
             buyerEmail,
             supplierEmail: supplier.contactEmail,
             products: orderProducts,
             totalAmount,
-            orderStatus: 'Pending', // Default status
+            orderStatus: 'Pending', 
         });
         await order.save();
 
-        // Send emails
         await transporter.sendMail(buyerMailOptions);
         await transporter.sendMail(supplierMailOptions);
 
-        // Redirect or render a success page
         req.flash('success_msg', 'Order confirmed and email sent!');
         res.redirect('/doctor/orders');
     } catch (err) {
@@ -2818,7 +2785,6 @@ router.post('/update/:productId', async (req, res) => {
     }
 });
 
-// Delete Item from Cart
 router.post('/delete/:productId', async (req, res) => {
     const { productId } = req.params;
     const userId = req.session.userId;
@@ -2839,29 +2805,25 @@ router.post('/delete/:productId', async (req, res) => {
 
 router.get('/order-dashboard', isLoggedIn, checkSubscription, async (req, res) => {
     try {
-        // Find the doctor based on the logged-in user's email
         const doctor = await Doctor.findOne({ email: req.session.user.email }).lean();
         if (!doctor) {
             return res.status(404).send('Doctor not found');
         }
         console.log(doctor);
 
-        // Retrieve order chats related to this doctor
         const orderChats = await OrderChat.find({ buyerId: doctor._id })
-            .populate('supplierId', 'name') // Populate supplier details to show in the chat list
-            .sort({ updatedAt: -1 }) // Sort by latest updated chat
+            .populate('supplierId', 'name') 
+            .sort({ updatedAt: -1 }) 
             .lean();
 
-        console.log('Retrieved orderChats:', orderChats); // Debugging line
+        console.log('Retrieved orderChats:', orderChats); 
 
-        // Calculate unread messages for each chat
         orderChats.forEach(chat => {
             chat.unreadCount = chat.messages.filter(message =>
                 !message.read && message.senderId.toString() !== doctor._id.toString()
             ).length;
         });
 
-        // Render the dashboard view with doctor info and order chats
         res.render('doctorOrderDashboard', { doctor, orderChats });
     } catch (err) {
         console.error(err.message);
@@ -2877,7 +2839,6 @@ router.post('/orderchat/:chatId/send-message', async (req, res) => {
         const senderEmail = req.session.user.email;
         const chatId = req.params.chatId;
 
-        // Find the sender (either supplier or doctor) and identify their role
         const supplier = await Supplier.findOne({ email: senderEmail });
         const doctor = await Doctor.findOne({ email: senderEmail });
         
@@ -2892,7 +2853,6 @@ router.post('/orderchat/:chatId/send-message', async (req, res) => {
             return res.status(404).send('Chat not found');
         }
 
-        // Update chat with the new message
         chat.messages.push({
             senderId,
             text: message,
@@ -2912,21 +2872,19 @@ router.get('/orderchat/:id', async (req, res) => {
     try {
         const chatId = req.params.id;
 
-        // Log the request details, including req.user
         console.log('Request Details:', {
             method: req.method,
             url: req.url,
             params: req.params,
-            user: req.user // Log req.user instead of req.session.user
+            user: req.user
         });
 
-        // Check if req.user exists
-        if (!req.session.user) { // Change this to check req.user
+        if (!req.session.user) { 
             return res.status(401).json({ error: 'Unauthorized access, please log in.' });
         }
 
         const chat = await OrderChat.findById(chatId)
-            .populate('supplierId', 'name email') // Populate supplier details
+            .populate('supplierId', 'name email') 
             .lean();
 
         console.log(chat);
@@ -2935,7 +2893,6 @@ router.get('/orderchat/:id', async (req, res) => {
             return res.status(404).json({ error: 'Chat not found' });
         }
 
-        // Mark unread messages as read if they are not sent by the current user
         chat.messages.forEach(message => {
             if (message.senderId.toString() !== req.session.user._id.toString() && !message.read) {
                 message.read = true;
@@ -2944,7 +2901,7 @@ router.get('/orderchat/:id', async (req, res) => {
 
         await OrderChat.findByIdAndUpdate(chatId, { $set: { messages: chat.messages } });
 
-        res.render('orderChat', { chat, doctor: req.session.user }); // Render orderChat view with chat data
+        res.render('orderChat', { chat, doctor: req.session.user }); 
     } catch (err) {
         console.error('Error:', err.message);
         res.status(500).json({ error: 'Server Error' });
@@ -2992,14 +2949,12 @@ router.get('/view-corporate-request/:doctorId', async (req, res) => {
     const doctorId = req.params.doctorId;
   
     try {
-      // Find the doctor
       const doctor = await Doctor.findById(doctorId);
       if (!doctor) {
         req.flash('error_msg', 'Doctor not found');
         return res.redirect('/doctors');
       }
   
-      // Find all corporate requests for this doctor
       const corporateRequests = doctor.corporateRequests;
   
       if (corporateRequests.length === 0) {
@@ -3007,21 +2962,18 @@ router.get('/view-corporate-request/:doctorId', async (req, res) => {
         return res.redirect('/doctors');
       }
   
-      // Find all corporates that have made requests
       const corporates = await Corporate.find({
         _id: { $in: corporateRequests.map(request => request.corporateId) }
       });
   
-      // Map the corporates to the requests
       const requestsWithCorporate = corporateRequests.map(request => {
         const corporate = corporates.find(corp => corp._id.toString() === request.corporateId.toString());
-        return { ...request.toObject(), corporate }; // Add corporate info to the request
+        return { ...request.toObject(), corporate }; 
       });
   
-      // Render the view to show all corporate requests and their statuses
       res.render('corporate-requests', {
         doctor,
-        corporateRequests: requestsWithCorporate, // Pass the updated request list
+        corporateRequests: requestsWithCorporate, 
         pageTitle: 'View Corporate Requests'
       });
     } catch (err) {
@@ -3034,52 +2986,43 @@ router.get('/view-corporate-request/:doctorId', async (req, res) => {
   router.post('/update-corporate-request-status/:doctorId/:corporateId/:requestId', async (req, res) => {
     const doctorId = req.params.doctorId;
     const corporateId = req.params.corporateId;
-    const requestId = req.params.requestId;  // Get the requestId from the URL
-    const { newStatus } = req.body; // The new status comes from the form
+    const requestId = req.params.requestId;  
+    const { newStatus } = req.body; 
   
     try {
-      // Find the doctor
       const doctor = await Doctor.findById(doctorId);
       if (!doctor) {
         req.flash('error_msg', 'Doctor not found');
         return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
       }
   
-      // Find the corporate request by ID
       const request = doctor.corporateRequests.id(requestId);
       if (!request || request.corporateId.toString() !== corporateId.toString()) {
         req.flash('error_msg', 'Request not found');
         return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
       }
   
-      // Update the status of the request
       request.requestStatus = newStatus;
   
-      // If the request status is 'accepted', add the doctor to the corporate database
       if (newStatus === 'accepted') {
-        // Find the corporate document and update it to include this doctor
         const corporate = await Corporate.findById(corporateId);
         if (!corporate) {
           req.flash('error_msg', 'Corporate not found');
           return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
         }
   
-        // Add the doctor to the corporate's list of approved doctors
         if (!corporate.doctors) {
-          corporate.doctors = [];  // Initialize if not already set
+          corporate.doctors = [];  
         }
         
-        // Check if the doctor is already added
         if (!corporate.doctors.includes(doctor._id)) {
           corporate.doctors.push(doctor._id);
         }
   
-        // Save the corporate document after adding the doctor
         await corporate.save();
         req.flash('success_msg', 'Doctor added to corporate successfully');
       }
   
-      // Save the updated doctor document
       await doctor.save();
   
       req.flash('success_msg', 'Request status updated successfully');
@@ -3093,14 +3036,10 @@ router.get('/view-corporate-request/:doctorId', async (req, res) => {
 
   router.get('/corporate-list', async (req, res) => {
     try {
-      // Fetch all corporates from the database
-      const corporates = await Corporate.find();
+      const corporates = await Corporate.find().select('corporateName tagline address profilePicture');
   
-      // Render a view or return JSON data with the list of corporates
-      res.render('doctor-corporate-list', { corporates }); // Use a view template named 'corporate-list.ejs'
-      
-      // Alternatively, for JSON response:
-      // res.json(corporates);
+      res.render('doctor-corporate-list', { corporates });
+  
     } catch (err) {
       console.error('Error fetching corporate list:', err);
       req.flash('error_msg', 'Error retrieving corporate list');
@@ -3108,47 +3047,64 @@ router.get('/view-corporate-request/:doctorId', async (req, res) => {
     }
   });
   
+
   router.get('/corporate/:corporateId', async (req, res) => {
     const { corporateId } = req.params;
-    const doctorId = req.session.user._id; 
-
+    const doctorId = req.session.user._id;
+  
     try {
-        // Find the corporate by ID using the Corporate model and populate the doctors array
-        const corporates = await Corporate.findById(corporateId).populate('doctors');
-        if (!corporates) {
-            req.flash('error_msg', 'Corporate not found');
-            return res.redirect('/doctor/corporate-list');
-        }
-
-        // Check if the logged-in doctor is in the followers list
-        const isFollowing = corporates.followers.some(
-            followerId => followerId.toString() === doctorId.toString()
-        );
-
-        const doctors = corporates.doctors || [];
-        const followerCount = corporates.followers.length;
-
-        // Render the view with corporate details, doctors, and follow/unfollow status
-        res.render('doctor-corporate-details', {
-            corporates,
-            doctors,
-            followerCount,
-            isFollowing
+      const corporate = await Corporate.findById(corporateId)
+        .populate('doctors') 
+        .populate({
+          path: 'doctorReviews',
+          populate: {
+            path: 'doctorId',
+            select: 'name profilePicture'
+          }
+        })
+        .populate({
+          path: 'patientReviews',
+          populate: {
+            path: 'patientId',
+            select: 'name profilePicture'
+          }
         });
+  
+      if (!corporate) {
+        req.flash('error_msg', 'Corporate not found');
+        return res.redirect('/doctor/corporate-list');
+      }
+  
+      corporate.doctorReviews = corporate.doctorReviews.filter(review => review.showOnPage);
+      corporate.patientReviews = corporate.patientReviews.filter(review => review.showOnPage);
+  
+      const isFollowing = corporate.followers.some(
+        followerId => followerId.toString() === doctorId.toString()
+      );
+  
+      const doctors = corporate.doctors || [];
+      const followerCount = corporate.followers.length;
+  
+      res.render('doctor-corporate-details', {
+        corporate,
+        doctors,
+        followerCount,
+        isFollowing,
+        doctorReviews: corporate.doctorReviews,
+        patientReviews: corporate.patientReviews
+      });
     } catch (err) {
-        console.error('Error fetching corporate details:', err);
-        req.flash('error_msg', 'Error fetching corporate details');
-        res.redirect('/doctor/corporate-list');
+      console.error('Error fetching corporate details:', err);
+      req.flash('error_msg', 'Error fetching corporate details');
+      res.redirect('/doctor/corporate-list');
     }
-});
-
-
+  });
+  
 router.post('/corporate/:corporateId/follow', async (req, res) => {
     const { corporateId } = req.params;
     const doctorId = req.session.user._id;
 
     try {
-        // Find the corporate and doctor by their respective IDs
         const corporates = await Corporate.findById(corporateId);
         const doctor = await Doctor.findById(doctorId);
 
@@ -3157,24 +3113,20 @@ router.post('/corporate/:corporateId/follow', async (req, res) => {
             return res.redirect(`/doctor/corporate/${corporateId}`);
         }
 
-        // Check if the doctor is already following the corporate
         const alreadyFollowing = corporates.followers.some(
             follower => follower.toString() === doctorId.toString()
         );
 
         if (alreadyFollowing) {
-            // Unfollow the corporate by removing the doctor's ID from the followers list
             corporates.followers = corporates.followers.filter(
                 follower => follower.toString() !== doctorId.toString()
             );
             req.flash('success_msg', 'You have unfollowed the corporate');
         } else {
-            // Follow the corporate by adding the doctor's ID to the followers list
             corporates.followers.push(doctorId);
             req.flash('success_msg', 'You have followed the corporate');
         }
 
-        // Save the changes in the database
         await corporates.save();
         res.redirect(`/doctor/corporate/${corporateId}`);
     } catch (err) {
@@ -3184,6 +3136,34 @@ router.post('/corporate/:corporateId/follow', async (req, res) => {
     }
 });
 
+router.post('/corporate/:corporateId/add-review', async (req, res) => {
+    const { corporateId } = req.params;
+    const { rating, reviewText } = req.body;
+    const doctorId = req.session.user._id;
   
+    try {
+      const corporate = await Corporate.findById(corporateId);
+  
+      if (!corporate) {
+        return res.status(404).send('Corporate not found');
+      }
+  
+      const review = {
+        doctorId,
+        rating,
+        reviewText,
+        createdAt: new Date(),
+      };
+  
+      corporate.doctorReviews.push(review);
+      await corporate.save();
+  
+      res.redirect(`/doctor/corporate/${corporateId}`);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal server error');
+    }
+  });
+    
   
 module.exports = router;

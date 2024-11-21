@@ -23,7 +23,7 @@ const https = require('https');
 const axios = require('axios');
 const { title } = require('process');
 const {  GoogleGenerativeAI,} = require('@google/generative-ai');
-const corporate = require('../models/Corporate');
+const Corporate = require('../models/Corporate');
 
 
 const fetchConversionRates = () => {
@@ -1885,14 +1885,9 @@ router.get('/news-releases', async (req, res) => {
 
 router.get('/corporate-list', async (req, res) => {
   try {
-    // Fetch all corporates from the database
-    const corporates = await corporate.find();
+    const corporates = await Corporate.find().select('corporateName tagline address profilePicture');
 
-    // Render a view or return JSON data with the list of corporates
-    res.render('corporate-list', { corporates }); // Use a view template named 'corporate-list.ejs'
-    
-    // Alternatively, for JSON response:
-    // res.json(corporates);
+    res.render('corporate-list', { corporates });
   } catch (err) {
     console.error('Error fetching corporate list:', err);
     req.flash('error_msg', 'Error retrieving corporate list');
@@ -1905,24 +1900,47 @@ router.get('/corporate/:corporateId', async (req, res) => {
   const patientId = req.session.user._id; 
 
   try {
-    // Find the corporate by ID using the Corporate model
-    const corporates = await corporate.findById(corporateId).populate('doctors'); // Populate doctors array
+    const corporates = await Corporate.findById(corporateId).populate('doctors'); 
     if (!corporates) {
       req.flash('error_msg', 'Corporate not found');
       return res.redirect('/patient/corporate-list');
     }
 
-    // Find the patient to check if they are following the corporate
     const patient = await Patient.findById(patientId);
-
     const isFollowing = patient.followedCorporates.includes(corporateId);
 
-    // Render a view with corporate details, doctors, and follow/unfollow status
+    const verifiedBlogs = await Blog.find({
+      authorId: { $in: corporates.doctors.map(doctor => doctor._id) },
+      verificationStatus: 'Verified'
+    })
+      .select('title description image conditions authorId')
+      .populate({
+        path: 'authorId',
+        model: 'Doctor',
+        select: 'name profilePicture',
+      });
+
+    const corporatesWithReviews = await Corporate.findById(corporateId)
+      .populate({
+        path: 'patientReviews.patientId',
+        model: 'Patient',
+        select: 'name profilePicture',
+      })
+      .populate({
+        path: 'doctorReviews.doctorId',
+        model: 'Doctor',
+        select: 'name profilePicture',
+      });
+
+    corporatesWithReviews.patientReviews = corporatesWithReviews.patientReviews.filter(review => review.showOnPage);
+    corporatesWithReviews.doctorReviews = corporatesWithReviews.doctorReviews.filter(review => review.showOnPage);
+
     res.render('corporate-details', {
-      corporates,
+      corporates: corporatesWithReviews,
       doctors: corporates.doctors,
       isFollowing,
-      followerCount: corporates.followers.length // Assuming `corporate.followers` is an array of follower IDs
+      followerCount: corporates.followers.length,
+      blogs: verifiedBlogs,
     });
   } catch (err) {
     console.error('Error fetching corporate details:', err);
@@ -1931,12 +1949,12 @@ router.get('/corporate/:corporateId', async (req, res) => {
   }
 });
 
+
 router.post('/corporate/:corporateId/follow', async (req, res) => {
   const { corporateId } = req.params;
   const patientId = req.session.user._id;
 
   try {
-    // Find the corporate and patient
     const corporates = await Corporate.findById(corporateId);
     const patient = await Patient.findById(patientId);
 
@@ -1945,29 +1963,59 @@ router.post('/corporate/:corporateId/follow', async (req, res) => {
       return res.redirect(`/corporate/${corporateId}`);
     }
 
-    // Check if the patient is already following the corporate
     const alreadyFollowing = corporates.followers.some(
       follower => follower._id.toString() === patientId.toString() && follower.modelType === 'Patient'
     );
 
     if (alreadyFollowing) {
-      // Unfollow the corporate
       corporates.followers = corporates.followers.filter(
         follower => !(follower._id.toString() === patientId.toString() && follower.modelType === 'Patient')
       );
       req.flash('success_msg', 'You have unfollowed the corporate');
     } else {
-      // Follow the corporate
       corporates.followers.push({ _id: patientId, modelType: 'Patient' });
       req.flash('success_msg', 'You have followed the corporate');
     }
 
-    // Save the changes
     await corporates.save();
     res.redirect(`/patient/corporate/${corporateId}`);
   } catch (err) {
     console.error('Error updating follow status:', err);
     req.flash('error_msg', 'Error updating follow status');
+    res.redirect(`/patient/corporate/${corporateId}`);
+  }
+});
+
+router.post('/corporate/:corporateId/review', async (req, res) => {
+  const { corporateId } = req.params;
+  const { reviewText, rating } = req.body; 
+  const patientId = req.session.user._id;
+
+  try {
+    if (rating < 1 || rating > 5) {
+      req.flash('error_msg', 'Rating must be between 1 and 5');
+      return res.redirect(`/patient/corporate/${corporateId}`);
+    }
+
+    const corporate = await Corporate.findById(corporateId);
+    if (!corporate) {
+      req.flash('error_msg', 'Corporate not found');
+      return res.redirect('/patient/corporate-list');
+    }
+
+    corporate.patientReviews.push({
+      patientId,
+      reviewText,
+      rating,
+    });
+
+    await corporate.save();
+
+    req.flash('success_msg', 'Review added successfully');
+    res.redirect(`/patient/corporate/${corporateId}`);
+  } catch (err) {
+    console.error('Error adding review:', err);
+    req.flash('error_msg', 'Error adding review');
     res.redirect(`/patient/corporate/${corporateId}`);
   }
 });

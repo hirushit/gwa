@@ -4,25 +4,67 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Corporate List</title>
+  <style>
+    .corporate-card {
+      display: flex;
+      align-items: center;
+      border: 1px solid #ccc;
+      padding: 16px;
+      margin: 10px;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      box-sizing: border-box;
+    }
+
+    .corporate-card img {
+      border-radius: 50%;
+      width: 80px; 
+      height: 80px; 
+      margin-right: 20px; 
+    }
+
+    .corporate-card h2 {
+      font-size: 1.5em;
+      margin: 0;
+    }
+
+    .corporate-card p {
+      color: #555;
+      font-size: 1em;
+    }
+
+    .corporate-card .address {
+      font-size: 0.9em;
+      color: #777;
+    }
+
+  </style>
 </head>
 <body>
   <h1>Corporate List</h1>
 
   <% if (corporates.length > 0) { %>
-    <ul>
+    <div class="corporate-list">
       <% corporates.forEach(corporate => { %>
-        <li>
-          <h2><%= corporate.corporateName %></h2>
-          <!-- Add link to corporate details -->
-          <a href="/doctor/corporate/<%= corporate._id %>">View Details</a>
-          <!-- Add more details as necessary -->
-        </li>
+        <div class="corporate-card">
+          <% if (corporate.profilePicture && corporate.profilePicture.data) { %>
+            <img src="data:<%= corporate.profilePicture.contentType %>;base64,<%= corporate.profilePicture.data.toString('base64') %>" alt="<%= corporate.corporateName %> Profile">
+          <% } else { %>
+            <img src="default-profile.jpg" alt="<%= corporate.corporateName %> Profile">
+          <% } %>
+          <div>
+            <h2><%= corporate.corporateName %></h2>
+            <p><strong>Tagline:</strong> <%= corporate.tagline %></p>
+            <p class="address"><strong>Address:</strong> <%= corporate.address.street %>, <%= corporate.address.city %>, <%= corporate.address.state %>, <%= corporate.address.zipCode %>, <%= corporate.address.country %></p>
+            <a href="/doctor/corporate/<%= corporate._id %>" class="view-details-btn">View Details</a>
+          </div>
+        </div>
       <% }) %>
-    </ul>
+    </div>
   <% } else { %>
     <p>No corporates found.</p>
   <% } %>
 
-  <a href="/doctor/corporate-list">Back to Dashboard</a>
+  <a href="/doctor/doctor-index">Back to Dashboard</a>
 </body>
 </html>

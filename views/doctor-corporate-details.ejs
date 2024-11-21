@@ -3,47 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= corporates.corporateName %> - Details</title>
+  <title><%= corporate.corporateName %> - Details</title>
 </head>
 <body>
-  <h1><%= corporates.corporateName %></h1>
+  <h1><%= corporate.corporateName %></h1>
   <p>Follower Count: <%= followerCount %></p>
 
-  <!-- Corporate Specialties -->
-  <h3>Our Specialties:</h3>
-<% if (doctors && doctors.length > 0) { %>
-  <div class="corporate-specialities">
-    <% 
-      // Create a Set to hold unique specialties
-      let uniqueSpecialties = new Set();
-      doctors.forEach(doctor => {
-        if (doctor.speciality && doctor.speciality.length > 0) {
-          doctor.speciality.forEach(speciality => {
-            uniqueSpecialties.add(speciality);
-          });
-        }
-      });
-
-      // Render each unique speciality as a link
-      uniqueSpecialties.forEach(speciality => { 
-    %>
-      <div class="speciality-item">
-        <p><%= speciality %></p>
-      </div>
-    <% }) %>
+  <div class="cover-image">
+    <% if (corporate.coverPhoto && corporate.coverPhoto.data) { %>
+      <img src="data:<%= corporate.coverPhoto.contentType %>;base64,<%= corporate.coverPhoto.data.toString('base64') %>" alt="Cover Photo" style="width:100%; height:auto; max-height: 300px;">
+    <% } else { %>
+      <p>No cover photo available</p>
+    <% } %>
   </div>
-<% } else { %>
-  <p>No specialties available.</p>
-<% } %>
 
+  <div class="profile-image">
+    <% if (corporate.profilePicture && corporate.profilePicture.data) { %>
+      <img src="data:<%= corporate.profilePicture.contentType %>;base64,<%= corporate.profilePicture.data.toString('base64') %>" alt="Profile Image" style="width:150px; height:auto;">
+    <% } else { %>
+      <p>No profile image available</p>
+    <% } %>
+  </div>
 
-  <!-- Follow/Unfollow Button -->
-  <form action="/doctor/corporate/<%= corporates._id %>/follow" method="POST">
+  <p><strong>Tagline:</strong> <%= corporate.tagline || 'Not provided' %></p>
+
+  <p><strong>Overview:</strong> <%= corporate.overview || 'Not provided' %></p>
+
+  <div class="address">
+    <p><strong>Address:</strong> 
+      <% if (corporate.address) { %>
+        <%= corporate.address.street %>, <%= corporate.address.city %>, <%= corporate.address.state %>, <%= corporate.address.zipCode %>, <%= corporate.address.country %>
+      <% } else { %>
+        Not provided
+      <% } %>
+    </p>
+  </div>
+
+  <p><strong>Business Type:</strong> <%= corporate.businessType || 'Not provided' %></p>
+
+  <h3>Our Specialties:</h3>
+  <% if (doctors && doctors.length > 0) { %>
+    <div class="corporate-specialities">
+      <% 
+        let uniqueSpecialties = new Set();
+        doctors.forEach(doctor => {
+          if (doctor.speciality && doctor.speciality.length > 0) {
+            doctor.speciality.forEach(speciality => {
+              uniqueSpecialties.add(speciality);
+            });
+          }
+        });
+
+        uniqueSpecialties.forEach(speciality => { 
+      %>
+        <div class="speciality-item">
+          <p><%= speciality %></p>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p>No specialties available.</p>
+  <% } %>
+
+  <form action="/doctor/corporate/<%= corporate._id %>/follow" method="POST">
     <button type="submit"><%= isFollowing ? 'Unfollow' : 'Follow' %></button>
-</form>
+  </form>
 
-
-  <h2>Doctors in <%= corporates.corporateName %></h2>
+  <h2>Doctors in <%= corporate.corporateName %></h2>
   <% if (doctors.length > 0) { %>
     <ul>
       <% doctors.forEach(doctor => { %>
@@ -51,15 +77,11 @@
           <div class="doctor-profile">
             <h3>Doctor Name: <%= doctor.name %></h3>
 
-            <!-- Profile Picture -->
             <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
               <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Profile Picture" width="150" height="180">
             <% } else { %>
               <p>No profile picture available</p>
             <% } %>
-
-            <!-- Actions -->
-            
           </div>
           <hr>
         </li>
@@ -68,6 +90,67 @@
   <% } else { %>
     <p>No doctors found in this corporate.</p>
   <% } %>
+
+<h2>Reviews by Doctors</h2>
+<div class="reviews-section">
+  <% if (doctorReviews.length > 0) { %>
+    <% doctorReviews.forEach(review => { %>
+      <div class="review-item">
+        
+        <div class="doctor-info">
+          <% if (review.doctorId && review.doctorId.profilePicture && review.doctorId.profilePicture.data) { %>
+            <img src="data:<%= review.doctorId.profilePicture.contentType %>;base64,<%= review.doctorId.profilePicture.data.toString('base64') %>" alt="Doctor Image" style="width: 50px; height: 50px; border-radius: 50%;">
+          <% } else { %>
+            <img src="/images/placeholder-profile.jpg" alt="Doctor Placeholder" style="width: 50px; height: 50px; border-radius: 50%;">
+          <% } %>
+          <p><strong>Doctor:</strong> <%= review.doctorId ? review.doctorId.name : 'Unknown' %></p>
+        </div>
+
+        <p><strong>Rating:</strong> <%= review.rating %> ★</p>
+        <p><strong>Review:</strong> <%= review.reviewText %></p>
+        <p><strong>Date:</strong> <%= review.createdAt.toLocaleDateString() %> at <%= review.createdAt.toLocaleTimeString() %></p>
+      </div>
+    <% }) %>
+  <% } else { %>
+    <p>No reviews yet.</p>
+  <% } %>
+</div>
+
+<h2>Reviews by Patients</h2>
+<div class="reviews-section">
+  <% if (patientReviews.length > 0) { %>
+    <% patientReviews.forEach(review => { %>
+      <div class="review-item">
+        
+        <div class="patient-info">
+          <% if (review.patientId && review.patientId.profilePicture && review.patientId.profilePicture.data) { %>
+            <img src="data:<%= review.patientId.profilePicture.contentType %>;base64,<%= review.patientId.profilePicture.data.toString('base64') %>" alt="Patient Image" style="width: 50px; height: 50px; border-radius: 50%;">
+          <% } else { %>
+            <img src="/images/placeholder-profile.jpg" alt="Patient Placeholder" style="width: 50px; height: 50px; border-radius: 50%;">
+          <% } %>
+          <p><strong>Patient:</strong> <%= review.patientId ? review.patientId.name : 'Unknown' %></p>
+        </div>
+        
+        <p><strong>Rating:</strong> <%= review.rating %> ★</p>
+        <p><strong>Review:</strong> <%= review.reviewText %></p>
+        <p><strong>Date:</strong> <%= review.createdAt.toLocaleDateString() %> at <%= review.createdAt.toLocaleTimeString() %></p>
+      </div>
+    <% }) %>
+  <% } else { %>
+    <p>No reviews yet.</p>
+  <% } %>
+</div>
+
+<h2>Leave a Review</h2>
+<form action="/doctor/corporate/<%= corporate._id %>/add-review" method="POST">
+  <label for="rating">Rating (1 to 5):</label>
+  <input type="number" name="rating" min="1" max="5" required>
+  
+  <label for="reviewText">Review:</label>
+  <textarea name="reviewText" rows="4" required></textarea>
+  
+  <button type="submit">Submit Review</button>
+</form>
 
   <a href="/doctor/corporate-list">Back to Corporate List</a>
 </body>

@@ -3098,7 +3098,7 @@ router.get('/view-corporate-request/:doctorId', async (req, res) => {
       req.flash('error_msg', 'Error fetching corporate details');
       res.redirect('/doctor/corporate-list');
     }
-  });
+  });  
   
 router.post('/corporate/:corporateId/follow', async (req, res) => {
     const { corporateId } = req.params;

@@ -242,6 +242,7 @@ router.get('/corporate-home', async (req, res) => {
     res.redirect('/corporate/login');
   }
 });
+
 router.get('/profile', async (req, res) => {
   try {
     const corporateId = req.session.corporateId;
@@ -291,8 +292,6 @@ router.get('/profile', async (req, res) => {
     res.redirect('/corporate/corporate-home');
   }
 });
-
-
 
 router.get('/edit-profile', async (req, res) => {
   try {
@@ -376,20 +375,24 @@ router.get('/add-doctors', async (req, res) => {
   const searchEmail = req.query.email || '';
 
   try {
-    const doctors = await Doctor.find({
-      email: { $regex: searchEmail, $options: 'i' }, 
-    });
+      const doctors = await Doctor.find({
+          email: { $regex: searchEmail, $options: 'i' }, 
+      });
 
-    res.render('add-doctors', {
-      doctors,
-      searchEmail,
-    });
+      const corporateId = req.session.corporateId;
+
+      res.render('add-doctors', {
+          doctors,
+          searchEmail,
+          corporateId, 
+      });
   } catch (err) {
-    console.error('Error fetching doctors:', err);
-    req.flash('error_msg', 'Error fetching doctors');
-    res.redirect('/corporate/corporate-home');
+      console.error('Error fetching doctors:', err);
+      req.flash('error_msg', 'Error fetching doctors');
+      res.redirect('/corporate/corporate-home');
   }
 });
+
 
 router.post('/add-doctor/:doctorId', async (req, res) => {
   const doctorId = req.params.doctorId;

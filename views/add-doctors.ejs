@@ -4,25 +4,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Doctor</title>
+    <style>
+        .doctor-card {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        .doctor-profile-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-right: 10px;
+        }
+        .doctor-profile-pic img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .doctor-details {
+            flex: 1;
+        }
+        .doctor-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .doctor-specialty {
+            font-style: italic;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .doctor-contact {
+            margin-bottom: 5px;
+        }
+        .doctor-status {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .add-doctor-button {
+            margin-left: 10px;
+        }
+    </style>
 </head>
 <body>
-<form action="/corporate/add-doctors" method="get">
-    <input type="text" name="email" value="<%= searchEmail %>" placeholder="Search by email" />
-    <button type="submit">Search</button>
-  </form>
-  
-  <ul>
-    <% doctors.forEach(function(doctor) { %>
-      <li>
-        <p><%= doctor.name %> (<%= doctor.email %>)</p>
-        <form action="/corporate/add-doctor/<%= doctor._id %>" method="post">
-          <button type="submit">Add Doctor</button>
-        </form>
-      </li>
-    <% }); %>
-  </ul>
-  
   <a href="/corporate/corporate-home">Back to Home</a>
 
+    <form action="/corporate/add-doctors" method="get">
+        <input type="text" name="email" value="<%= searchEmail %>" placeholder="Search by email" />
+        <button type="submit">Search</button>
+    </form>
+  
+    <ul>
+        <% doctors.forEach(function(doctor) { %>
+            <li class="doctor-card">
+                <div class="doctor-profile-pic">
+                    <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
+                        <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="<%= doctor.name %>'s Profile Picture" />
+                    <% } else { %>
+                        <img src="/default-profile.png" alt="Default Profile Picture" />
+                    <% } %>
+                </div>
+                <div class="doctor-details">
+                    <div class="doctor-name"><%= doctor.name %></div>
+                    <div class="doctor-specialty">Specialty: <%= doctor.speciality.join(', ') %></div>
+                    <div class="doctor-contact">
+                        <p>Email: <%= doctor.email %></p>
+                        <% if (doctor.phoneNumber) { %>
+                            <p>Phone: <%= doctor.phoneNumber %></p>
+                        <% } else { %>
+                            <p>Phone: Not provided</p>
+                        <% } %>
+                    </div>
+                    <div class="doctor-experience">
+                        <p>Experience: <%= doctor.experience || 'N/A' %> years</p>
+                    </div>
+                </div>
+                <% 
+                const existingRequest = doctor.corporateRequests.find(request => 
+                    request.corporateId.toString() === corporateId.toString()
+                ); 
+                %>
+                <% if (existingRequest) { %>
+                    <div class="doctor-status">
+                        Status: <%= existingRequest.requestStatus %>
+                    </div>
+                <% } else { %>
+                    <form action="/corporate/add-doctor/<%= doctor._id %>" method="post" class="add-doctor-button">
+                        <button type="submit">Add Doctor</button>
+                    </form>
+                <% } %>
+            </li>
+        <% }); %>
+    </ul>
+  
+    <a href="/corporate/corporate-home">Back to Home</a>
 </body>
 </html>
+  

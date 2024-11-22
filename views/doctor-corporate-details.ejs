@@ -4,6 +4,37 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= corporate.corporateName %> - Details</title>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const specialityLinks = document.querySelectorAll('.speciality-link');
+      const doctorItems = document.querySelectorAll('.doctor-item');
+      const resetButton = document.getElementById('reset-button');
+  
+      specialityLinks.forEach(link => {
+        link.addEventListener('click', event => {
+          event.preventDefault();
+          const speciality = link.dataset.speciality;
+          
+          doctorItems.forEach(item => {
+            const doctorSpecialities = item.dataset.speciality.split(', ');
+            if (doctorSpecialities.includes(speciality)) {
+              item.style.display = 'block';
+            } else {
+              item.style.display = 'none';
+            }
+          });
+        });
+      });
+  
+      resetButton.addEventListener('click', () => {
+        doctorItems.forEach(item => {
+          item.style.display = 'block';
+        });
+      });
+    });
+  </script>
+  
 </head>
 <body>
   <h1><%= corporate.corporateName %></h1>
@@ -41,9 +72,10 @@
 
   <p><strong>Business Type:</strong> <%= corporate.businessType || 'Not provided' %></p>
 
-  <h3>Our Specialties:</h3>
-  <% if (doctors && doctors.length > 0) { %>
-    <div class="corporate-specialities">
+  <h2>Our Doctors</h2>
+  <h3>Specialties</h3>
+  <% if (doctors.length > 0) { %>
+    <div class="specialities">
       <% 
         let uniqueSpecialties = new Set();
         doctors.forEach(doctor => {
@@ -57,39 +89,31 @@
         uniqueSpecialties.forEach(speciality => { 
       %>
         <div class="speciality-item">
-          <p><%= speciality %></p>
+          <a href="#" class="speciality-link" data-speciality="<%= speciality %>"><%= speciality %></a>
         </div>
       <% }) %>
     </div>
+    <button id="reset-button" style="margin-top: 10px;">Reset</button>
   <% } else { %>
     <p>No specialties available.</p>
   <% } %>
 
-  <form action="/doctor/corporate/<%= corporate._id %>/follow" method="POST">
-    <button type="submit"><%= isFollowing ? 'Unfollow' : 'Follow' %></button>
-  </form>
-
-  <h2>Doctors in <%= corporate.corporateName %></h2>
-  <% if (doctors.length > 0) { %>
-    <ul>
-      <% doctors.forEach(doctor => { %>
-        <li>
-          <div class="doctor-profile">
-            <h3>Doctor Name: <%= doctor.name %></h3>
-
-            <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
-              <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Profile Picture" width="150" height="180">
-            <% } else { %>
-              <p>No profile picture available</p>
-            <% } %>
-          </div>
-          <hr>
-        </li>
-      <% }) %>
-    </ul>
-  <% } else { %>
-    <p>No doctors found in this corporate.</p>
-  <% } %>
+  <ul id="doctor-list">
+    <% doctors.forEach(doctor => { %>
+      <li class="doctor-item" data-speciality="<%= Array.isArray(doctor.speciality) ? doctor.speciality.join(', ') : '' %>">
+        <div class="doctor-profile">
+          <h3>Doctor Name: <%= doctor.name %></h3>
+          <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
+            <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Doctor Profile Picture" width="150" height="180">
+          <% } else { %>
+            <p>No profile picture available</p>
+          <% } %>
+          <p><strong>Specialties:</strong> <%= doctor.speciality.join(', ') %></p>
+        </div>
+        <hr>
+      </li>
+    <% }) %>
+  </ul>
 
 <h2>Reviews by Doctors</h2>
 <div class="reviews-section">

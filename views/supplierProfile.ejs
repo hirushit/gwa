@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Profile</title>
-    <link rel="stylesheet" href="/path/to/bootstrap.css">
 </head>
 <body>
     <div class="container mt-5">
@@ -73,6 +72,52 @@
             <% } %>
         </div>
 
+        <h3 class="mt-5">Blogs Posted</h3>
+        <div id="blog-container">
+            <% if (blogs && blogs.length > 0) { %>
+                <div class="row">
+                    <% blogs.forEach(function(blog) { %>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <% if (blog.image && blog.image.data) { %>
+                                    <img src="data:<%= blog.image.contentType %>;base64,<%= blog.image.data.toString('base64') %>" class="card-img-top" alt="<%= blog.title %>" style="height: 200px; object-fit: cover;">
+                                <% } else { %>
+                                    <img src="/path/to/placeholder-image.jpg" class="card-img-top" alt="No Image Available" style="height: 200px; object-fit: cover;">
+                                <% } %>
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <% if (blog.authorProfilePicture && blog.authorProfilePicture.data) { %>
+                                            <img src="data:<%= blog.authorProfilePicture.contentType %>;base64,<%= blog.authorProfilePicture.data.toString('base64') %>" 
+                                                 alt="<%= blog.authorName %>" 
+                                                 class="rounded-circle" 
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                        <% } else { %>
+                                            <img src="/path/to/default-profile-pic.jpg" 
+                                                 alt="Default Profile" 
+                                                 class="rounded-circle" 
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                        <% } %>
+                                        <span class="ms-3"><strong><%= blog.authorName %></strong></span>
+                                    </div>
+                                    <h5 class="card-title"><%= blog.title %></h5>
+                                    <p class="card-text"><%- blog.description.slice(0, 100) %>...</p>
+                                    <% if (blog.categories && blog.categories.length > 0) { %>
+                                        <p><strong>Categories:</strong> <%= blog.categories.join(', ') %></p>
+                                    <% } else { %>
+                                        <p><strong>Categories:</strong> N/A</p>
+                                    <% } %>
+                                    <p><strong>Date Posted:</strong> <%= new Date(blog.createdAt).toLocaleDateString() %></p>
+                                    <a href="/blogs/<%= blog._id %>" class="btn btn-primary">Read More</a>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <p>No blogs posted by this supplier yet.</p>
+            <% } %>
+        </div>
+        
         <a href="/supplier/edit-profile" class="btn btn-primary mt-3">Edit Profile</a>
         <a href="/supplier/dashboard" class="btn btn-info">Back to Dashboard</a><br>
 

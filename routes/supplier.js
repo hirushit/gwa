@@ -10,6 +10,8 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const Order = require('../models/Order');
+const Blog = require('../models/Blog');
+
 
 function isLoggedIn(req, res, next) {
     if (req.session && req.session.supplierId) {
@@ -222,8 +224,8 @@ router.get('/dashboard', isLoggedIn, (req, res) => {
 
 router.get('/profile', isLoggedIn, async (req, res) => {
     try {
-        const supplier = await Supplier.findById(req.session.supplierId); 
-        
+        const supplier = await Supplier.findById(req.session.supplierId);
+
         const category = req.query.category;
         let products = [];
 
@@ -233,16 +235,26 @@ router.get('/profile', isLoggedIn, async (req, res) => {
             products = await Product.find({ uploadedBy: req.session.supplierId, countInStock: { $gt: 0 } });
         }
 
-        res.render('supplierProfile', { supplier, products });
+        const blogs = await Blog.find({ authorId: req.session.supplierId });
+
+        const blogsWithAuthors = await Promise.all(
+            blogs.map(async (blog) => {
+                const author = await Supplier.findById(blog.authorId);
+                return {
+                    ...blog.toObject(),
+                    authorName: author?.name || 'Unknown Author',
+                    authorProfilePicture: author?.profilePicture || null,
+                };
+            })
+        );
+
+        res.render('supplierProfile', { supplier, products, blogs: blogsWithAuthors });
     } catch (err) {
         console.error('Error fetching supplier data:', err);
         req.flash('error_msg', 'Failed to fetch profile data');
         res.redirect('/supplier/dashboard'); 
     }
 });
-
-
-
 
 router.get('/edit-profile', isLoggedIn, async (req, res) => {
     const supplier = await Supplier.findById(req.session.supplierId);

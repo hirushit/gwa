@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Supplier Blog Upload</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <style>
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="sidebar">
+        </div>
+
+        <div class="main-content">
+            <h1>Supplier Blog Upload Form</h1>
+            <form id="supplierBlogForm" action="/admin/supplier-blog-upload" method="POST" enctype="multipart/form-data">
+                <div>
+                    <label for="title">Title:</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+
+                <div>
+                    <label for="supplier">Select Supplier:</label>
+                    <select name="supplierId" id="supplier" required>
+                        <% suppliers.forEach(supplier => { %>
+                            <option value="<%= supplier._id %>"><%= supplier.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="description">Description:</label>
+                    <div id="editor"></div>
+                    <input type="hidden" name="description" id="description">
+                </div>
+
+                <div>
+                    <label for="image">Upload Cover Image:</label>
+                    <input type="file" id="image" name="image" accept="image/*" required>
+                </div>
+
+                <div>
+                    <label for="images">Additional Images:</label>
+                    <input type="file" id="images" name="images" accept="image/*" multiple>
+                </div>
+
+                <div>
+                    <label for="categories">Categories:</label>
+                    <select id="categories" name="categories" multiple style="width: 100%;" required>
+                        <option value="Supplier News">Supplier News</option>
+                        <option value="Product Updates">Product Updates</option>
+                        <option value="Supplier Tips">Supplier Tips</option>
+                        <option value="Industry Trends">Industry Trends</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="hashtags">Hashtags:</label>
+                    <select id="hashtags" name="hashtags" multiple="multiple" style="width: 100%;">
+                        <option value="#suppliers">#suppliers</option>
+                        <option value="#business">#business</option>
+                        <option value="#supplychain">#supplychain</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="priority">Priority:</label>
+                    <select id="priority" name="priority">
+                        <option value="high">High</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+
+                <button type="submit">Upload Blog</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#categories, #hashtags, #supplier').select2();
+
+            const quill = new Quill('#editor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, false] }],
+                        ['bold', 'italic', 'underline'],
+                        ['image', 'blockquote', 'code-block'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        ['clean']
+                    ]
+                }
+            });
+
+            $('#supplierBlogForm').on('submit', function () {
+                const descriptionField = document.querySelector('input[name=description]');
+                descriptionField.value = quill.root.innerHTML; 
+            });
+        });
+    </script>
+</body>
+</html>

@@ -13,6 +13,7 @@ const Specialty = require('../models/Specialty');
 const Condition = require('../models/Condition');
 const NewsRelease = require('../models/NewsRelease');  
 const NewsLogo = require('../models/NewsLogo'); 
+const Supplier = require('../models/Supplier');
 const storage = multer.memoryStorage(); 
 const upload = multer({ storage: storage });
 
@@ -77,8 +78,6 @@ router.get('/doctor-profile-requests', isLoggedIn, async (req, res) => {
   }
 });
 
-
-
 router.get('/view/:id', isLoggedIn, async (req, res) => {
   try {
     const doctorId = req.params.id;
@@ -117,13 +116,13 @@ router.post('/verify/:id', isLoggedIn, async (req, res) => {
     if (verificationStatus === 'Verified') {
       const customTrialPeriod = parseInt(trialPeriod) || 60;
       const customMaxTimeSlots = parseInt(maxTimeSlots) || 3;
-      const adminCommissionFee = parseFloat(commissionFee) || 10; // Default commission fee to 10%
+      const adminCommissionFee = parseFloat(commissionFee) || 10; 
 
       doctor.subscriptionVerification = 'Verified';
       doctor.trialEndDate = new Date(Date.now() + customTrialPeriod * 24 * 60 * 60 * 1000);
       doctor.maxTimeSlots = customMaxTimeSlots;
-      doctor.subscriptionType = 'Standard'; // Update to standard subscription
-      doctor.adminCommissionFee = adminCommissionFee; // Save the commission fee
+      doctor.subscriptionType = 'Standard'; 
+      doctor.adminCommissionFee = adminCommissionFee; 
     }
 
     await doctor.save();
@@ -1038,7 +1037,6 @@ router.get('/insurance/new', isAdmin, (req, res) => {
   res.render('adminNewInsurance', { activePage });
 });
 
-
 router.post('/insurance', isAdmin, upload.single('logo'), async (req, res) => {
   try {
     const { name } = req.body;
@@ -1668,6 +1666,61 @@ router.post('/commission-fee', async (req, res) => {
   } catch (error) {
     console.error('Error updating commission fee:', error);
     res.status(500).send('Server error');
+  }
+});
+
+router.get('/supplier-blog', async (req, res) => {
+  try {
+      const suppliers = await Supplier.find(); 
+      res.render('admin-supplier-blog-upload', { suppliers, activePage: 'supplier-blog' });
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Server Error');
+  }
+});
+
+router.post('/supplier-blog-upload', upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images', maxCount: 5 }]), async (req, res) => {
+  try {
+      const { title, description, categories, hashtags, priority, supplierId } = req.body;
+
+      const supplier = await Supplier.findById(supplierId);
+      if (!supplier) {
+          return res.status(400).send('Invalid supplier selection');
+      }
+
+      const blogData = {
+          title,
+          author: supplier.name,
+          description,
+          authorEmail: supplier.contactEmail,
+          authorId: supplier._id,
+          categories,
+          hashtags,
+          priority,
+          verificationStatus: 'Pending'
+      };
+
+      if (req.files['image']) {
+          blogData.image = {
+              data: req.files['image'][0].buffer,
+              contentType: req.files['image'][0].mimetype
+          };
+      }
+
+      if (req.files['images']) {
+          blogData.images = req.files['images'].map(file => ({
+              data: file.buffer,
+              contentType: file.mimetype
+          }));
+      }
+
+      const newBlog = new Blog(blogData);
+      await newBlog.save();
+
+      res.render('admin-blog-success', { message: 'Blog uploaded successfully for supplier' });
+  } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server Error' });
   }
 });
 

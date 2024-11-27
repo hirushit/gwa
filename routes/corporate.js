@@ -14,6 +14,7 @@ const axios = require('axios');
 const querystring = require('querystring');
 const Corporate = require('../models/Corporate');
 const Blog = require('../models/Blog');
+const Booking = require('../models/Booking');
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -508,6 +509,135 @@ router.get('/followers', async (req, res) => {
   }
 });
 
+router.get('/insights', async (req, res) => {
+  try {
+    const corporateId = req.session?.corporateId;
+    if (!corporateId) {
+      return res.status(400).json({ error: 'Corporate ID is required' });
+    }
+
+    const linkedDoctors = await Doctor.find({
+      corporateRequests: {
+        $elemMatch: { 
+          corporateId: corporateId, 
+          requestStatus: 'accepted' 
+        }
+      }
+    });
+
+    const doctorIds = linkedDoctors.map(doctor => doctor._id);
+
+    const totalDoctors = doctorIds.length;
+
+    const totalPremiumDoctors = await Doctor.countDocuments({
+      _id: { $in: doctorIds },
+      subscriptionType: { $ne: 'Free' }
+    });
+
+    const totalPatients = await Booking.aggregate([
+      {
+        $match: {
+          doctor: { $in: doctorIds }
+        }
+      },
+      {
+        $group: {
+          _id: '$patient'
+        }
+      },
+      {
+        $count: 'uniquePatients'
+      }
+    ]).then(result => result[0]?.uniquePatients || 0);
+
+const totalBlogs = await Blog.countDocuments({
+  authorId: { $in: doctorIds }
+});
+
+const blogsVerified = await Blog.countDocuments({
+  authorId: { $in: doctorIds },
+  verificationStatus: 'Verified' 
+});
+
+const blogsPendingRequest = await Blog.countDocuments({
+  authorId: { $in: doctorIds },
+  verificationStatus: 'Pending' 
+});
+
+    const totalConsultations = await Booking.countDocuments({
+      doctor: { $in: doctorIds },
+      status: 'completed'
+    });
+
+    const totalReviews = await Doctor.aggregate([
+      { $match: { _id: { $in: doctorIds } } },
+      { $unwind: '$reviews' },
+      { $count: 'totalReviews' }
+    ]).then(result => result[0]?.totalReviews || 0);
+
+    const bookingFilter = req.query['booking-filter'] || 'all';
+    let startDate, endDate;
+
+    switch (bookingFilter) {
+      case 'today':
+        startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date();
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'week':
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - startDate.getDay());
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date();
+        endDate.setDate(startDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'month':
+        startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        endDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      default:
+        startDate = new Date('1970-01-01');
+        endDate = new Date();
+    }
+
+    const bookingRates = await Booking.aggregate([
+      {
+        $match: {
+          doctor: { $in: doctorIds },
+          date: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: '$date' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    res.render('corporateInsights', {
+      totalDoctors,
+      totalPremiumDoctors,
+      totalPatients,
+      totalBlogs,
+      blogsVerified,
+      blogsPendingRequest,
+      totalConsultations,
+      totalReviews,
+      bookingRates,
+      bookingFilter,
+      corporateId,
+      linkedDoctors 
+    });
+  } catch (err) {
+    console.error('Error fetching corporate insights:', err.message);
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  }
+});
 
 router.get('/logout', (req, res) => {
   req.session.destroy(err => {

@@ -306,6 +306,51 @@ router.post('/update-profile', isLoggedIn, upload.fields([{ name: 'profileImage'
     }
 });
 
+router.post('/add-category', upload.single('image'), async (req, res) => {
+    try {
+        const { name } = req.body;
+        const image = req.file;
+
+        const category = { name };
+
+        if (image) {
+            category.image = {
+                data: image.buffer,
+                contentType: image.mimetype,
+            };
+        }
+
+        const supplier = await Supplier.findById(req.session.supplierId);
+        supplier.supplierCategories.push(category);
+        await supplier.save();
+
+        res.redirect('/supplier/profile');
+    } catch (err) {
+        console.error('Error adding category:', err);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+router.post('/remove-category/:index', async (req, res) => {
+    try {
+        const supplier = await Supplier.findById(req.session.supplierId);
+        const index = parseInt(req.params.index, 10);
+
+        if (!supplier || index < 0 || index >= supplier.supplierCategories.length) {
+            return res.status(400).send('Invalid category index');
+        }
+
+        supplier.supplierCategories.splice(index, 1);
+        await supplier.save();
+
+        res.redirect('/supplier/profile');
+    } catch (err) {
+        console.error('Error removing category:', err);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+
 router.get('/manage-products', isLoggedIn, async (req, res) => {
     try {
         const products = await Product.find({ uploadedBy: req.session.supplierId }).lean();

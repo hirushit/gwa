@@ -25,6 +25,15 @@ const supplierSchema = new Schema({
         data: Buffer,
         contentType: String
     },
+    supplierCategories: [
+        {
+            name: { type: String, required: true },
+            image: {
+                data: Buffer,
+                contentType: String,
+            },
+        },
+    ],
     tagline: { type: String },
     overview: { type: String }, 
     productCategories: [{ type: String }],

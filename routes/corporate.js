@@ -399,6 +399,25 @@ router.post('/add-specialty', upload.single('image'), async (req, res) => {
   }
 });
 
+router.post('/remove-specialty/:index', async (req, res) => {
+  try {
+    const corporate = await Corporate.findById(req.session.corporateId);
+    const index = parseInt(req.params.index, 10);
+
+    if (!corporate || index < 0 || index >= corporate.corporateSpecialties.length) {
+      return res.status(400).send('Invalid specialty index');
+    }
+
+    corporate.corporateSpecialties.splice(index, 1);
+    await corporate.save();
+
+    res.redirect('/corporate/profile');
+  } catch (error) {
+    console.error('Error removing specialty:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 
 router.get('/add-doctors', async (req, res) => {
   const searchEmail = req.query.email || '';

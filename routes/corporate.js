@@ -372,6 +372,34 @@ router.post('/edit-profile', upload.fields([{ name: 'profileImage' }, { name: 'c
   }
 });
 
+router.post('/add-specialty', upload.single('image'), async (req, res) => {
+  try {
+    const { name } = req.body;
+    const image = req.file;
+
+    const specialty = {
+      name,
+    };
+
+    if (image) {
+      specialty.image = {
+        data: image.buffer,
+        contentType: image.mimetype,
+      };
+    }
+
+    const corporate = await Corporate.findById(req.session.corporateId);
+    corporate.corporateSpecialties.push(specialty);
+    await corporate.save();
+
+    res.redirect('/corporate/profile');
+  } catch (error) {
+    console.error('Error adding specialty:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
 router.get('/add-doctors', async (req, res) => {
   const searchEmail = req.query.email || '';
 

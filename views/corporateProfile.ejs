@@ -6,6 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Corporate Profile</title>
     <link rel="stylesheet" href="/path/to/your/styles.css">
+    <style>
+      .specialties-list {
+        display: flex;
+        flex-wrap: nowrap; 
+        gap: 10px; 
+        overflow-x: auto; 
+        padding: 10px 0;
+        scrollbar-width: thin; 
+        scrollbar-color: #888 #f5f5f5; 
+    }
+
+    .specialty-item {
+        flex: 0 0 auto; 
+        text-align: center; 
+        max-width: 150px; 
+    }
+
+    </style>
 </head>
 <body>
     <div class="container">
@@ -45,6 +63,40 @@
             <p><strong>Country:</strong> <%= corporate.address.country %></p>
         </div>
         <p><strong>Verification Status:</strong> <%= corporate.verificationStatus %></p>
+
+        <div class="specialties-section">
+          <h2>Corporate Specialties</h2>
+          <% if (corporate.corporateSpecialties && corporate.corporateSpecialties.length > 0) { %>
+            <div class="specialties-list">
+              <% corporate.corporateSpecialties.forEach(specialty => { %>
+                <div class="specialty-item">
+                  <% if (specialty.image && specialty.image.data) { %>
+                    <img src="data:<%= specialty.image.contentType %>;base64,<%= specialty.image.data.toString('base64') %>" alt="<%= specialty.name %>" style="max-width: 100px; height: auto;">
+                  <% } %>
+                  <p><strong><%= specialty.name %></strong></p>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <p>No specialties added yet.</p>
+          <% } %>
+        </div>
+        
+
+        <div class="add-specialty">
+          <button id="add-specialty-btn">Add Specialty</button>
+          <form id="add-specialty-form" action="/corporate/add-specialty" method="POST" enctype="multipart/form-data" style="display: none;">
+            <label for="specialty-name">Name:</label>
+            <input type="text" name="name" id="specialty-name" required>
+            
+            <label for="specialty-image">Image:</label>
+            <input type="file" name="image" id="specialty-image" accept="image/*">
+        
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+        
+        
 
         <h2>Our Doctors</h2>
         <h3>Specialties</h3>
@@ -220,6 +272,11 @@
             item.style.display = 'block';
           });
         });
+      });
+
+      document.getElementById('add-specialty-btn').addEventListener('click', function () {
+        const form = document.getElementById('add-specialty-form');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
       });
     </script>
 

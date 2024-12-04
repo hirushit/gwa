@@ -110,6 +110,15 @@ const corporateSchema = new mongoose.Schema({
     ref: 'Supplier',
   }],
   doctors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Doctor' }],
+  corporateSpecialties: [
+    {
+      name: { type: String, required: true },
+      image: {
+        data: Buffer,
+        contentType: String,
+      },
+    },
+  ],
 });
 
 module.exports = mongoose.model('Corporate', corporateSchema);

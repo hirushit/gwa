@@ -281,6 +281,7 @@ router.post('/profile/update', upload.fields([
             licenseNumber: req.body.licenseNumber || doctor.licenseNumber,
             zip: req.body.zip || doctor.zip,
             experience: req.body.experience || doctor.experience,
+            treatmentApproach: req.body.treatmentApproach || doctor.treatmentApproach,
         };
 
         if (!updateData.documents) {

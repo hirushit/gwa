@@ -136,7 +136,8 @@ const doctorSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Corporate', // Referencing the Corporate model
   }],
-
+  treatmentApproach: { type: String, enum: ['Conventional', 'Holistic', 'Alternative', 'Integrative'] },
+  
 });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

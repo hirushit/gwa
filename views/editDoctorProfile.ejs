@@ -426,6 +426,20 @@ function addFAQ() {
         <option value="Unknown" <%= doctor.bloodGroup === 'Unknown' ? 'selected' : '' %>>Unknown</option>
       </select>
     </div>
+
+    <div>
+      <label for="treatmentApproach">Treatment Approach:</label>
+      <select name="treatmentApproach" id="treatmentApproach" required>
+        <option value="" disabled selected>Select Treatment Approach</option>
+        <% const availableApproaches = ['Conventional', 'Holistic', 'Alternative', 'Integrative']; %>
+        <% availableApproaches.forEach(approach => { %>
+          <option value="<%= approach %>" <%= doctor.treatmentApproach === approach ? 'selected' : '' %>>
+            <%= approach %>
+          </option>
+        <% }) %>
+      </select>
+    </div>
+    
     
     <div>
       <label for="licenseProof">License Proof:</label>

@@ -139,7 +139,7 @@ app.post('/auth/logout', (req, res) => {
 });
 
 app.get('/auth/search-doctors', async (req, res) => {
-  const { what, where, country, state, city, speciality, conditions, languages, gender, availability, dateAvailability, consultation } = req.query;
+  const { what, where, country, state, city, speciality, conditions, languages, gender, availability, dateAvailability, consultation, treatmentApproach } = req.query;
 
   try {
     let matchQuery = {
@@ -170,6 +170,7 @@ app.get('/auth/search-doctors', async (req, res) => {
     if (gender) matchQuery.gender = gender;
     if (availability) matchQuery.availability = availability === 'true';
     if (consultation) matchQuery.consultation = consultation;
+    if (treatmentApproach) matchQuery.treatmentApproach = treatmentApproach;
 
     if (conditions) {
       const conditionsArray = conditions.split(',').map(cond => new RegExp(cond.trim(), 'i'));

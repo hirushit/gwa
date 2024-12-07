@@ -156,6 +156,15 @@
             <label for="dateAvailability">Date Availability:</label> 
             <input type="date" id="dateAvailability" onchange="searchDoctors()">
 
+            <label for="treatmentApproach">Treatment Approach:</label>
+            <select id="treatmentApproach" onchange="searchDoctors()">
+                <option value="">Select Treatment Approach</option>
+                <option value="Conventional">Conventional</option>
+                <option value="Alternative">Alternative</option>
+                <option value="Integrative">Integrative</option>
+            </select>
+
+
             <label for="consultation">Consultation Type:</label>
             <select id="consultation" onchange="searchDoctors()">
                 <option value="">Select Consultation Type</option>
@@ -487,11 +496,12 @@ function computeDistance(loc1, loc2) {
             const availability = document.getElementById('availability').value;
             const dateAvailability = document.getElementById('dateAvailability').value;
             const consultation = document.getElementById('consultation').value;
+            const treatmentApproach = document.getElementById('treatmentApproach').value;
 
             const conditionsSelect = document.getElementById('conditions');
             const conditions = Array.from(conditionsSelect?.selectedOptions || []).map(option => option.value).join(',');
 
-            const url = `/auth/search-doctors?what=${what}&where=${where}&country=${country}&state=${state}&city=${city}&speciality=${speciality}&languages=${languages}&gender=${gender}&hospitals=${hospital}&availability=${availability}&dateAvailability=${dateAvailability}&consultation=${consultation}&conditions=${conditions}`;
+            const url = `/auth/search-doctors?what=${what}&where=${where}&country=${country}&state=${state}&city=${city}&speciality=${speciality}&languages=${languages}&gender=${gender}&hospitals=${hospital}&availability=${availability}&dateAvailability=${dateAvailability}&consultation=${consultation}&conditions=${conditions}&treatmentApproach=${treatmentApproach}`;
 
             try {
                 const response = await fetch(url);

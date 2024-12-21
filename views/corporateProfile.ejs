@@ -64,6 +64,28 @@
         </div>
         <p><strong>Verification Status:</strong> <%= corporate.verificationStatus %></p>
 
+        <div class="invite-link-section">
+          <h3>Invite Doctors</h3>
+          <% if (inviteLinks.length > 0) { %>
+            <div>
+              <p>Doctors can use this link after registration</p>
+              <button onclick="copyInviteLink('<%= inviteLinks[0].inviteLink %>')">Copy Invite Link</button>  or
+
+              <br>
+
+              <p>Send them a direct invite via mail</p>
+        
+              <div>
+                <input type="email" id="doctor-email" placeholder="Enter doctor's email" required>
+                <button onclick="sendInviteEmail('<%= inviteLinks[0].inviteLink %>')">Send Invite</button>
+              </div>
+            </div>
+          <% } else { %>
+            <p>No invite links available.</p>
+          <% } %>
+        </div>
+        
+        
         <div class="specialties-section">
           <h2>Corporate Specialties</h2>
           <% if (corporate.corporateSpecialties && corporate.corporateSpecialties.length > 0) { %>
@@ -282,6 +304,48 @@
         const form = document.getElementById('add-specialty-form');
         form.style.display = form.style.display === 'none' ? 'block' : 'none';
       });
+
+      function copyInviteLink(link) {
+        const tempInput = document.createElement('input');
+        tempInput.value = link;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        alert('Invitation link copied to clipboard');
+      }
+
+      function sendInviteEmail(inviteLink) {
+  const doctorEmail = document.getElementById('doctor-email').value;
+
+  if (!doctorEmail) {
+    alert('Please enter a valid email address.');
+    return;
+  }
+
+  // Data to be sent to the server
+  const data = {
+    email: doctorEmail,
+    inviteLink: inviteLink
+  };
+
+  fetch('/corporate/send-invite', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert('Invite sent successfully');
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error sending the invite.');
+  });
+}
+
     </script>
 
 <a href="/corporate/corporate-home">Back to Home</a>

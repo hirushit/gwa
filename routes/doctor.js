@@ -3166,5 +3166,62 @@ router.post('/corporate/:corporateId/add-review', async (req, res) => {
     }
   });
     
+  router.get('/accept-invite/:corporateId/:doctorId?/:requestId?', async (req, res) => {
+    if (!req.session.user) {
+      req.flash('error_msg', 'You must be logged in to accept the invite');
+      return res.redirect('/auth/login'); 
+    }
   
-module.exports = router;
+    const { corporateId, requestId } = req.params;
+    const doctorId = req.session.user._id;  
+  
+    try {
+      const doctor = await Doctor.findById(doctorId);
+      if (!doctor) {
+        req.flash('error_msg', 'Doctor not found');
+        return res.redirect('/doctor/login'); 
+      }
+  
+      let request;
+      if (requestId) {
+        request = doctor.corporateRequests.id(requestId);
+        if (!request || request.corporateId.toString() !== corporateId.toString()) {
+          req.flash('error_msg', 'Request not found or invalid');
+          return res.redirect('/doctor/dashboard'); 
+        }
+      } else {
+        request = {
+          corporateId,
+          corporateName: 'Corporate Name',
+          requestStatus: 'accepted',
+        };
+        doctor.corporateRequests.push(request); 
+      }
+  
+      if (!requestId) {
+        request.requestStatus = 'accepted';
+      }
+      await doctor.save();
+  
+      const corporate = await Corporate.findById(corporateId);
+      if (!corporate) {
+        req.flash('error_msg', 'Corporate not found');
+        return res.redirect('/doctor/dashboard');
+      }
+  
+      if (!corporate.doctors.includes(doctor._id)) {
+        corporate.doctors.push(doctor._id);
+        await corporate.save();
+      }
+  
+      req.flash('success_msg', 'Invitation accepted and doctor added to corporate');
+      res.redirect(`/doctor/corporate/${corporateId}`);   
+    } catch (err) {
+      console.error('Error accepting invite:', err);
+      req.flash('error_msg', 'Error accepting invitation');
+      res.redirect('/doctor/dashboard'); 
+    }
+  });
+    
+    
+  module.exports = router;

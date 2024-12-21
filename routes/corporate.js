@@ -19,6 +19,8 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const router = express.Router();
+const NODE_URL = process.env.NODE_URL;
+
 
 function isLoggedIn(req, res, next) {
   if (req.session.user && req.session.user.role === 'corporate') {
@@ -110,6 +112,44 @@ const generateVerificationToken = () => {
 
     await transporter.sendMail(mailOptions);
 };
+
+const sendInvitationEmail = (email, inviteLink, hospitalName) => {
+  const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
+      },
+  });
+
+  const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: `Invitation to Join ${hospitalName} Hospital Network`, 
+      html: `
+          <p>Hello,</p>
+          <p>We would like to invite you to join the ${hospitalName} hospital network. Please follow the steps below:</p>
+          <ul>
+              <li>If you are not a member yet, <a href="https://beta.medxbay.com/signup">register here</a> and fill out your details.</li>
+              <li>If you are already a member, <a href="https://beta.medxbay.com/login">log in here</a>.</li>
+              <li>After logging in, click the following invite link to join the hospital: <a href="${inviteLink}">${inviteLink}</a></li>
+          </ul>
+          <p>Best regards,</p>
+          <p>Your ${hospitalName} Team</p>
+      `,
+  };
+
+  return new Promise((resolve, reject) => {
+      transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+              reject(error);
+          } else {
+              resolve(info);
+          }
+      });
+  });
+};
+
 
 router.get('/verify-email', async (req, res) => {
     const { token } = req.query;
@@ -280,12 +320,21 @@ router.get('/profile', async (req, res) => {
     const doctorReviews = corporate.doctorReviews || [];
     const patientReviews = corporate.patientReviews || [];
 
+    const inviteLinks = corporate.doctors.map(doctor => {
+      return {
+        doctorId: doctor._id,
+        inviteLink: `${NODE_URL}/doctor/accept-invite/${corporateId}/${doctor._id}`
+      };
+    });
+
+
     res.render('corporateProfile', {
       corporate,
       doctors: corporate.doctors,
       blogs: verifiedBlogs,
       doctorReviews,
       patientReviews,
+      inviteLinks,  
     });
   } catch (err) {
     console.error('Error fetching corporate profile:', err);
@@ -293,6 +342,7 @@ router.get('/profile', async (req, res) => {
     res.redirect('/corporate/corporate-home');
   }
 });
+
 
 router.get('/edit-profile', async (req, res) => {
   try {
@@ -685,6 +735,31 @@ const blogsPendingRequest = await Blog.countDocuments({
     res.status(500).json({ error: 'Internal Server Error', details: err.message });
   }
 });
+
+router.post('/send-invite', async (req, res) => {
+  const { email, inviteLink } = req.body;
+  const corporateId = req.session.corporateId; 
+
+  if (!email || !inviteLink || !corporateId) {
+    return res.status(400).json({ message: 'Email, invite link, and corporate ID are required' });
+  }
+
+  try {
+    const corporate = await Corporate.findById(corporateId);
+    if (!corporate) {
+      return res.status(404).json({ message: 'Corporate not found' });
+    }
+
+    const hospitalName = corporate.corporateName; 
+    const info = await sendInvitationEmail(email, inviteLink, hospitalName);
+
+    return res.status(200).json({ message: 'Invitation sent successfully', info });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: 'Error sending email', error });
+  }
+});
+
 
 router.get('/logout', (req, res) => {
   req.session.destroy(err => {

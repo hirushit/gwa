@@ -235,6 +235,98 @@ const sendDoctorEmail = async (doctorEmail, booking) => {
   }
 };
 
+const sendInvoiceEmail = async (patientEmail, booking, doctor, totalFee, serviceCharge, consultationType) => {
+  try {
+    const patient = await Patient.findById(booking.patient);
+    if (!patient) throw new Error('Patient not found');
+
+    const doctor = await Doctor.findById(booking.doctor);
+    if (!doctor) throw new Error('Doctor not found');
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const invoiceDate = new Date().toLocaleDateString();
+    const invoiceNumber = `INV-${booking._id.toString().slice(-7).toUpperCase()}`;
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: patientEmail,
+      subject: 'Invoice for Your Appointment',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background-color: #f9f9f9;">
+          <div style="text-align: center; margin-bottom: -20px;">
+            <h1 style="color: #FF7F50; font-size: 24px;">MedxBay</h1>
+            <p style="color: #888; font-size: 14px;">Your Trusted Health Partner</p>
+          </div>
+          <div style="color: #272848; padding: 10px; border-radius: 4px;">
+            <h2 style="text-align: center; margin: -10;">Invoice</h2>
+          </div>
+          <div style="padding: 10px; margin-top: 10px;">
+            <p><strong>Invoice Number:</strong> ${invoiceNumber}</p>
+            <p><strong>Date:</strong> ${invoiceDate}</p>
+          </div>
+          <hr style="border: 1px solid #ddd;">
+          <div style="padding: 10px;">
+            <h3 style="color: #333;">Patient Details</h3>
+            <p style="margin: 0;"><strong>Name:</strong> ${patient.name || "N/A"}</p>
+            <p style="margin: 0;"><strong>Email:</strong> ${patientEmail}</p>
+          </div>
+          <hr style="border: 1px solid #ddd;">
+          <div style="padding: 10px;">
+            <h3 style="color: #333;">Doctor Details</h3>
+            <p style="margin: 0;"><strong>Name:</strong> Dr. ${doctor.name}</p>
+            <p style="margin: 0;"><strong>Specialty:</strong> ${doctor.speciality.join(', ')}</p>
+            <p style="margin: 0;"><strong>Consultation Type:</strong> ${consultationType}</p>
+          </div>
+          <hr style="border: 1px solid #ddd;">
+          <div style="padding: 10px;">
+            <h3 style="color: #333;">Appointment Details</h3>
+            <p style="margin: 0;"><strong>Date:</strong> ${new Date(booking.date).toLocaleDateString()}</p>
+            <p style="margin: 0;"><strong>Time:</strong> ${booking.time}</p>
+          </div>
+          <hr style="border: 1px solid #ddd;">
+          <div style="padding: 10px;">
+            <h3 style="color: #333;">Payment Summary</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+              <tr style="background-color: #f1f1f1;">
+                <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">Description</th>
+                <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">Amount</th>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;">Doctor's Fee</td>
+                <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${totalFee.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;">Service Charge</td>
+                <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${serviceCharge.toFixed(2)}</td>
+              </tr>
+              <tr style="background-color: #f1f1f1;">
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Total Amount Paid</strong></td>
+                <td style="text-align: right; padding: 8px; border: 1px solid #ddd;"><strong>${(totalFee + serviceCharge).toFixed(2)}</strong></td>
+              </tr>
+            </table>
+          </div>
+          <hr style="border: 1px solid #ddd;">
+          <div style="text-align: center; margin-top: 20px;">
+            <p style="color: #888;">Thank you for choosing our services!</p>
+            <p style="color: #888;">For any inquiries, contact us at support@medxbay.com</p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Invoice email sent successfully');
+  } catch (error) {
+    console.error('Error sending invoice email:', error.message);
+  }
+};
+
 
 function isLoggedIn(req, res, next) {
   if (req.session.user && req.session.user.role === 'patient') {
@@ -613,6 +705,7 @@ router.get('/book/payment-success', async (req, res) => {
 
       await booking.save();
 
+      await sendInvoiceEmail(patient.email, booking, doctor, totalFee, serviceCharge, consultationType);
       await sendPatientEmail(patient.email, booking);
       await sendDoctorEmail(doctor.email, booking);
 
@@ -625,6 +718,7 @@ router.get('/book/payment-success', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
 
 router.get('/book/payment-failure', (req, res) => {
   res.render('patient-payment-failure');

@@ -5,44 +5,106 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Corporate List</title>
   <style>
-  .corporate-card {
-    display: flex;
-    align-items: center;
-    border: 1px solid #ccc;
-    padding: 16px;
-    margin: 10px;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-    box-sizing: border-box;
-  }
+    .filter-section {
+      margin-bottom: 20px;
+    }
 
-  .corporate-card img {
-    border-radius: 50%;
-    width: 80px; 
-    height: 80px;
-    margin-right: 20px; 
-  }
+    .filter-section select,
+    .filter-section input {
+      padding: 8px;
+      margin-right: 10px;
+    }
 
-  .corporate-card h2 {
-    font-size: 1.5em;
-    margin: 0;
-  }
+    .corporate-card {
+      display: flex;
+      align-items: center;
+      border: 1px solid #ccc;
+      padding: 16px;
+      margin: 10px;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      box-sizing: border-box;
+    }
 
-  .corporate-card p {
-    color: #555;
-    font-size: 1em;
-  }
+    .corporate-card img {
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      margin-right: 20px;
+    }
 
-  .corporate-card .address {
-    font-size: 0.9em;
-    color: #777;
-  }
+    .corporate-card h2 {
+      font-size: 1.5em;
+      margin: 0;
+    }
 
+    .corporate-card p {
+      color: #555;
+      font-size: 1em;
+    }
 
+    .corporate-card .address {
+      font-size: 0.9em;
+      color: #777;
+    }
   </style>
 </head>
 <body>
   <h1>Corporate List</h1>
+
+  <div class="filter-section">
+    <form action="/corporate/corporate-list" method="get">      <select name="country" id="country" onchange="this.form.submit()">
+        <option value="">Select Country</option>
+        <% countries.forEach(country => { %>
+          <option value="<%= country %>" <%= selectedFilters.country === country ? 'selected' : '' %>><%= country %></option>
+        <% }) %>
+      </select>
+
+      <select name="state" id="state" onchange="this.form.submit()">
+        <option value="">Select State</option>
+        <% states.forEach(state => { %>
+          <option value="<%= state %>" <%= selectedFilters.state === state ? 'selected' : '' %>><%= state %></option>
+        <% }) %>
+      </select>
+
+      <select name="city" id="city" onchange="this.form.submit()">
+        <option value="">Select City</option>
+        <% cities.forEach(city => { %>
+          <option value="<%= city %>" <%= selectedFilters.city === city ? 'selected' : '' %>><%= city %></option>
+        <% }) %>
+      </select>
+
+      <select name="treatmentApproach" id="treatmentApproach" onchange="this.form.submit()">
+        <option value="">Select Treatment Approach</option>
+        <% treatmentApproaches.forEach(approach => { %>
+          <option value="<%= approach %>" <%= selectedFilters.treatmentApproach === approach ? 'selected' : '' %>><%= approach %></option>
+        <% }) %>
+      </select>
+
+      <select name="doctorLanguage" id="doctorLanguage" onchange="this.form.submit()">
+        <option value="">Select Doctor's Language</option>
+        <% languagesSpoken.forEach(language => { %>
+          <option value="<%= language %>" <%= selectedFilters.doctorLanguage === language ? 'selected' : '' %>><%= language %></option>
+        <% }) %>
+      </select>
+
+      <select name="speciality" id="speciality" onchange="this.form.submit()">
+        <option value="">Select Speciality</option>
+        <% specialities.forEach(speciality => { %>
+          <option value="<%= speciality %>" <%= selectedFilters.speciality === speciality ? 'selected' : '' %>><%= speciality %></option>
+        <% }) %>
+      </select>
+
+      <select name="condition" id="condition" onchange="this.form.submit()">
+        <option value="">Select Condition</option>
+        <% conditions.forEach(condition => { %>
+          <option value="<%= condition %>" <%= selectedFilters.condition === condition ? 'selected' : '' %>><%= condition %></option>
+        <% }) %>
+      </select>
+
+      <input type="text" name="corporateName" placeholder="Search Corporate Name" value="<%= selectedFilters.corporateName || '' %>" oninput="this.form.submit()">
+    </form>
+  </div>
 
   <% if (corporates.length > 0) { %>
     <div class="corporate-list">
@@ -51,7 +113,7 @@
           <% if (corporate.profilePicture && corporate.profilePicture.data) { %>
             <img src="data:<%= corporate.profilePicture.contentType %>;base64,<%= corporate.profilePicture.data.toString('base64') %>" alt="<%= corporate.corporateName %> Profile">
           <% } else { %>
-            <img src="default-profile.jpg" alt="<%= corporate.corporateName %> Profile">
+            <img src="/default-profile.jpg" alt="<%= corporate.corporateName %> Profile">
           <% } %>
           <div>
             <h2><%= corporate.corporateName %></h2>
@@ -66,6 +128,6 @@
     <p>No corporates found.</p>
   <% } %>
 
-  <a href="/patients/corporate-list">Back to Dashboard</a>
+  <a href="/patient/patient-index">Back to Dashboard</a>
 </body>
 </html>

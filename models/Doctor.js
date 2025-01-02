@@ -134,9 +134,9 @@ const doctorSchema = new mongoose.Schema({
   }],
   followedCorporates: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Corporate', // Referencing the Corporate model
+    ref: 'Corporate', 
   }],
-  treatmentApproach: { type: String, enum: ['Conventional', 'Holistic', 'Alternative', 'Integrative'] },
+  treatmentApproach: { type: String, default: '' },
   
 });
 

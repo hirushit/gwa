@@ -772,4 +772,83 @@ router.get('/logout', (req, res) => {
 });
 
 
+router.get('/corporate-list', async (req, res) => {
+  const { 
+    state, 
+    country, 
+    city, 
+    treatmentApproach, 
+    corporateName, 
+    doctorLanguage, 
+    speciality, 
+    condition 
+  } = req.query; // Extract filters
+
+  const filter = { verificationStatus: 'Verified' }; // Only include verified corporates
+
+  if (state) filter['address.state'] = state;
+  if (country) filter['address.country'] = country;
+  if (city) filter['address.city'] = city;
+  if (corporateName) filter['corporateName'] = { $regex: corporateName, $options: 'i' };
+
+  try {
+    // Fetch corporates that match filters
+    const corporates = await Corporate.find(filter)
+      .select('corporateName tagline address profilePicture')
+      .populate({
+        path: 'doctors',
+        match: {
+          ...(treatmentApproach && { treatmentApproach: { $in: [treatmentApproach] } }),
+          ...(doctorLanguage && { languages: { $in: [doctorLanguage] } }),
+          ...(speciality && { speciality: { $in: [speciality] } }), // Handle speciality filter
+          ...(condition && { conditions: { $in: [condition] } }),  // Handle condition filter
+        },
+        select: 'speciality conditions treatmentApproach languages',
+      })
+      .lean();
+
+    // Filter out corporates without matching doctors
+    const filteredCorporates = corporates.filter(corporate => corporate.doctors && corporate.doctors.length > 0);
+
+    // Fetch unique dropdown options for filters
+    const states = await Corporate.distinct('address.state', { verificationStatus: 'Verified' });
+    const countries = await Corporate.distinct('address.country', { verificationStatus: 'Verified' });
+    const cities = await Corporate.distinct('address.city', { verificationStatus: 'Verified' });
+    const treatmentApproaches = await Doctor.distinct('treatmentApproach');
+    const languagesSpoken = await Doctor.distinct('languages');
+    const specialities = await Doctor.distinct('speciality'); // Correct field spelling
+    const conditions = await Doctor.distinct('conditions');
+
+    // Render the corporate list page
+    res.render('corporate-list', {
+      corporates: filteredCorporates,
+      states,
+      countries,
+      cities,
+      treatmentApproaches,
+      languagesSpoken,
+      specialities, // Pass updated specialities
+      conditions, // Pass updated conditions
+      selectedFilters: { 
+        state, 
+        country, 
+        city, 
+        treatmentApproach, 
+        corporateName, 
+        doctorLanguage, 
+        speciality, 
+        condition 
+      },
+    });
+  } catch (err) {
+    console.error('Error fetching corporate list:', err);
+    req.flash('error_msg', 'Error retrieving corporate list');
+    res.redirect('/patient/patient-index');
+  }
+});
+
+
+
+
+
 module.exports = router;

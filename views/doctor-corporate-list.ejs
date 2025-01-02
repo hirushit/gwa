@@ -103,6 +103,9 @@
       </select>
 
       <input type="text" name="corporateName" placeholder="Search Corporate Name" value="<%= selectedFilters.corporateName || '' %>" oninput="this.form.submit()">
+
+      <button type="button" onclick="resetFilters()">Reset Filters</button>
+
     </form>
   </div>
 
@@ -128,6 +131,22 @@
     <p>No corporates found.</p>
   <% } %>
 
-  <a href="/doctor/doctor-index">Back to Dashboard</a>
+  <a href="/doctor/doctor-index">Back to Home</a>
+
+  <script>
+    function resetFilters() {
+      document.querySelector('#country').value = '';
+      document.querySelector('#state').value = '';
+      document.querySelector('#city').value = '';
+      document.querySelector('#treatmentApproach').value = '';
+      document.querySelector('#doctorLanguage').value = '';
+      document.querySelector('#speciality').value = '';
+      document.querySelector('#condition').value = '';
+      document.querySelector('input[name="corporateName"]').value = '';
+  
+      document.querySelector('form').submit();
+    }
+  </script>
+
 </body>
 </html>

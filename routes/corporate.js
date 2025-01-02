@@ -782,9 +782,9 @@ router.get('/corporate-list', async (req, res) => {
     doctorLanguage, 
     speciality, 
     condition 
-  } = req.query; // Extract filters
+  } = req.query; 
 
-  const filter = { verificationStatus: 'Verified' }; // Only include verified corporates
+  const filter = { verificationStatus: 'Verified' }; 
 
   if (state) filter['address.state'] = state;
   if (country) filter['address.country'] = country;
@@ -792,7 +792,6 @@ router.get('/corporate-list', async (req, res) => {
   if (corporateName) filter['corporateName'] = { $regex: corporateName, $options: 'i' };
 
   try {
-    // Fetch corporates that match filters
     const corporates = await Corporate.find(filter)
       .select('corporateName tagline address profilePicture')
       .populate({
@@ -800,26 +799,23 @@ router.get('/corporate-list', async (req, res) => {
         match: {
           ...(treatmentApproach && { treatmentApproach: { $in: [treatmentApproach] } }),
           ...(doctorLanguage && { languages: { $in: [doctorLanguage] } }),
-          ...(speciality && { speciality: { $in: [speciality] } }), // Handle speciality filter
-          ...(condition && { conditions: { $in: [condition] } }),  // Handle condition filter
+          ...(speciality && { speciality: { $in: [speciality] } }), 
+          ...(condition && { conditions: { $in: [condition] } }),  
         },
         select: 'speciality conditions treatmentApproach languages',
       })
       .lean();
 
-    // Filter out corporates without matching doctors
     const filteredCorporates = corporates.filter(corporate => corporate.doctors && corporate.doctors.length > 0);
 
-    // Fetch unique dropdown options for filters
     const states = await Corporate.distinct('address.state', { verificationStatus: 'Verified' });
     const countries = await Corporate.distinct('address.country', { verificationStatus: 'Verified' });
     const cities = await Corporate.distinct('address.city', { verificationStatus: 'Verified' });
     const treatmentApproaches = await Doctor.distinct('treatmentApproach');
     const languagesSpoken = await Doctor.distinct('languages');
-    const specialities = await Doctor.distinct('speciality'); // Correct field spelling
+    const specialities = await Doctor.distinct('speciality'); 
     const conditions = await Doctor.distinct('conditions');
 
-    // Render the corporate list page
     res.render('corporate-list', {
       corporates: filteredCorporates,
       states,
@@ -827,8 +823,8 @@ router.get('/corporate-list', async (req, res) => {
       cities,
       treatmentApproaches,
       languagesSpoken,
-      specialities, // Pass updated specialities
-      conditions, // Pass updated conditions
+      specialities, 
+      conditions, 
       selectedFilters: { 
         state, 
         country, 
@@ -846,9 +842,6 @@ router.get('/corporate-list', async (req, res) => {
     res.redirect('/patient/patient-index');
   }
 });
-
-
-
 
 
 module.exports = router;

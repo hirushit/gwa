@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const supplierSchema = new Schema({
-    name: { type: String, required: true },
-    contactEmail: { type: String, required: true, unique: true },
-    phone: { type: String, required: true },
+    name: { type: String },
+    contactEmail: { type: String },
+    phone: { type: String },
     alternateContactNumber: { type: String },
     businessRegistrationNumber: { type: String },
     taxIdentificationNumber: { type: String },
@@ -14,7 +14,7 @@ const supplierSchema = new Schema({
         city: { type: String },
         state: { type: String },
         zipCode: { type: String },
-        country: { type: String, required: true }
+        country: { type: String}
     },
     companyName: { type: String },
     profilePicture: {
@@ -27,7 +27,7 @@ const supplierSchema = new Schema({
     },
     supplierCategories: [
         {
-            name: { type: String, required: true },
+            name: { type: String },
             image: {
                 data: Buffer,
                 contentType: String,
@@ -37,7 +37,7 @@ const supplierSchema = new Schema({
     tagline: { type: String },
     overview: { type: String }, 
     productCategories: [{ type: String }],
-    password: { type: String, required: true },
+    password: { type: String },
     rating: { type: Number, default: 0 },
     totalReviews: { type: Number, default: 0 },
     products: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
@@ -47,9 +47,22 @@ const supplierSchema = new Schema({
     isVerified: { type: Boolean, default: false },
 
     followers: [{ type: Schema.Types.ObjectId, ref: 'Supplier' }], 
-    following: [{ type: Schema.Types.ObjectId, ref: 'Supplier' }] 
-});
-
+    following: [{ type: Schema.Types.ObjectId, ref: 'Supplier' }] ,
+    createdByAdmin: { type: Boolean, default: false },
+    profileVerification: [{
+        email: { type: String },
+        document: {
+          data: Buffer,
+          contentType: String
+        }
+      }], 
+    profileTransferRequest: {
+        type: String,
+        enum: ['Accepted', 'Pending', 'Rejected', 'Idle'], 
+        default: 'Idle'
+      }
+  });
+  
 const Supplier = mongoose.model('Supplier', supplierSchema);
 
 module.exports = Supplier;

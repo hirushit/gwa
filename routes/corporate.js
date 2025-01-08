@@ -784,7 +784,12 @@ router.get('/corporate-list', async (req, res) => {
     condition 
   } = req.query; 
 
-  const filter = { verificationStatus: 'Verified' }; 
+  const filter = {
+    $or: [
+      { verificationStatus: 'Verified' },
+      { createdByAdmin: true }
+    ]
+  };
 
   if (state) filter['address.state'] = state;
   if (country) filter['address.country'] = country;
@@ -793,7 +798,7 @@ router.get('/corporate-list', async (req, res) => {
 
   try {
     const corporates = await Corporate.find(filter)
-      .select('corporateName tagline address profilePicture')
+      .select('corporateName tagline address profilePicture profileTransferRequest createdByAdmin')
       .populate({
         path: 'doctors',
         match: {
@@ -806,7 +811,7 @@ router.get('/corporate-list', async (req, res) => {
       })
       .lean();
 
-    const filteredCorporates = corporates.filter(corporate => corporate.doctors && corporate.doctors.length > 0);
+    const filteredCorporates = corporates;
 
     const states = await Corporate.distinct('address.state', { verificationStatus: 'Verified' });
     const countries = await Corporate.distinct('address.country', { verificationStatus: 'Verified' });
@@ -839,7 +844,39 @@ router.get('/corporate-list', async (req, res) => {
   } catch (err) {
     console.error('Error fetching corporate list:', err);
     req.flash('error_msg', 'Error retrieving corporate list');
-    res.redirect('/patient/patient-index');
+  }
+});
+
+router.post('/claim-profile', upload.single('document'), async (req, res) => {
+  const { corporateId, email } = req.body;
+  const document = req.file;
+
+  try {
+    const corporate = await Corporate.findById(corporateId);
+    if (!corporate) {
+      return res.status(404).send('Corporate profile not found.');
+    }
+
+    if (!document || !email) {
+      return res.status(400).send('Email and document are required.');
+    }
+
+    corporate.profileTransferRequest = 'Pending';
+
+    corporate.profileVerification.push({
+      email,
+      document: {
+        data: document.buffer,
+        contentType: document.mimetype,
+      },
+    });
+
+    await corporate.save();
+
+    res.redirect('/corporate/corporate-list'); 
+  } catch (err) {
+    console.error('Error submitting claim:', err);
+    res.status(500).send('Internal server error.');
   }
 });
 

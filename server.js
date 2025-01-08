@@ -350,10 +350,6 @@ app.get('/auth/what-options', async (req, res) => {
 
 app.get('/auth/where-options', async (req, res) => {
   try {
-    const citiesFromTimeSlots = await Doctor.distinct('timeSlots.hospitalLocation.city');
-    const statesFromTimeSlots = await Doctor.distinct('timeSlots.hospitalLocation.state');
-    const countriesFromTimeSlots = await Doctor.distinct('timeSlots.hospitalLocation.country');
-
     const citiesFromHospitals = await Doctor.distinct('hospitals.city');
     const statesFromHospitals = await Doctor.distinct('hospitals.state');
     const countriesFromHospitals = await Doctor.distinct('hospitals.country');
@@ -373,7 +369,6 @@ app.get('/auth/where-options', async (req, res) => {
     res.status(500).json({ message: 'Error fetching where options', error });
   }
 });
-
 
 
 app.post('/submit-lead', async (req, res) => {

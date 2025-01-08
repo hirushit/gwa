@@ -121,12 +121,36 @@
           <div>
             <h2><%= corporate.corporateName %></h2>
             <p><strong>Tagline:</strong> <%= corporate.tagline %></p>
-            <p class="address"><strong>Address:</strong> <%= corporate.address.street %>, <%= corporate.address.city %>, <%= corporate.address.state %>, <%= corporate.address.zipCode %>, <%= corporate.address.country %></p>
+            <p class="address"><strong>Address:</strong> 
+              <% if (corporate.address) { %>
+                <%= corporate.address.street %>, <%= corporate.address.city %>, <%= corporate.address.state %>, <%= corporate.address.zipCode %>, <%= corporate.address.country %>
+              <% } else { %>
+                Address not available
+              <% } %>
+            </p>
+    
+            <% if (corporate.profileTransferRequest !== "Verified" && corporate.createdByAdmin) { %>
+              <button onclick="showClaimForm('<%= corporate._id %>')">Claim this Profile</button>
+              <form id="claim-form-<%= corporate._id %>" style="display:none;" method="POST" action="/corporate/claim-profile" enctype="multipart/form-data">
+                <input type="hidden" name="corporateId" value="<%= corporate._id %>">
+                
+                <label for="email-<%= corporate._id %>">Email:</label>
+                <input type="email" name="email" id="email-<%= corporate._id %>" required>
+                
+                <label for="document-<%= corporate._id %>">Upload ID Proof:</label>
+                <input type="file" name="document" id="document-<%= corporate._id %>" accept=".pdf" required>
+                
+                <button type="submit">Submit Claim</button>
+              </form>
+            <% } %>
+            
             <a href="/patient/corporate/<%= corporate._id %>" class="view-details-btn">View Details</a>
           </div>
         </div>
       <% }) %>
     </div>
+    
+      
   <% } else { %>
     <p>No corporates found.</p>
   <% } %>
@@ -146,6 +170,16 @@
   
       document.querySelector('form').submit();
     }
+
+    function showClaimForm(corporateId) {
+    const form = document.getElementById(`claim-form-${corporateId}`);
+    if (form.style.display === 'none') {
+      form.style.display = 'block';
+    } else {
+      form.style.display = 'none';
+    }
+  }
+
   </script>
   
 </body>

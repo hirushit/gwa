@@ -433,34 +433,47 @@ router.get('/doctors', async (req, res) => {
         sortCriteria = {};
     }
 
-    const doctors = await Doctor.find({ verified: 'Verified' })
+    const doctors = await Doctor.find({
+      $or: [
+        { verified: 'Verified' },
+        { createdByAdmin: true, profileTransferRequest: { $ne: 'Verified' } }
+      ]
+    })
       .populate({
         path: 'hospitals',
-        select: 'name city lat lng -_id'
+        select: 'name city profileTransferRequest createdByAdmin',
       })
-      .sort(sortCriteria);
+      .sort({ rating: -1 })
+      .limit(10);
+
+    const doctorsWithoutProfilePicture = doctors.map(doctor => {
+      const { profilePicture, ...doctorData } = doctor.toObject();
+      return doctorData;
+    });
+
+    console.log('Doctors Data (without profilePicture):', doctorsWithoutProfilePicture);
 
     const locationSet = new Map();
 
     doctors.forEach(doctor => {
       let profilePictureBase64;
-      if (doctor.profilePicture && doctor.profilePicture.data) {
+      if (doctor?.profilePicture?.data) {
         profilePictureBase64 = `data:${doctor.profilePicture.contentType};base64,${doctor.profilePicture.data.toString('base64')}`;
       } else {
         profilePictureBase64 = '/path/to/default/profile/pic.png';
       }
 
-      doctor.timeSlots.forEach(slot => {
-        if (slot.status === 'free' && slot.lat && slot.lng) {
+      doctor.timeSlots?.forEach(slot => {
+        if (slot?.status === 'free' && slot.lat && slot.lng) {
           const key = `${slot.lat},${slot.lng}`;
           if (!locationSet.has(key)) {
             locationSet.set(key, {
               lat: slot.lat,
               lng: slot.lng,
-              hospitalName: slot.hospital,
-              doctorName: doctor.name,
-              doctorTitle: doctor.title,
-              doctorProfilePic: profilePictureBase64 
+              hospitalName: slot.hospital || 'Unknown Hospital',
+              doctorName: doctor.name || 'Unknown Doctor',
+              doctorTitle: doctor.title || 'No Title',
+              doctorProfilePic: profilePictureBase64,
             });
           }
         }
@@ -472,7 +485,7 @@ router.get('/doctors', async (req, res) => {
     const countries = await Doctor.distinct('country');
     const states = await Doctor.distinct('state');
     const hospitals = doctors.flatMap(doctor => doctor.hospitals);
-    const cities = Array.from(new Set(hospitals.map(hospital => hospital.city)))
+    const cities = Array.from(new Set(hospitals.map(hospital => hospital?.city)))
       .filter(city => city !== undefined);
     const specialities = await Doctor.distinct('speciality');
     const languages = await Doctor.distinct('languages');
@@ -486,7 +499,7 @@ router.get('/doctors', async (req, res) => {
       specialities,
       languages,
       genders,
-      uniqueLocations 
+      uniqueLocations,
     });
   } catch (err) {
     console.error(err.message);

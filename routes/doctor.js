@@ -2910,42 +2910,6 @@ router.get('/orderchat/:id', async (req, res) => {
 });
 
 
-
-
-// try {
-//     const chatId = req.params.id;
-
-//     console.log('Request Details:', {
-//         method: req.method,
-//         url: req.url,
-//         params: req.params,
-//         query: req.query,
-//         user: req.user
-//     });
-
-//     const chat = await Chat.findById(chatId)
-//         .populate('patientId', 'name email profilePicture') 
-//         .lean();
-
-//     if (!chat) {
-//         console.log('Chat not found');
-//         return res.status(404).json({ error: 'Chat not found' });
-//     }
-
-//     chat.messages.forEach(message => {
-//         if (!message.text) {
-//             console.error(`Message missing text found: ${message._id}`);
-//         }
-
-//         if (message.senderId.toString() !== req.user._id.toString() && !message.read) {
-//             message.read = true;
-//         }
-//     });
-
-//     await Chat.findByIdAndUpdate(chatId, { $set: { messages: chat.messages } });
-
-//     console.log('Updated Chat Data:', chat);
-
 router.get('/view-corporate-request/:doctorId', async (req, res) => {
     const doctorId = req.params.doctorId;
   
@@ -3222,6 +3186,42 @@ router.post('/corporate/:corporateId/add-review', async (req, res) => {
       res.redirect('/doctor/dashboard'); 
     }
   });
+
+  router.post('/claim-profile', upload.single('document'), async (req, res) => {
+    const { doctorId, email } = req.body;
+    const document = req.file; 
+
+    if (!doctorId || !email || !document) {
+        return res.status(400).send('Missing required fields');
+    }
+
+    try {
+        const doctor = await Doctor.findById(doctorId);
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        doctor.profileTransferRequest = 'Pending';
+
+        const profileVerification = {
+            email,
+            document: {
+                data: document.buffer,
+                contentType: document.mimetype,
+            },
+        };
+
+        doctor.profileVerification.push(profileVerification);
+
+        await doctor.save();
+
+        res.status(200).send('Profile claim request submitted successfully');
+    } catch (error) {
+        console.error('Error claiming profile:', error);
+        res.status(500).send('An error occurred while claiming the profile');
+    }
+});
+
     
     
   module.exports = router;

@@ -180,7 +180,7 @@
 
         <div id="results-container">
         </div>
-
+        
         <div class="map-container">
             <div id="map"></div>
         </div>
@@ -524,19 +524,45 @@ function computeDistance(loc1, loc2) {
                         hospitalsInfo += `${hospital.name}, ${hospital.city}<br>`;
                     });
 
+                    const claimButton = document.createElement('button');
+                    claimButton.textContent = 'Claim Profile';
+                    claimButton.className = 'claim-button';
+
+                    claimButton.onclick = () => showClaimForm(doctor._id, doctor.profileVerification);
+
                     doctorCard.innerHTML = `
                         <h2>${doctor.name}</h2>
                         <p>Speciality: ${doctor.speciality.join(', ')}</p>
                         <p>Rating: ${doctor.rating}</p>
                         <p>Available Now: ${doctor.availability ? 'Yes' : 'No'}</p>
                         <p>City: ${doctor.conditions}</p>
-                        <button onclick="showDoctorDetails('${doctor._id}')">View Details</button>
+                        <img src="${doctor.profilePictureBase64 || '/path/to/default/profile/pic.png'}" alt="Profile Picture" class="custom-marker">
                     `;
+
+                    doctorCard.appendChild(claimButton);
+
+                    const requestForm = document.createElement('form');
+                    requestForm.id = `request-form-${doctor._id}`;
+                    requestForm.style.display = 'none';
+                    requestForm.method = 'POST';
+                    requestForm.action = '/doctor/claim-profile';
+                    requestForm.enctype = 'multipart/form-data';
+
+                    requestForm.innerHTML = `
+                        <input type="hidden" name="doctorId" value="${doctor._id}">
+                        <label for="email-${doctor._id}">Email:</label>
+                        <input type="email" name="email" id="email-${doctor._id}" required>
+
+                        <label for="document-${doctor._id}">ID Proof Document:</label>
+                        <input type="file" name="document" id="document-${doctor._id}" accept=".pdf" required>
+
+                        <button type="submit">Submit Request</button>
+                    `;
+
+                    doctorCard.appendChild(requestForm);
+
                     resultsContainer.appendChild(doctorCard);
                 });
-
-
-
             } catch (error) {
                 console.error('Error fetching doctors:', error);
                 const resultsContainer = document.getElementById('results-container');
@@ -544,6 +570,23 @@ function computeDistance(loc1, loc2) {
             }
         }
 
+            function showClaimForm(doctorId, profileVerification) {
+                const form = document.getElementById(`request-form-${doctorId}`);
+                form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+
+                if (profileVerification && profileVerification.length > 0) {
+                    const emailField = document.getElementById(`email-${doctorId}`);
+                    const documentField = document.getElementById(`document-${doctorId}`);
+                    
+                    if (profileVerification[0].email) {
+                        emailField.value = profileVerification[0].email;
+                    }
+
+                    if (profileVerification[0].document && profileVerification[0].document.data) {
+                        documentField.disabled = true;  
+                    }
+                }
+            }
 
         async function showDoctorDetails(doctorId) {
             window.location.href = `/patient/doctors/${doctorId}/slots`;

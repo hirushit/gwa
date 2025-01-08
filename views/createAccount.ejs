@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account</title>
+</head>
+<body>
+  <h1>Create New Account</h1>
+  
+  <% if (success_msg) { %>
+    <p style="color: green;"><%= success_msg %></p>
+  <% } %>
+  <% if (error_msg) { %>
+    <p style="color: red;"><%= error_msg %></p>
+  <% } %>
+  
+  <form action="/admin/create-account" method="POST">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required>
+    <br>
+    
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required>
+    <br>
+    
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    
+    <label for="role">Role:</label>
+    <select id="role" name="role" required>
+      <option value="doctor">Doctor</option>
+      <option value="corporate">Corporate</option>
+      <option value="supplier">Supplier</option>
+    </select>
+    <br>
+    
+    <button type="submit">Create Account</button>
+  </form>
+</body>
+</html>

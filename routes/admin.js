@@ -14,6 +14,8 @@ const Condition = require('../models/Condition');
 const NewsRelease = require('../models/NewsRelease');  
 const NewsLogo = require('../models/NewsLogo'); 
 const Supplier = require('../models/Supplier');
+const Corporate = require('../models/Corporate');
+const bcrypt = require('bcryptjs');
 const storage = multer.memoryStorage(); 
 const upload = multer({ storage: storage });
 
@@ -1182,68 +1184,6 @@ router.post('/view-appointments/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-// router.get('/bookings', async (req, res) => {
-//   try {
-//       const bookings = await Booking.find().select('doctor patient date consultationType').lean();
-
-//       // Prepare an array to hold booking details
-//       const bookingDetails = await Promise.all(
-//           bookings.map(async (booking) => {
-//               try {
-//                   // Fetch the doctor details using doctorId
-//                   const doctor = await Doctor.findById(booking.doctor, 'name email').lean();
-//                   if (!doctor) {
-//                       throw new Error('Doctor not found');
-//                   }
-
-//                   // Fetch the patient details using patientId
-//                   const patient = await Patient.findById(booking.patient, 'name').lean();
-//                   if (!patient) {
-//                       throw new Error('Patient not found');
-//                   }
-
-//                   // Combine the data
-//                   return {
-//                       _id: booking._id,
-//                       patientName: patient.name,
-//                       doctorName: doctor.name,
-//                       doctorEmail: doctor.email,
-//                       appointmentDate: booking.date,
-//                       appointmentTime: booking.time,
-//                       consultationType: booking.consultationType,
-//                       status: booking.status,
-//                       meetingLink: booking.meetingLink,
-//                       hospital: booking.hospital,
-//                       payment: booking.payment,
-//                       paid: booking.paid
-//                   };
-//               } catch (error) {
-//                   console.error('Error fetching details:', error);
-//                   return {
-//                       _id: booking._id,
-//                       patientName: 'Error',
-//                       doctorName: 'Error',
-//                       doctorEmail: 'Error',
-//                       appointmentDate: booking.date,
-//                       appointmentTime: booking.time,
-//                       consultationType: booking.consultationType,
-//                       status: booking.status,
-//                       meetingLink: booking.meetingLink,
-//                       hospital: booking.hospital,
-//                       payment: booking.payment,
-//                       paid: booking.paid
-//                   };
-//               }
-//           })
-//       );
-
-//       res.render('bookings', { bookings: bookingDetails });
-//   } catch (error) {
-//       console.error('Error fetching bookings:', error);
-//       res.status(500).send('Internal Server Error');
-//   }
-// });
-
 router.get('/bookings', async (req, res) => {
   try {
       const { doctorName, doctorEmail, consultationType, patientName, appointmentDate } = req.query;
@@ -1723,5 +1663,104 @@ router.post('/supplier-blog-upload', upload.fields([{ name: 'image', maxCount: 1
       res.status(500).json({ message: 'Server Error' });
   }
 });
+
+router.get('/create-account', isAdmin, (req, res) => {
+  res.render('createAccount', {
+    success_msg: req.flash('success_msg'),
+    error_msg: req.flash('error_msg'),
+  });
+});
+
+router.post('/create-account', isAdmin, async (req, res) => {
+  const { name, email, password, role } = req.body;
+
+  try {
+    if (!name || !email || !password || !role) {
+      req.flash('error_msg', 'All fields are required.');
+      return res.redirect('/admin/create-account');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    let newUser;
+
+    switch (role.toLowerCase()) {
+      case 'doctor':
+        newUser = new Doctor({
+          name,
+          email,
+          password: hashedPassword,
+          role: 'doctor',
+          createdByAdmin: true,
+          verified: "Verified",
+          isVerified: true,
+        });
+        break;
+      case 'corporate':
+        newUser = new Corporate({
+          corporateName: name,
+          email,
+          password: hashedPassword,
+          role: 'corporate',
+          verificationStatus: "Verified",
+          isVerified: true,
+          createdByAdmin: true,
+        });
+        break;
+      case 'supplier':
+        newUser = new Supplier({
+          name,
+          email,
+          password: hashedPassword,
+          role: 'supplier',
+          createdByAdmin: true,
+        });
+        break;
+      default:
+        req.flash('error_msg', 'Invalid role selected.');
+        return res.redirect('/admin/create-account');
+    }
+
+    await newUser.save();
+    req.flash('success_msg', `${role} account created successfully.`);
+    res.redirect('/admin/create-account');
+  } catch (err) {
+    console.error('Error creating account:', err);
+    req.flash('error_msg', 'An error occurred while creating the account.');
+    res.redirect('/admin/create-account');
+  }
+});
+
+router.post('/profile-request', async (req, res) => {
+  try {
+    const { doctorId, email } = req.body;
+    const idProof = req.files?.idProof; 
+    if (!doctorId || !email || !idProof) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const doctor = await Doctor.findById(doctorId);
+
+    if (!doctor) {
+      return res.status(404).json({ message: 'Doctor not found' });
+    }
+
+    doctor.profileVerificationEmail = email;
+    doctor.profileVerificationDocument = {
+      data: idProof.data,
+      contentType: idProof.mimetype,
+    };
+    doctor.profileTransferRequest = 'Pending';
+
+    await doctor.save();
+
+    res.status(200).json({ message: 'Profile transfer request submitted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
 
 module.exports = router;

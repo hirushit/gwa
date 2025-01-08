@@ -136,8 +136,21 @@ const doctorSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Corporate', 
   }],
-  treatmentApproach: { type: String, default: '' },
+  treatmentApproach: { type: String },
   
+  createdByAdmin: { type: Boolean, default: false },
+  profileVerification: [{
+    email: { type: String },
+    document: {
+      data: Buffer,
+      contentType: String
+    }
+  }], 
+  profileTransferRequest: {
+    type: String,
+    enum: ['Accepted', 'Pending', 'Rejected', 'Idle'], 
+    default: 'Idle'
+  }
 });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

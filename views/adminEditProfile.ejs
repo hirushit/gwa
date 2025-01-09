@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Account</title>
+  <title>Edit Profile</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <style>
     @font-face {
@@ -36,7 +36,6 @@
         box-shadow: 2px 0 5px rgba(0,0,0,0.1);
         position: fixed;
         height: 100%;
-        overflow-y: auto;
     }
 
     .sidebar-logo img {
@@ -95,6 +94,7 @@
         margin: 0 0 20px 0; 
     }
 
+    /* Form Styles */
     label {
         font-weight: bold;
         margin-bottom: 5px;
@@ -132,22 +132,6 @@
     a:hover {
         text-decoration: underline;
     }
-
-    .alert {
-        padding: 10px;
-        border-radius: 5px;
-        margin: 20px 0;
-    }
-
-    .alert-success {
-        background-color: #d4edda;
-        color: #155724;
-    }
-
-    .alert-danger {
-        background-color: #f8d7da;
-        color: #721c24;
-    }
   </style>
 </head>
 <body>
@@ -182,48 +166,41 @@
 
     <div class="main-content">
       <div class="container">
-        <h1>Create New Account</h1>
+        <h1>Edit Profile</h1>
         
-        <% if (success_msg) { %>
-          <div class="alert alert-success">
-            <%= success_msg %>
-          </div>
-        <% } %>
-        <% if (error_msg) { %>
-          <div class="alert alert-danger">
-            <%= error_msg %>
-          </div>
-        <% } %>
-        
-        <form action="/admin/create-account" method="POST">
+        <form action="/admin/update/<%= profile._id %>" method="POST">
+          <input type="hidden" name="profileType" value="<%= profileType %>">
+
           <div>
             <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required>
+            <input type="text" name="name" value="<%= profile.name || profile.corporateName %>" required>
           </div>
 
           <div>
             <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+            <input type="email" name="email" value="<%= profile.email || profile.contactEmail %>" required>
           </div>
 
           <div>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+            <label for="password">Password (Leave blank to keep unchanged):</label>
+            <input type="password" name="password">
           </div>
 
           <div>
-            <label for="role">Role:</label>
-            <select id="role" name="role" required>
-              <option value="doctor">Doctor</option>
-              <option value="corporate">Corporate</option>
-              <option value="supplier">Supplier</option>
+            <label for="profileTransferRequest">Profile Transfer Request:</label>
+            <select name="profileTransferRequest" required>
+              <option value="Idle" <%= profile.profileTransferRequest === 'Idle' ? 'selected' : '' %>>Idle</option>
+              <option value="Pending" <%= profile.profileTransferRequest === 'Pending' ? 'selected' : '' %>>Pending</option>
+              <option value="Accepted" <%= profile.profileTransferRequest === 'Accepted' ? 'selected' : '' %>>Accepted</option>
+              <option value="Rejected" <%= profile.profileTransferRequest === 'Rejected' ? 'selected' : '' %>>Rejected</option>
             </select>
           </div>
 
-          <button type="submit">Create Account</button>
+          <button type="submit">Update Profile</button>
         </form>
 
-        <a href="/admin/accounts">Back to Accounts</a>
+        <a href="/admin/accounts">Back to Accounts</a> <br>
+        <a href="/admin/profile-transfer-requests">Back to Profile Transfer Requests</a>
       </div>
     </div>
   </div>

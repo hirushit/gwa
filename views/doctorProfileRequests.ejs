@@ -35,6 +35,7 @@
       box-shadow: 2px 0 5px rgba(0,0,0,0.1);
       position: fixed;
       height: 100%; 
+      overflow-y: auto;
     }
 
     .sidebar-logo img {
@@ -202,6 +203,9 @@
       </div>
       <h2>Admin Functions</h2>
       <ul class="sidebar-menu">
+        <li><a href="/admin/create-account" <% if (activePage === 'create-account') { %> class="active" <% } %>>Create New Account</a></li>
+        <li><a href="/admin/accounts" <% if (activePage === 'accounts') { %> class="active" <% } %>>Manage Accounts</a></li>
+        <li><a href="/admin/profile-transfer-requests" <% if (activePage === 'profile-transfer-requests') { %> class="active" <% } %>>Profile Transfer Requests</a></li>
         <li><a href="/admin/blogs" <% if (activePage === 'blogs') { %> class="active" <% } %>>View and Approve Blogs</a></li>
         <li><a href="/admin/blog" <% if (activePage === 'blog') { %> class="active" <% } %>>Upload Admin Blog</a></li>
         <li><a href="/admin/doctor-profile-requests" <% if (activePage === 'doctor-profile-requests') { %> class="active" <% } %>>Doctor Profile Verification Requests</a></li>

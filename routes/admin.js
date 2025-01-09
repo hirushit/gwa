@@ -1668,6 +1668,7 @@ router.get('/create-account', isAdmin, (req, res) => {
   res.render('createAccount', {
     success_msg: req.flash('success_msg'),
     error_msg: req.flash('error_msg'),
+    activePage: 'create-account', 
   });
 });
 
@@ -1710,7 +1711,7 @@ router.post('/create-account', isAdmin, async (req, res) => {
       case 'supplier':
         newUser = new Supplier({
           name,
-          email,
+          contactEmail: email,
           password: hashedPassword,
           role: 'supplier',
           createdByAdmin: true,
@@ -1731,32 +1732,161 @@ router.post('/create-account', isAdmin, async (req, res) => {
   }
 });
 
-router.post('/profile-request', async (req, res) => {
+
+router.get('/accounts', async (req, res) => {
   try {
-    const { doctorId, email } = req.body;
-    const idProof = req.files?.idProof; 
-    if (!doctorId || !email || !idProof) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
+    const doctors = await Doctor.find({ createdByAdmin: true }).select('_id name email role profileTransferRequest');
+    const corporates = await Corporate.find({ createdByAdmin: true }).select('_id corporateName email role profileTransferRequest');
+    const suppliers = await Supplier.find({ createdByAdmin: true }).select('_id name contactEmail role profileTransferRequest');
 
-    const doctor = await Doctor.findById(doctorId);
+    const accounts = [
+      ...doctors.map((d) => ({
+        _id: d._id, 
+        name: d.name,
+        email: d.email,
+        role: 'Doctor',
+        profileTransferRequest: d.profileTransferRequest || 'N/A',
+      })),
+      ...corporates.map((c) => ({
+        _id: c._id, 
+        name: c.corporateName,
+        email: c.email,
+        role: 'Corporate',
+        profileTransferRequest: c.profileTransferRequest || 'N/A',
+      })),
+      ...suppliers.map((s) => ({
+        _id: s._id, 
+        name: s.name,
+        email: s.contactEmail,
+        role: 'Supplier',
+        profileTransferRequest: s.profileTransferRequest || 'N/A',
+      })),
+    ];
 
-    if (!doctor) {
-      return res.status(404).json({ message: 'Doctor not found' });
-    }
+    console.log(accounts);
 
-    doctor.profileVerificationEmail = email;
-    doctor.profileVerificationDocument = {
-      data: idProof.data,
-      contentType: idProof.mimetype,
-    };
-    doctor.profileTransferRequest = 'Pending';
-
-    await doctor.save();
-
-    res.status(200).json({ message: 'Profile transfer request submitted successfully' });
+    res.render('adminAccounts', { accounts, activePage: 'accounts' });
   } catch (err) {
-    console.error(err.message);
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.get('/account-view/:id', isLoggedIn, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    let profile = await Doctor.findById(id).lean();
+    let profileType = 'Doctor';
+
+    if (!profile) {
+      profile = await Corporate.findById(id).lean();
+      profileType = 'Corporate';
+    }
+
+    if (!profile) {
+      profile = await Supplier.findById(id).lean();
+      profileType = 'Supplier';
+    }
+
+    if (!profile) {
+      return res.status(404).send('Profile not found');
+    }
+
+    res.render('adminEditProfile', {
+      profile,
+      profileType,
+      activePage: 'edit-profile',
+    });
+  } catch (err) {
+    console.error('Error fetching profile:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.post('/update/:id', isLoggedIn, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, profileTransferRequest, profileType } = req.body;
+
+    let updatedProfile;
+
+    switch (profileType) {
+      case 'Doctor':
+        updatedProfile = await Doctor.findByIdAndUpdate(
+          id,
+          { name, email, profileTransferRequest },
+          { new: true }
+        );
+        break;
+      case 'Corporate':
+        updatedProfile = await Corporate.findByIdAndUpdate(
+          id,
+          { corporateName: name, email, profileTransferRequest },
+          { new: true }
+        );
+        break;
+      case 'Supplier':
+        updatedProfile = await Supplier.findByIdAndUpdate(
+          id,
+          { name, contactEmail: email, profileTransferRequest },
+          { new: true }
+        );
+        break;
+      default:
+        return res.status(400).send('Invalid profile type');
+    }
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updatedProfile.password = hashedPassword;
+      await updatedProfile.save();
+    }
+
+    req.flash('success_msg', 'Profile updated successfully.');
+    res.redirect(`/admin/account-view/${id}`);
+  } catch (err) {
+    console.error('Error updating profile:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.get('/profile-transfer-requests', async (req, res) => {
+  try {
+    const doctors = await Doctor.find({ createdByAdmin: true }).select('_id name email profileTransferRequest profileVerification');
+    const corporates = await Corporate.find({ createdByAdmin: true }).select('_id corporateName email profileTransferRequest profileVerification');
+    const suppliers = await Supplier.find({ createdByAdmin: true }).select('_id name contactEmail profileTransferRequest profileVerification');
+
+    const requests = [
+      ...doctors.map((d) => ({
+        _id: d._id,
+        name: d.name,
+        email: d.email,
+        role: 'Doctor',
+        profileTransferRequest: d.profileTransferRequest || 'N/A',
+        profileVerification: d.profileVerification || [],
+      })),
+      ...corporates.map((c) => ({
+        _id: c._id,
+        name: c.corporateName,
+        email: c.email,
+        role: 'Corporate',
+        profileTransferRequest: c.profileTransferRequest || 'N/A',
+        profileVerification: c.profileVerification || [],
+      })),
+      ...suppliers.map((s) => ({
+        _id: s._id,
+        name: s.name,
+        email: s.contactEmail,
+        role: 'Supplier',
+        profileTransferRequest: s.profileTransferRequest || 'N/A',
+        profileVerification: s.profileVerification || [],
+      })),
+    ];
+
+    res.render('adminProfileTransferRequests', { requests, activePage: 'profile-transfer-requests' });
+  } catch (err) {
+    console.error(err);
     res.status(500).send('Server Error');
   }
 });

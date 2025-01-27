@@ -61,6 +61,10 @@ const doctorSchema = new mongoose.Schema({
     data: Buffer,
     contentType: String
   },
+  coverPhoto: {
+    data: Buffer,
+    contentType: String
+  },
   verified: { type: String, enum: ['Not Verified', 'Pending', 'Verified'], default: 'Not Verified' },
   timeSlots: [{
     date: { type: Date, required: true },

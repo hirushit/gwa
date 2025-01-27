@@ -62,7 +62,17 @@ const supplierSchema = new Schema({
         type: String,
         enum: ['Accepted', 'Pending', 'Rejected', 'Idle'], 
         default: 'Idle'
-      }
+      },
+      messages: [{
+        name: { type: String, required: true },
+        companyName: { type: String },
+        phone: { type: String },
+        email: { type: String },
+        interestedProduct: { type: String },
+        message: { type: String },
+        timeframe: { type: String },
+        createdAt: { type: Date, default: Date.now },
+    }],
   });
   
 const Supplier = mongoose.model('Supplier', supplierSchema);

@@ -24,6 +24,14 @@
     <% } %>
     </div>
 
+    <% if (doctor.coverPhoto && doctor.coverPhoto.data) { %>
+        <div class="cover-photo">
+            <img src="data:<%= doctor.coverPhoto.contentType %>;base64,<%= doctor.coverPhoto.data.toString('base64') %>" alt="Cover Photo" style="max-width: 200px; width: 100%; height: auto;">
+        </div>
+    <% } else { %>
+        <p>No cover photo available</p>
+    <% } %>    
+
     <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
     <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Profile Picture" width="150" height="180">
     <% } else { %>

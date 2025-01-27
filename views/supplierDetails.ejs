@@ -24,6 +24,57 @@
             <p>No cover image uploaded.</p>
         <% } %>
 
+        <!-- Button to Show the Message Form -->
+        <button id="showMessageFormBtn" class="btn btn-info mt-3">Send Message</button>
+
+        <!-- Message Form (Initially Hidden) -->
+        <div id="messageFormContainer" style="display: none;">
+            <h3 class="mt-5">Send a Message to <%= supplier.name %></h3>
+
+            <form id="messageForm">
+                <div class="form-group">
+                    <label for="name">Your Name</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="companyName">Company Name (if relevant)</label>
+                    <input type="text" class="form-control" id="companyName" name="companyName">
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Your Phone</label>
+                    <input type="text" class="form-control" id="phone" name="phone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Your Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="interestedProduct">What product/service are you interested in?</label>
+                    <input type="text" class="form-control" id="interestedProduct" name="interestedProduct" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Your Message</label>
+                    <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>What timeframe are you looking to make the purchase?</label><br>
+                    <input type="radio" id="asap" name="timeframe" value="ASAP" required> ASAP
+                    <input type="radio" id="next30" name="timeframe" value="Next 30 days"> Next 30 days
+                    <input type="radio" id="1to3" name="timeframe" value="1 - 3 months"> 1 - 3 months
+                    <input type="radio" id="4to6" name="timeframe" value="4 - 6 months"> 4 - 6 months
+                    <input type="radio" id="6months+" name="timeframe" value="6 months+"> 6 months+
+                </div>
+
+                <button type="submit" class="btn btn-primary">Send Message</button>
+            </form>
+        </div>
+
         <div class="card mt-3">
             <div class="card-body">
                 <h5 class="card-title"><%= supplier.name %></h5>
@@ -69,10 +120,19 @@
 
         <a href="/supplier/all-suppliers" class="btn btn-info mt-3">Back to All Suppliers</a>
     </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const categoryLinks = document.querySelectorAll('.category-link');
             const productItems = document.querySelectorAll('.product-item');
+            const showMessageFormBtn = document.getElementById('showMessageFormBtn');
+            const messageFormContainer = document.getElementById('messageFormContainer');
+
+            // Show the message form when button is clicked
+            showMessageFormBtn.addEventListener('click', function() {
+                messageFormContainer.style.display = 'block'; // Display the form
+                showMessageFormBtn.style.display = 'none';  // Hide the button
+            });
 
             categoryLinks.forEach(function(link) {
                 link.addEventListener('click', function(e) {
@@ -90,6 +150,42 @@
                 });
             });
         });
+
+        document.getElementById('messageForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = {
+            name: formData.get('name'),
+            companyName: formData.get('companyName'),
+            phone: formData.get('phone'),
+            email: formData.get('email'),
+            interestedProduct: formData.get('interestedProduct'),
+            message: formData.get('message'),
+            timeframe: formData.get('timeframe')
+        };
+
+        try {
+            const response = await fetch(`/supplier/<%= supplier._id %>/send-message`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                alert('Message sent successfully!');
+                document.getElementById('messageForm').reset();
+            } else {
+                alert('Failed to send message.');
+            }
+        } catch (err) {
+            console.error('Error:', err);
+            alert('An error occurred while sending your message.');
+        }
+    });
+
     </script>
 </body>
 </html>

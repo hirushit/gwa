@@ -204,7 +204,8 @@ router.post('/profile/update', upload.fields([
     { name: 'profilePicture' },
     { name: 'licenseProof' },
     { name: 'certificationProof' },
-    { name: 'businessProof' }
+    { name: 'businessProof' },
+    { name: 'coverPhoto' }
 ]), isLoggedIn, async (req, res) => {
     try {
         const doctorEmail = req.session.user.email;
@@ -316,6 +317,12 @@ router.post('/profile/update', upload.fields([
             };
         } else {
             updateData.profilePicture = doctor.profilePicture;
+        }
+        if (req.files['coverPhoto'] && req.files['coverPhoto'][0]) {
+            updateData.coverPhoto = {
+                data: req.files['coverPhoto'][0].buffer,
+                contentType: req.files['coverPhoto'][0].mimetype
+            };
         }
 
         doctor = await Doctor.findOneAndUpdate({ email: doctorEmail }, updateData, { new: true });

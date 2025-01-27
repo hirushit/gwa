@@ -616,7 +616,6 @@ router.post('/:id/send-message', async (req, res) => {
     try {
         const { name, companyName, phone, email, interestedProduct, message, timeframe } = req.body;
 
-        // Store message in the supplier's messages array
         const supplier = await Supplier.findById(req.params.id);
         supplier.messages.push({
             name,
@@ -628,10 +627,8 @@ router.post('/:id/send-message', async (req, res) => {
             timeframe
         });
 
-        // Save the supplier with the new message
         await supplier.save();
 
-        // Call the sendMessageEmail function to send an email to the supplier
         await sendMessageEmail(
             supplier.contactEmail,
             name,

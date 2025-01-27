@@ -24,10 +24,8 @@
             <p>No cover image uploaded.</p>
         <% } %>
 
-        <!-- Button to Show the Message Form -->
         <button id="showMessageFormBtn" class="btn btn-info mt-3">Send Message</button>
 
-        <!-- Message Form (Initially Hidden) -->
         <div id="messageFormContainer" style="display: none;">
             <h3 class="mt-5">Send a Message to <%= supplier.name %></h3>
 
@@ -128,10 +126,9 @@
             const showMessageFormBtn = document.getElementById('showMessageFormBtn');
             const messageFormContainer = document.getElementById('messageFormContainer');
 
-            // Show the message form when button is clicked
             showMessageFormBtn.addEventListener('click', function() {
-                messageFormContainer.style.display = 'block'; // Display the form
-                showMessageFormBtn.style.display = 'none';  // Hide the button
+                messageFormContainer.style.display = 'block'; 
+                showMessageFormBtn.style.display = 'none';  
             });
 
             categoryLinks.forEach(function(link) {

@@ -282,6 +282,12 @@ router.post('/profile/update', upload.fields([
             zip: req.body.zip || doctor.zip,
             experience: req.body.experience || doctor.experience,
             treatmentApproach: req.body.treatmentApproach || doctor.treatmentApproach,
+            termsAndConditionsAccepted: req.body.termsAndConditionsAccepted === 'on', 
+            showAwards: req.body.showAwards === 'on',
+            showFaq: req.body.showFaq === 'on',
+            showArticle: req.body.showArticle === 'on',
+            showInsurances: req.body.showInsurances === 'on',
+      
         };
 
         if (!updateData.documents) {

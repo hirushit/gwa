@@ -115,8 +115,10 @@ const corporateSchema = new mongoose.Schema({
     document: {
       data: Buffer,
       contentType: String
-    }
-  }],   
+    },
+    createdAt: { type: Date, default: Date.now } 
+  }],
+
   profileTransferRequest: {
     type: String,
     enum: ['Accepted', 'Pending', 'Rejected', 'Idle'], 

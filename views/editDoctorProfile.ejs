@@ -629,6 +629,33 @@ function addFAQ() {
     </select>
   </div>
 
+
+<div>
+  <label for="termsAndConditionsAccepted">Accept Terms and Conditions</label>
+  <input type="checkbox" name="termsAndConditionsAccepted" <%= doctor.termsAndConditionsAccepted ? 'checked' : '' %> />
+</div>
+
+<div>
+  <label for="showAwards">Show Awards on Profile</label>
+  <input type="checkbox" name="showAwards" <%= doctor.showAwards ? 'checked' : '' %> />
+</div>
+
+<div>
+  <label for="showFaq">Show FAQ on Profile</label>
+  <input type="checkbox" name="showFaq" <%= doctor.showFaq ? 'checked' : '' %> />
+</div>
+
+<div>
+  <label for="showArticle">Show Articles on Profile</label>
+  <input type="checkbox" name="showArticle" <%= doctor.showArticle ? 'checked' : '' %> />
+</div>
+
+<div>
+  <label for="showInsurances">Show Insurances on Profile</label>
+  <input type="checkbox" name="showInsurances" <%= doctor.showInsurances ? 'checked' : '' %> />
+</div>
+
+
     
     <div>
       <button type="submit">Update Profile</button>

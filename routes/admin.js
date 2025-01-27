@@ -1864,7 +1864,7 @@ router.get('/profile-transfer-requests', async (req, res) => {
         email: d.email,
         role: 'Doctor',
         profileTransferRequest: d.profileTransferRequest || 'N/A',
-        profileVerification: d.profileVerification || [],
+        profileVerification: d.profileVerification.sort((a, b) => b.createdAt - a.createdAt) || [], // Sort profileVerification by createdAt in descending order
       })),
       ...corporates.map((c) => ({
         _id: c._id,
@@ -1872,7 +1872,7 @@ router.get('/profile-transfer-requests', async (req, res) => {
         email: c.email,
         role: 'Corporate',
         profileTransferRequest: c.profileTransferRequest || 'N/A',
-        profileVerification: c.profileVerification || [],
+        profileVerification: c.profileVerification.sort((a, b) => b.createdAt - a.createdAt) || [], // Sort profileVerification by createdAt in descending order
       })),
       ...suppliers.map((s) => ({
         _id: s._id,
@@ -1880,7 +1880,7 @@ router.get('/profile-transfer-requests', async (req, res) => {
         email: s.contactEmail,
         role: 'Supplier',
         profileTransferRequest: s.profileTransferRequest || 'N/A',
-        profileVerification: s.profileVerification || [],
+        profileVerification: s.profileVerification.sort((a, b) => b.createdAt - a.createdAt) || [], // Sort profileVerification by createdAt in descending order
       })),
     ];
 
@@ -1890,6 +1890,8 @@ router.get('/profile-transfer-requests', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
+
 
 
 

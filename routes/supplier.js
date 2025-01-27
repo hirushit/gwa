@@ -507,7 +507,7 @@ router.get('/all-suppliers', async (req, res) => {
         const states = await Supplier.distinct('address.state', country ? { 'address.country': country } : {});
         const cities = await Supplier.distinct('address.city', state ? { 'address.state': state } : {});
 
-        res.render('allSuppliers', {
+        res.json({
             suppliers,
             countries,
             states,
@@ -516,7 +516,7 @@ router.get('/all-suppliers', async (req, res) => {
         });
     } catch (err) {
         console.error('Error fetching suppliers:', err);
-        res.status(500).send('Error fetching supplier list');
+        res.status(500).json({ error: 'Error fetching supplier list' });
     }
 });
 

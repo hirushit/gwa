@@ -54,9 +54,11 @@ const supplierSchema = new Schema({
         document: {
           data: Buffer,
           contentType: String
-        }
-      }], 
-    profileTransferRequest: {
+        },
+        createdAt: { type: Date, default: Date.now } 
+      }],
+    
+        profileTransferRequest: {
         type: String,
         enum: ['Accepted', 'Pending', 'Rejected', 'Idle'], 
         default: 'Idle'

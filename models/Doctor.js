@@ -37,12 +37,12 @@ const doctorSchema = new mongoose.Schema({
   doctorFee:{type: Number, default: 85},
   doctorFeeCurrency:{type: String, enum: ['usd', 'inr', 'gbp', 'aed']},
   hospitals: [{
-      name: { type: String, required: true },
-      street: { type: String, required: true },
-      city: { type: String, required: true },
-      state: { type: String, required: true },
-      country: { type: String, required: true },
-      zip: { type: String, required: true },
+      name: { type: String },
+      street: { type: String },
+      city: { type: String },
+      state: { type: String },
+      country: { type: String},
+      zip: { type: String },
     lat: { type: Number }, 
     lng: { type: Number }  
   }],
@@ -144,13 +144,22 @@ const doctorSchema = new mongoose.Schema({
     document: {
       data: Buffer,
       contentType: String
-    }
-  }], 
+    },
+    createdAt: { type: Date, default: Date.now } 
+  }],
+
   profileTransferRequest: {
     type: String,
     enum: ['Accepted', 'Pending', 'Rejected', 'Idle'], 
     default: 'Idle'
-  }
+  },
+
+  termsAndConditionsAccepted: { type: Boolean},
+  showAwards: { type: Boolean},
+  showFaq: { type: Boolean},
+  showArticle: { type: Boolean },
+  showInsurances: { type: Boolean},
+
 });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

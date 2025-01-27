@@ -233,7 +233,7 @@
     <div class="main-content">
       <div class="container">
         <h1>Profile Transfer Requests</h1>
-
+    
         <% if (requests.length > 0) { %>
           <table class="requests-table">
             <thead>
@@ -246,8 +246,17 @@
               </tr>
             </thead>
             <tbody>
-              <% requests.forEach((request) => { %>
-                <% request.profileVerification.forEach((verification, index) => { %>
+              <% 
+                // Sort requests by the most recent profile verification
+                const sortedRequests = requests.sort((a, b) => {
+                  const aCreatedAt = a.profileVerification.length > 0 ? a.profileVerification[0].createdAt : 0;
+                  const bCreatedAt = b.profileVerification.length > 0 ? b.profileVerification[0].createdAt : 0;
+                  return bCreatedAt - aCreatedAt; // Sort in descending order
+                });
+              %>
+    
+              <% sortedRequests.forEach((request) => { %>
+                <% request.profileVerification.forEach((verification) => { %>
                   <tr>
                     <td><%= request.email %></td>
                     <td><%= request.role %></td>
@@ -274,24 +283,24 @@
         <% } %>
       </div>
     </div>
-  </div>
-
-  <div id="pdfModal" class="modal">
-    <div class="modal-content">
-      <button onclick="closeModal()">Close</button>
-      <embed id="pdfViewer" type="application/pdf" width="100%" height="600px">
+    
+    <div id="pdfModal" class="modal">
+      <div class="modal-content">
+        <button onclick="closeModal()">Close</button>
+        <embed id="pdfViewer" type="application/pdf" width="100%" height="600px">
+      </div>
     </div>
-  </div>
-
-  <script>
-    function openModal(pdfData, contentType) {
-      document.getElementById('pdfViewer').setAttribute('src', 'data:' + contentType + ';base64,' + pdfData);
-      document.getElementById('pdfModal').style.display = 'block';
-    }
-
-    function closeModal() {
-      document.getElementById('pdfModal').style.display = 'none';
-    }
-  </script>
-</body>
-</html>
+    
+    <script>
+      function openModal(pdfData, contentType) {
+        document.getElementById('pdfViewer').setAttribute('src', 'data:' + contentType + ';base64,' + pdfData);
+        document.getElementById('pdfModal').style.display = 'block';
+      }
+    
+      function closeModal() {
+        document.getElementById('pdfModal').style.display = 'none';
+      }
+    </script>
+    </body>
+    </html>
+    

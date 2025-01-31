@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Bookings</title>
+</head>
+<body>
+    <h2>Doctor Bookings</h2>
+
+    <form method="GET" action="/corporate/doctor/bookings/<%= doctorId %>">
+        <input type="text" name="searchQuery" placeholder="Search by Patient or Hospital" value="<%= searchQuery || '' %>">
+        
+        <label for="filterDate">Booking Date:</label>
+        <input type="date" name="filterDate" value="<%= filterDate || '' %>">
+
+
+        <label for="filterConsultation">Consultation Type:</label>
+        <select name="filterConsultation">
+            <option value="">All</option>
+            <option value="In-person" <%= filterConsultation === 'In-person' ? 'selected' : '' %>>In-Person</option>
+            <option value="Video call" <%= filterConsultation === 'Video call' ? 'selected' : '' %>>Video Call</option>
+        </select>
+
+        <label for="filterStatus">Status:</label>
+        <select name="filterStatus">
+            <option value="">All</option>
+            <option value="waiting" <%= filterStatus === 'waiting' ? 'selected' : '' %>>Waiting</option>
+            <option value="accepted" <%= filterStatus === 'accepted' ? 'selected' : '' %>>Accepted</option>
+            <option value="completed" <%= filterStatus === 'completed' ? 'selected' : '' %>>Completed</option>
+            <option value="rejected" <%= filterStatus === 'rejected' ? 'selected' : '' %>>Rejected</option>
+        </select>
+
+        <button type="submit">Filter</button>
+    </form>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Patient Name</th>
+                <th>Booking Date</th>
+                <th>Time Slot</th>
+                <th>Consultation Type</th>
+                <th>Status</th>
+                <th>Hospital</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (bookings.length > 0) { %>
+                <% bookings.forEach(booking => { %>
+                    <tr>
+                        <td><%= booking.patient ? booking.patient.name : 'N/A' %></td>
+                        <td><%= booking.date ? new Date(booking.date).toDateString() : 'N/A' %></td>
+                        <td><%= booking.time %></td>
+                        <td><%= booking.consultationType %></td>
+                        <td class="status-<%= booking.status %>"><%= booking.status %></td>
+                        <td><%= booking.hospital ? booking.hospital.name : 'N/A' %></td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="6">No bookings available.</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+
+</body>
+</html>

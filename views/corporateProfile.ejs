@@ -86,42 +86,22 @@
         </div>
         
         
-        <div class="specialties-section">
-          <h2>Corporate Specialties</h2>
-          <% if (corporate.corporateSpecialties && corporate.corporateSpecialties.length > 0) { %>
-            <div class="specialties-list">
-              <% corporate.corporateSpecialties.forEach((specialty, index) => { %>
-                <div class="specialty-item">
-                  <% if (specialty.image && specialty.image.data) { %>
-                    <img src="data:<%= specialty.image.contentType %>;base64,<%= specialty.image.data.toString('base64') %>" alt="<%= specialty.name %>" style="max-width: 100px; height: auto;">
-                  <% } %>
-                  <p><strong><%= specialty.name %></strong></p>
-                  <form action="/corporate/remove-specialty/<%= index %>" method="POST" style="margin-top: 10px;">
-                    <button type="submit" class="btn btn-danger">Remove</button>
-                  </form>
-                </div>
-              <% }); %>
-            </div>
-          <% } else { %>
-            <p>No specialties added yet.</p>
-          <% } %>
-        </div>
-        
-        
-
-        <div class="add-specialty">
-          <button id="add-specialty-btn">Add Specialty</button>
-          <form id="add-specialty-form" action="/corporate/add-specialty" method="POST" enctype="multipart/form-data" style="display: none;">
-            <label for="specialty-name">Name:</label>
-            <input type="text" name="name" id="specialty-name" required>
-            
-            <label for="specialty-image">Image:</label>
-            <input type="file" name="image" id="specialty-image" accept="image/*">
-        
-            <button type="submit">Submit</button>
-          </form>
-        </div>
-        
+        <% if (corporate.showSpecialties) { %>
+          <div class="specialties-section">
+            <h2>Corporate Specialties</h2>
+            <% if (corporate.corporateSpecialties && corporate.corporateSpecialties.length > 0) { %>
+              <div class="specialties-list">
+                <% corporate.corporateSpecialties.forEach((specialty) => { %>
+                  <div class="specialty-item">
+                    <p><strong><%= specialty %></strong></p>
+                  </div>
+                <% }); %>
+              </div>
+            <% } else { %>
+              <p>No specialties added yet.</p>
+            <% } %>
+          </div>
+        <% } %>
         
 
         <h2>Our Doctors</h2>
@@ -173,6 +153,7 @@
     </div>
 
     <div class="blog-section">
+      <h3>Conditions Library</h3>
       <% blogs.forEach(blog => { %>
         <div class="blog-item">
           <% if (blog.image && blog.image.data) { %>
@@ -323,7 +304,6 @@
     return;
   }
 
-  // Data to be sent to the server
   const data = {
     email: doctorEmail,
     inviteLink: inviteLink
@@ -349,6 +329,8 @@
     </script>
 
 <a href="/corporate/corporate-home">Back to Home</a>
+<a href="/corporate/edit-profile">Edit Profile</a>
+<a href="/corporate/logout">Logout</a>
 
 </body>
 </html>

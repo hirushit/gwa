@@ -14,7 +14,7 @@ const supplierSchema = new Schema({
         city: { type: String },
         state: { type: String },
         zipCode: { type: String },
-        country: { type: String}
+        country: { type: String }
     },
     companyName: { type: String },
     profilePicture: {
@@ -58,12 +58,12 @@ const supplierSchema = new Schema({
         createdAt: { type: Date, default: Date.now } 
       }],
     
-        profileTransferRequest: {
+    profileTransferRequest: {
         type: String,
         enum: ['Accepted', 'Pending', 'Rejected', 'Idle'], 
         default: 'Idle'
-      },
-      messages: [{
+    },
+    messages: [{
         name: { type: String, required: true },
         companyName: { type: String },
         phone: { type: String },
@@ -73,8 +73,13 @@ const supplierSchema = new Schema({
         timeframe: { type: String },
         createdAt: { type: Date, default: Date.now },
     }],
-  });
   
+    showConditionLibrary: { type: Boolean, default: false }, 
+    showReviews: { type: Boolean, default: false }, 
+    showProducts: { type: Boolean, default: false }, 
+    showCategories: { type: Boolean, default: false }, 
+});
+
 const Supplier = mongoose.model('Supplier', supplierSchema);
 
 module.exports = Supplier;

@@ -144,6 +144,63 @@
             </div>
         </div>
 
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Add Custom Time Slot</h5>
+                <form action="/doctor/add-custom-time-slot" method="POST">
+                    <div class="form-group">
+                        <label for="customConsultationType">Consultation Type:</label>
+                        <select id="customConsultationType" name="consultationType" class="form-control" required>
+                            <option value="In-person">In-person</option>
+                            <option value="Video call">Video call</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="customStartDate">Start Date:</label>
+                        <input type="date" id="customStartDate" name="startDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customStartTime">Start of Day Time:</label>
+                        <input type="time" id="customStartTime" name="startTime" class="form-control" value="09:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customEndTime">End of Day Time:</label>
+                        <input type="time" id="customEndTime" name="endTime" class="form-control" value="17:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customDuration">Duration (minutes):</label>
+                        <input type="number" id="customDuration" name="duration" class="form-control" value="30" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customDaysOfWeek">Days of the Week:</label><br>
+                        <input type="checkbox" id="monday" name="daysOfWeek" value="Monday"> Monday
+                        <input type="checkbox" id="tuesday" name="daysOfWeek" value="Tuesday"> Tuesday
+                        <input type="checkbox" id="wednesday" name="daysOfWeek" value="Wednesday"> Wednesday
+                        <input type="checkbox" id="thursday" name="daysOfWeek" value="Thursday"> Thursday
+                        <input type="checkbox" id="friday" name="daysOfWeek" value="Friday"> Friday
+                        <input type="checkbox" id="saturday" name="daysOfWeek" value="Saturday"> Saturday
+                        <input type="checkbox" id="sunday" name="daysOfWeek" value="Sunday"> Sunday
+                    </div>
+                    <div class="form-group" id="hospitalGroupCustom">
+                        <label for="hospital">Select Hospital (Only if In-person):</label>
+                        <select id="hospital" name="hospital" class="form-control">
+                            <% doctor.hospitals.forEach(hospital => { %>
+                                <option value="<%= hospital.name %>"><%= hospital.name %> - <%= hospital.street %>, <%= hospital.city %>, <%= hospital.state %>, <%= hospital.country %>, <%= hospital.zip %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customRepeatWeeks">Repeat for (weeks):</label>
+                        <input type="number" id="customRepeatWeeks" name="repeatWeeks" class="form-control" value="1" min="1" max="12" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Add Custom Time Slot</button>
+                </form>
+            </div>
+        </div>
+        
+
         <div class="container">
             <div class="navigation">
                 <a href="/doctor/manage-time-slots?month=<%= currentMonth - 1 %>&year=<%= currentYear %>">Previous Month</a>
@@ -199,6 +256,16 @@
                 document.getElementById('hospitalGroup').style.display = 'block';
             }
         });
+
+        document.getElementById('customConsultationType').addEventListener('change', function () {
+    const consultationType = document.getElementById('customConsultationType').value;
+    if (consultationType === 'Video call') {
+        document.getElementById('hospitalGroupCustom').style.display = 'none';
+    } else {
+        document.getElementById('hospitalGroupCustom').style.display = 'block';
+    }
+});
+
     </script>
 </body>
 </html>

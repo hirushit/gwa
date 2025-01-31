@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edit Corporate Profile</title>
-  <link rel="stylesheet" href="/path/to/your/styles.css"> <!-- Update with actual CSS path -->
-</head>
+  <link rel="stylesheet" href="/path/to/your/styles.css"> 
 <body>
   <div class="container">
     <h1>Edit Corporate Profile</h1>
@@ -99,6 +98,41 @@
         <label for="coverPhoto">Cover Photo</label>
         <input type="file" name="coverPhoto">
       </div>
+
+      <div class="form-group">
+        <label for="specialtySelect">Specialties</label>
+        <select id="specialtySelect" name="specialties" multiple>
+          <% specialties.forEach(function(specialty) { %>
+            <option value="<%= specialty.name %>" 
+              <%= corporate.specialties && corporate.specialties.includes(specialty.name) ? 'selected' : '' %> >
+              <%= specialty.name %>
+            </option>
+          <% }); %>
+        </select>
+      </div>
+      
+
+      <div class="form-group">
+        <label for="showSpecialties">Show Specialties</label>
+        <input type="checkbox" id="showSpecialties" name="showSpecialties" <%= corporate.showSpecialties ? 'checked' : '' %> value="true">
+      </div>
+
+      <div class="form-group">
+        <label for="showDoctors">Show Doctors</label>
+        <input type="checkbox" id="showDoctors" name="showDoctors" <%= corporate.showDoctors ? 'checked' : '' %> value="true">
+      </div>
+
+      <div class="form-group">
+        <label for="showConditionLibrary">Show Condition Library</label>
+        <input type="checkbox" id="showConditionLibrary" name="showConditionLibrary" <%= corporate.showConditionLibrary ? 'checked' : '' %> value="true">
+      </div>
+
+      <div class="form-group">
+        <label for="showReviews">Show Reviews</label>
+        <input type="checkbox" id="showReviews" name="showReviews" <%= corporate.showReviews ? 'checked' : '' %> value="true">
+      </div>
+      
+
 
       <button type="submit" class="btn btn-primary">Save Changes</button>
     </form>

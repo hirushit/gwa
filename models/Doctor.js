@@ -143,6 +143,7 @@ const doctorSchema = new mongoose.Schema({
   treatmentApproach: { type: String },
   
   createdByAdmin: { type: Boolean, default: false },
+  createdByCorporate: { type: Boolean, default: false},
   profileVerification: [{
     email: { type: String },
     document: {

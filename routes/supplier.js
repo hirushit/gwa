@@ -308,7 +308,11 @@ router.get('/edit-profile', isLoggedIn, async (req, res) => {
 });
 
 router.post('/update-profile', isLoggedIn, upload.fields([{ name: 'profileImage' }, { name: 'coverPhoto' }]), async (req, res) => {
-    const { name, contactEmail, phone, alternateContactNumber, companyName, businessRegistrationNumber, taxIdentificationNumber, businessType, street, city, state, zipCode, country, province, tagline, overview } = req.body;
+    const {
+        name, contactEmail, phone, alternateContactNumber, companyName, businessRegistrationNumber,
+        taxIdentificationNumber, businessType, street, city, state, zipCode, country, province, tagline, overview,
+        showConditionLibrary, showReviews, showProducts, showCategories
+    } = req.body;
     
     const productCategories = Array.isArray(req.body.productCategories) ? req.body.productCategories : [req.body.productCategories];
 
@@ -324,7 +328,11 @@ router.post('/update-profile', isLoggedIn, upload.fields([{ name: 'profileImage'
         tagline,
         overview,
         productCategories,
-        address: { street, city, state, zipCode, country }
+        address: { street, city, state, zipCode, country },
+        showConditionLibrary: showConditionLibrary === 'true', 
+        showReviews: showReviews === 'true',
+        showProducts: showProducts === 'true',
+        showCategories: showCategories === 'true'
     };
 
     if (req.files['profileImage']) {
@@ -351,6 +359,7 @@ router.post('/update-profile', isLoggedIn, upload.fields([{ name: 'profileImage'
         res.redirect('/supplier/edit-profile');
     }
 });
+
 
 router.post('/add-category', upload.single('image'), async (req, res) => {
     try {
@@ -553,7 +562,6 @@ router.get('/all-suppliers', async (req, res) => {
         const states = await Supplier.distinct('address.state', country ? { 'address.country': country } : {});
         const cities = await Supplier.distinct('address.city', state ? { 'address.state': state } : {});
 
-        // Render the 'allSuppliers.ejs' view with the necessary data
         res.render('allSuppliers', {
             suppliers,
             countries,

@@ -83,12 +83,19 @@
                         <p>Experience: <%= doctor.experience || 'N/A' %> years</p>
                     </div>
                 </div>
+                
                 <% 
                 const existingRequest = doctor.corporateRequests.find(request => 
                     request.corporateId.toString() === corporateId.toString()
-                ); 
+                );
+                const isMember = corporateDoctors.includes(doctor._id.toString());
                 %>
-                <% if (existingRequest) { %>
+    
+                <% if (isMember) { %>
+                    <div class="doctor-status">
+                        <span style="color: green; font-weight: bold;">Our Member</span>
+                    </div>
+                <% } else if (existingRequest) { %>
                     <div class="doctor-status">
                         Status: <%= existingRequest.requestStatus %>
                     </div>
@@ -100,6 +107,7 @@
             </li>
         <% }); %>
     </ul>
+    
   
     <a href="/corporate/corporate-home">Back to Home</a>
 </body>

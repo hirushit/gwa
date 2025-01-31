@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corporate Doctors</title>
+</head>
+<body>
+    <h1>Doctors Under <%= corporate.corporateName %></h1>
+
+    <% if (doctors.length > 0) { %>
+        <ul>
+            <% doctors.forEach(doctor => { %>
+                <li>
+                    <strong>Name:</strong> <%= doctor.name %> <br>
+                    <strong>Email:</strong> <%= doctor.email %> <br>
+                    <strong>Specialty:</strong> <%= doctor.speciality %> <br>
+                    <a href="/corporate/doctor/insights/<%= doctor._id %>">View Insights</a> 
+                    <a href="/corporate/doctor/bookings/<%= doctor._id %>">View Bookings</a>
+                    <a href="/corporate/corporate/doctor-patients/<%= doctor._id %>">View Patients</a>
+                </li>
+                <hr>
+            <% }) %>
+        </ul>
+    <% } else { %>
+        <p>No doctors found under this corporate.</p>
+    <% } %>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Doctor Name</th>
+                <th>Specialization</th>
+                <th>Hospitals</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (doctors.length > 0) { %>
+                <% doctors.forEach(doctor => { %>
+                    <tr>
+                        <td><%= doctor.name %></td>
+                        <td><%= doctor.speciality %> </td>
+                        <td>
+                            <% if (doctor.hospitals && doctor.hospitals.length > 0) { %>
+                                <ul>
+                                    <% doctor.hospitals.forEach(hospital => { %>
+                                        <li>
+                                            <%= hospital.name %> - 
+                                            <%= hospital.street %>, 
+                                            <%= hospital.city %>, 
+                                            <%= hospital.state %>, 
+                                            <%= hospital.country %>, 
+                                            <%= hospital.zip %>
+                                        </li>
+                                    <% }) %>
+                                </ul>
+                            <% } else { %>
+                                N/A
+                            <% } %>
+                        </td>
+                        <td>
+                            <form action="/corporate/remove-doctor/<%= doctor._id %>" method="POST" style="display: inline;">
+                                <button type="submit" onclick="return confirm('Are you sure you want to remove this doctor?')">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="4">No doctors available.</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+    
+   
+
+    <a href="/corporate/dashboard">Back to Dashboard</a>
+</body>
+</html>

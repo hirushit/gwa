@@ -100,15 +100,14 @@ const corporateSchema = new mongoose.Schema({
     ref: 'Supplier',
   }],
   doctors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Doctor' }],
-  corporateSpecialties: [
-    {
-      name: { type: String },
-      image: {
-        data: Buffer,
-        contentType: String,
-      },
-    },
-  ],
+  corporateSpecialties: [{
+    type: String, 
+  }],
+  showSpecialties: { type: Boolean},  
+  showDoctors: { type: Boolean},      
+  showConditionLibrary: { type: Boolean },  
+  showReviews: { type: Boolean }, 
+
   createdByAdmin: { type: Boolean, default: false },
   profileVerification: [{
     email: { type: String },

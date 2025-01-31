@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const flash = require('connect-flash');
+const Chat = require('../models/Chat');
 const otpGenerator = require('otp-generator');
 const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
@@ -15,6 +16,7 @@ const querystring = require('querystring');
 const Corporate = require('../models/Corporate');
 const Blog = require('../models/Blog');
 const Booking = require('../models/Booking');
+const Specialty = require('../models/Specialty'); 
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -23,12 +25,29 @@ const NODE_URL = process.env.NODE_URL;
 
 
 function isLoggedIn(req, res, next) {
-  if (req.session.user && req.session.user.role === 'corporate') {
-    req.user = req.session.user;
+  const corporateId = req.session.corporateId; 
+
+  if (corporateId) {
+    req.user = req.session.user; 
     return next();
   }
+
+  res.redirect('/corporate/login'); 
+}
+
+
+
+function isCorporate(req, res, next) {
+  const corporateId = req.session.corporateId; 
+
+  if (corporateId) {
+    req.user = req.session.user; 
+    return next();
+  }
+
   res.redirect('/corporate/login');
 }
+
 
 const generateVerificationToken = () => {
     return crypto.randomBytes(20).toString('hex');
@@ -343,11 +362,9 @@ router.get('/profile', async (req, res) => {
   }
 });
 
-
 router.get('/edit-profile', async (req, res) => {
   try {
     const corporateId = req.session.corporateId;
-
     const corporate = await Corporate.findById(corporateId);
 
     if (!corporate) {
@@ -355,8 +372,11 @@ router.get('/edit-profile', async (req, res) => {
       return res.redirect('/corporate/corporate-home');
     }
 
+    const specialties = await Specialty.find();
+
     res.render('corporateeditProfile', {
       corporate,
+      specialties 
     });
   } catch (err) {
     console.error('Error fetching corporate profile for editing:', err);
@@ -364,61 +384,72 @@ router.get('/edit-profile', async (req, res) => {
     res.redirect('/corporate/corporate-home');
   }
 });
+
 router.post('/edit-profile', upload.fields([{ name: 'profileImage' }, { name: 'coverPhoto' }]), async (req, res) => {
   const {
-      corporateName,
-      email,
-      mobileNumber,
-      alternateContactNumber,
-      companyName,
-      businessRegistrationNumber,
-      taxIdentificationNumber,
-      businessType,
-      street,
-      city,
-      state,
-      zipCode,
-      country,
-      tagline,
-      overview
+    corporateName,
+    email,
+    mobileNumber,
+    alternateContactNumber,
+    companyName,
+    businessRegistrationNumber,
+    taxIdentificationNumber,
+    businessType,
+    street,
+    city,
+    state,
+    zipCode,
+    country,
+    tagline,
+    overview,
+    showSpecialties,
+    showDoctors,
+    showConditionLibrary,
+    showReviews, 
+    specialties, 
   } = req.body;
 
   const updateData = {
-      corporateName,
-      email,
-      mobileNumber,
-      alternateContactNumber,
-      companyName,
-      businessRegistrationNumber,
-      taxIdentificationNumber,
-      businessType,
-      tagline,
-      overview,
-      address: { street, city, state, zipCode, country }
+    corporateName,
+    email,
+    mobileNumber,
+    alternateContactNumber,
+    companyName,
+    businessRegistrationNumber,
+    taxIdentificationNumber,
+    businessType,
+    tagline,
+    overview,
+    address: { street, city, state, zipCode, country },
+    showSpecialties: showSpecialties === 'true',
+    showDoctors: showDoctors === 'true', 
+    showConditionLibrary: showConditionLibrary === 'true',
+    showReviews: showReviews === 'true', 
+    corporateSpecialties: specialties ? specialties : [], 
   };
 
   if (req.files['profileImage']) {
-      updateData.profilePicture = {
-          data: req.files['profileImage'][0].buffer,
-          contentType: req.files['profileImage'][0].mimetype
-      };
+    updateData.profilePicture = {
+      data: req.files['profileImage'][0].buffer,
+      contentType: req.files['profileImage'][0].mimetype
+    };
   }
 
   if (req.files['coverPhoto']) {
-      updateData.coverPhoto = {
-          data: req.files['coverPhoto'][0].buffer,
-          contentType: req.files['coverPhoto'][0].mimetype
-      };
+    updateData.coverPhoto = {
+      data: req.files['coverPhoto'][0].buffer,
+      contentType: req.files['coverPhoto'][0].mimetype
+    };
   }
 
   try {
-      await Corporate.findByIdAndUpdate(req.session.corporateId, updateData);
-      req.flash('success_msg', 'Profile updated successfully');
-      res.redirect('/corporate/profile');
+    await Corporate.findByIdAndUpdate(req.session.corporateId, updateData);
+    req.flash('success_msg', 'Profile updated successfully');
+    res.redirect('/corporate/profile');
   } catch (err) {
-      console.error('Error updating profile:', err);
-      req.flash('error_msg', 'Failed to update profile');
-      res.redirect('/corporate/edit-profile');
+    console.error('Error updating profile:', err);
+    req.flash('error_msg', 'Failed to update profile');
+    res.redirect('/corporate/edit-profile');
   }
 });
 
@@ -478,11 +509,13 @@ router.get('/add-doctors', async (req, res) => {
       });
 
       const corporateId = req.session.corporateId;
+      const corporate = await Corporate.findById(corporateId);
 
       res.render('add-doctors', {
           doctors,
           searchEmail,
-          corporateId, 
+          corporateId,
+          corporateDoctors: corporate ? corporate.doctors.map(id => id.toString()) : [],
       });
   } catch (err) {
       console.error('Error fetching doctors:', err);
@@ -491,55 +524,54 @@ router.get('/add-doctors', async (req, res) => {
   }
 });
 
-
 router.post('/add-doctor/:doctorId', async (req, res) => {
   const doctorId = req.params.doctorId;
   const corporateId = req.session.corporateId; 
 
   try {
-    const corporate = await Corporate.findById(corporateId);
-    if (!corporate) {
-      req.flash('error_msg', 'Corporate profile not found');
-      return res.redirect('/corporate/corporate-home');
-    }
+      const corporate = await Corporate.findById(corporateId);
+      if (!corporate) {
+          req.flash('error_msg', 'Corporate profile not found');
+          return res.redirect('/corporate/corporate-home');
+      }
 
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) {
-      req.flash('error_msg', 'Doctor not found');
-      return res.redirect('/corporate/corporate-home');
-    }
+      const doctor = await Doctor.findById(doctorId);
+      if (!doctor) {
+          req.flash('error_msg', 'Doctor not found');
+          return res.redirect('/corporate/corporate-home');
+      }
 
-    const existingRequest = doctor.corporateRequests.find(
-      request => request.corporateId.toString() === corporateId.toString()
-    );
+      if (corporate.doctors.includes(doctor._id)) {
+          req.flash('info_msg', 'Doctor is already a member of this corporate.');
+          return res.redirect('/corporate/add-doctors');
+      }
 
-    if (existingRequest) {
-      req.flash('info_msg', 'Request has already been sent to this doctor');
-      return res.redirect('/corporate/add-doctors');
-    }
+      const existingRequest = doctor.corporateRequests.find(
+          request => request.corporateId.toString() === corporateId.toString()
+      );
 
-    doctor.corporateRequests.push({
-      corporateId: corporate._id,
-      corporateName: corporate.corporateName,
-      requestStatus: 'pending',
-    });
-    doctor.faqs = doctor.faqs || []; 
+      if (existingRequest) {
+          req.flash('info_msg', 'Request has already been sent to this doctor');
+          return res.redirect('/corporate/add-doctors');
+      }
 
-    doctor.faqs.push({
-      question: 'What is your consultation fee?',
-      answer: 'The consultation fee is $100.',
-    });
+      doctor.corporateRequests.push({
+          corporateId: corporate._id,
+          corporateName: corporate.corporateName,
+          requestStatus: 'pending',
+      });
 
-    await doctor.save();
+      await doctor.save();
 
-    req.flash('success_msg', 'Request has been sent to the doctor');
-    res.redirect('/corporate/add-doctors');
+      req.flash('success_msg', 'Request has been sent to the doctor');
+      res.redirect('/corporate/add-doctors');
   } catch (err) {
-    console.error('Error sending corporate request to doctor:', err);
-    req.flash('error_msg', 'Error sending request');
-    res.redirect('/corporate/corporate-home');
+      console.error('Error sending corporate request to doctor:', err);
+      req.flash('error_msg', 'Error sending request');
+      res.redirect('/corporate/corporate-home');
   }
 });
+
 
 router.post('/update-doctor-review-visibility', async (req, res) => {
   try {
@@ -879,6 +911,333 @@ router.post('/claim-profile', upload.single('document'), async (req, res) => {
     res.status(500).send('Internal server error.');
   }
 });
+
+router.get('/:corporateId/doctors', async (req, res) => {
+  try {
+    const { corporateId } = req.params;
+
+    if (req.session.corporateId !== corporateId) {
+      req.flash('error_msg', 'Unauthorized access');
+      return res.redirect('/corporate/login');
+    }
+
+    const corporate = await Corporate.findById(corporateId).populate('doctors');
+
+    if (!corporate) {
+      req.flash('error_msg', 'Corporate not found');
+      return res.redirect('/corporate/login');
+    }
+
+    res.render('corporateDoctors', {
+      corporate,
+      doctors: corporate.doctors,
+      followerCount: corporate.followers.length,
+    });
+
+  } catch (err) {
+    console.error(err);
+    req.flash('error_msg', 'Server error');
+    res.redirect('/corporate/dashboard');
+  }
+});
+
+
+router.get('/doctor/insights/:doctorId', async (req, res) => {
+  try {
+    const doctorId = req.params.doctorId;
+
+    const doctor = await Doctor.findById(doctorId).populate('reviews');
+
+    if (!doctor) {
+        return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    const totalPatients = await Booking.aggregate([
+        { $match: { doctor: doctor._id, status: 'completed' } },
+        { $group: { _id: "$patient" } },
+        { $count: "uniquePatients" }
+    ]);
+
+    const totalConsultations = await Booking.countDocuments({ doctor: doctor._id, status: 'completed' });
+
+    const totalReviews = doctor.reviews.length;
+    const totalRatings = doctor.reviews.reduce((acc, review) => acc + review.rating, 0);
+    const averageRating = totalReviews > 0 ? (totalRatings / totalReviews).toFixed(1) : 'No ratings';
+
+    const bookingFilter = req.query['booking-filter'] || 'all';
+    const insightsFilter = req.query['insight-filter'] || 'all';
+
+    let startDate, endDate;
+    const currentDate = new Date();
+
+    if (bookingFilter === 'today') {
+        startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date();
+        endDate.setHours(23, 59, 59, 999);
+    } else if (bookingFilter === 'week') {
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - startDate.getDay());
+        endDate = new Date();
+        endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+    } else if (bookingFilter === 'month') {
+        startDate = new Date();
+        startDate.setDate(1);
+        endDate = new Date(startDate);
+        endDate.setMonth(endDate.getMonth() + 1);
+        endDate.setDate(0);
+    } else {
+        startDate = new Date('1970-01-01');
+        endDate = new Date();
+    }
+
+    const bookingRates = await Booking.aggregate([
+        { $match: { doctor: doctor._id, date: { $gte: startDate, $lte: endDate } } },
+        {
+            $group: {
+                _id: { $dayOfWeek: '$date' },
+                count: { $sum: 1 }
+            }
+        },
+        { $sort: { _id: 1 } }
+    ]);
+
+    const unreadMessages = await Chat.aggregate([
+        { $match: { doctorId: doctor._id } },
+        { $unwind: '$messages' },
+        { $match: { 'messages.read': false, 'messages.senderId': { $ne: doctor._id } } },
+        { $count: 'unreadCount' }
+    ]);
+
+    const totalUnreadMessages = unreadMessages.length > 0 ? unreadMessages[0].unreadCount : 0;
+
+    const waitingAppointmentsCount = await Booking.countDocuments({
+        doctor: doctor._id,
+        status: 'waiting'
+    });
+
+    const totalPostedSlots = doctor.timeSlots.length;
+    const totalFilledSlots = doctor.timeSlots.filter(slot => slot.status === 'booked').length;
+
+    const incomeByMonth = Array(5).fill(0);
+
+    for (let i = 0; i < 5; i++) {
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 0);
+
+        const monthlyIncome = await Booking.aggregate([
+            { $match: { doctor: doctor._id, status: 'completed', paid: true, date: { $gte: startOfMonth, $lte: endOfMonth } } },
+            { $group: { _id: null, total: { $sum: '$payment' } } }
+        ]);
+
+        incomeByMonth[4 - i] = monthlyIncome.length > 0 ? monthlyIncome[0].total : 0;
+    }
+
+    const totalIncomeReceived = incomeByMonth.reduce((acc, income) => acc + income, 0);
+
+    res.render('corporateDoctorInsights', {
+        doctor,
+        insights: {
+            totalPatients: totalPatients.length > 0 ? totalPatients[0].uniquePatients : 0,
+            totalConsultations,
+            totalReviews,
+            averageRating,
+            waitingAppointmentsCount,
+            totalUnreadMessages,
+            totalPostedSlots,
+            totalFilledSlots,
+            totalIncomeReceived,
+            incomeByMonth,
+            
+            
+        },insightsFilter, bookingFilter, bookingRates
+    });
+
+} catch (error) {
+    console.error("Error fetching doctor insights:", error);
+    res.status(500).json({ message: "Internal server error" });
+}
+});
+
+router.get('/doctor/bookings/:doctorId', async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const { searchQuery, filterDate, filterStatus, filterConsultation } = req.query;
+
+    let query = { doctor: doctorId };
+
+    if (searchQuery) {
+      query.$or = [
+        { patient: { $exists: true } },
+        { hospital: { $exists: true } } 
+      ];
+    }
+
+    if (filterDate) {
+      query.date = filterDate;
+    }
+
+    if (filterStatus) {
+      query.status = filterStatus.toLowerCase();
+    }
+
+    if (filterConsultation) {
+      query.consultationType = filterConsultation;
+    }
+
+    
+    const bookings = await Booking.find(query)
+      .populate('patient', 'name') 
+      .populate('hospital', 'name');
+
+    if (searchQuery) {
+      const filteredBookings = bookings.filter(
+        (booking) =>
+          (booking.patient?.name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (booking.hospital?.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+
+      return res.render('corporateDoctorBookings', {
+        bookings: filteredBookings,
+        doctorId,
+        searchQuery,
+        filterDate,
+        filterStatus,
+        filterConsultation,
+      });
+    }
+
+    res.render('corporateDoctorBookings', {
+      bookings,
+      doctorId,
+      searchQuery,
+      filterDate,
+      filterStatus,
+      filterConsultation,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+
+
+router.post('/remove-doctor/:doctorId', isLoggedIn, async (req, res) => {
+  try {
+    const corporateId = req.session.corporateId;
+
+    if (req.session.corporateId !== corporateId) {
+      return res.status(403).send('Unauthorized');
+    }
+
+    const { doctorId } = req.params;
+
+    await Corporate.updateOne(
+      { _id: corporateId },
+      { $pull: { doctors: doctorId } }
+    );
+
+    res.send('Doctor removed successfully');
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.get('/corporate/doctor-patients/:doctorId', isLoggedIn, async (req, res) => {
+  try {
+    const corporateId = req.session.corporateId;
+    const { doctorId } = req.params;
+
+    if (!corporateId) {
+      return res.status(403).send('Unauthorized');
+    }
+
+    const completedBookings = await Booking.find({ doctor: doctorId, status: 'completed' })
+      .populate('patient')
+      .populate('doctor');
+    console.log(completedBookings);
+
+    res.render('corporateDoctorPatients', { completedBookings, doctorId });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.get('/create-account', isCorporate, (req, res) => {
+  res.render('corporateCreateAccount', {
+    success_msg: req.flash('success_msg'),
+    error_msg: req.flash('error_msg'),
+    activePage: 'create-account', 
+  });
+});
+
+router.post('/create-account', isCorporate, async (req, res) => {
+  const { name, email, password } = req.body;
+  const corporateId = req.session.corporateId; 
+
+  try {
+    if (!name || !email || !password) {
+      req.flash('error_msg', 'All fields are required.');
+      return res.redirect('/corporate/create-account');
+    }
+
+    const existingDoctor = await Doctor.findOne({ email });
+    if (existingDoctor) {
+      req.flash('error_msg', 'Account email is already created.');
+      return res.redirect('/corporate/create-account');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const corporate = await Corporate.findById(corporateId);
+    if (!corporate) {
+      req.flash('error_msg', 'Corporate account not found.');
+      return res.redirect('/corporate/create-account');
+    }
+
+    const hospital = {
+      name: corporate.corporateName, 
+      street: corporate.address.street,
+      city: corporate.address.city,
+      state: corporate.address.state,
+      country: corporate.address.country,
+      zip: corporate.address.zipCode
+    };
+
+    const newDoctor = new Doctor({
+      name,
+      email,
+      password: hashedPassword,
+      role: 'doctor',
+      hospitals: [hospital],
+      createdByCorporate: true,
+      verified: "Verified",
+      isVerified: true
+    });
+
+    await newDoctor.save();
+
+    newDoctor.corporateRequests.push({
+      corporateId: corporate._id,
+      corporateName: corporate.corporateName,
+      requestStatus: "accepted"
+    });
+
+    await newDoctor.save();
+
+    req.flash('success_msg', 'Doctor account created successfully.');
+    res.redirect('/corporate/create-account');
+  } catch (err) {
+    console.error('Error creating doctor account:', err);
+    req.flash('error_msg', 'An error occurred while creating the account.');
+    res.redirect('/corporate/create-account');
+  }
+});
+
 
 
 module.exports = router;

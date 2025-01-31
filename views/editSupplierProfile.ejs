@@ -25,7 +25,6 @@
 <% } %>
 
         <form action="/supplier/update-profile" method="POST" enctype="multipart/form-data">
-            <!-- Personal and Contact Information -->
             <div class="form-group mt-3">
                 <label for="name">Name:</label>
                 <input type="text" class="form-control" id="name" name="name" value="<%= supplier.name %>" required>
@@ -46,7 +45,6 @@
                 <input type="text" class="form-control" id="alternateContactNumber" name="alternateContactNumber" value="<%= supplier.alternateContactNumber || '' %>">
             </div>
 
-            <!-- Company Information -->
             <div class="form-group">
                 <label for="companyName">Company Name:</label>
                 <input type="text" class="form-control" id="companyName" name="companyName" value="<%= supplier.companyName || '' %>">
@@ -72,7 +70,6 @@
                 </select>
             </div>
 
-            <!-- Address Information -->
             <h5>Address</h5>
             <div class="form-group">
                 <label for="street">Street:</label>
@@ -99,7 +96,6 @@
                 <input type="text" class="form-control" id="country" name="country" value="<%= supplier.address.country %>" required>
             </div>
 
-            <!-- Profile Information -->
             <div class="form-group">
                 <label for="tagline">Tagline:</label>
                 <input type="text" class="form-control" id="tagline" name="tagline" value="<%= supplier.tagline || '' %>">
@@ -110,7 +106,6 @@
                 <textarea class="form-control" id="overview" name="overview"><%= supplier.overview || '' %></textarea>
             </div>
 
-            <!-- Product Categories -->
             <div class="form-group">
                 <label>Product Categories:</label>
                 <div id="categoryContainer">
@@ -137,7 +132,6 @@
                 <button type="button" class="btn btn-primary mt-2" onclick="addCategory()">Add Category</button>
             </div>
 
-            <!-- Images -->
             <div class="form-group">
                 <label for="profileImage">Profile Image:</label>
                 <input type="file" class="form-control-file" id="profileImage" name="profileImage" accept="image/*">
@@ -147,6 +141,27 @@
                 <label for="coverPhoto">Cover Photo:</label>
                 <input type="file" class="form-control-file" id="coverPhoto" name="coverPhoto" accept="image/*">
             </div>
+
+            <div class="form-group mt-3">
+                <input type="checkbox" id="showConditionLibrary" name="showConditionLibrary" value="true" <%= supplier.showConditionLibrary ? 'checked' : '' %> >
+                <label for="showConditionLibrary">Show Condition Library</label>
+            </div>
+            
+            <div class="form-group">
+                <input type="checkbox" id="showReviews" name="showReviews" value="true" <%= supplier.showReviews ? 'checked' : '' %> >
+                <label for="showReviews">Show Reviews</label>
+            </div>
+            
+            <div class="form-group">
+                <input type="checkbox" id="showProducts" name="showProducts" value="true" <%= supplier.showProducts ? 'checked' : '' %> >
+                <label for="showProducts">Show Products</label>
+            </div>
+            
+            <div class="form-group">
+                <input type="checkbox" id="showCategories" name="showCategories" value="true" <%= supplier.showCategories ? 'checked' : '' %> >
+                <label for="showCategories">Show Categories</label>
+            </div>
+            
 
             <button type="submit" class="btn btn-primary mt-3">Update Profile</button>
         </form>

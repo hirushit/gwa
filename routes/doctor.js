@@ -1012,6 +1012,128 @@ router.post('/add-time-slot', isLoggedIn, checkSubscription, async (req, res) =>
     }
 });
 
+router.post('/add-custom-time-slot', isLoggedIn, checkSubscription, async (req, res) => {
+    try {
+        console.log('Request Body:', req.body);
+
+        const doctorEmail = req.session.user.email;
+        const { consultationType, startDate, startTime, endTime, duration, daysOfWeek, hospital, repeatWeeks } = req.body;
+
+        const doctor = await Doctor.findOne({ email: doctorEmail });
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
+
+        // Parse start date and times
+        const startDateTime = new Date(`${startDate}T${startTime}`);
+        const endDateTime = new Date(`${startDate}T${endTime}`);
+        
+        console.log('Parsed Start DateTime:', startDateTime);
+        console.log('Parsed End DateTime:', endDateTime);
+
+        if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+            return res.status(400).send('Invalid start or end time');
+        }
+
+        if (startDateTime >= endDateTime) {
+            return res.status(400).send('Start time must be before end time');
+        }
+
+        // Parse repeatWeeks to integer
+        const repeatWeeksInt = parseInt(repeatWeeks, 10) || 1; // Default to 1 if invalid repeatWeeks is provided
+
+        // Convert the startTime and endTime to minutes
+        const workingStartTime = parseInt(startTime.split(':')[0], 10) * 60 + parseInt(startTime.split(':')[1], 10); // Start time in minutes
+        const workingEndTime = parseInt(endTime.split(':')[0], 10) * 60 + parseInt(endTime.split(':')[1], 10); // End time in minutes
+
+        const durationInMinutes = parseInt(duration, 10);  // Slot duration in minutes
+
+        let currentStartTime = new Date(startDateTime); // Initialize the current start time
+        const timeSlots = []; // Array to store generated time slots
+
+        console.log('Starting slot generation...');
+
+        // Loop through repeat weeks
+        for (let week = 0; week < repeatWeeksInt; week++) {
+            let weekStartTime = new Date(currentStartTime);
+            // Add one week for each repetition
+            weekStartTime.setDate(weekStartTime.getDate() + 7 * week);
+
+            // Loop through selected days of the week
+            for (const day of daysOfWeek) {
+                const targetDay = new Date(weekStartTime);
+                const dayIndexMap = {
+                    'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+                    'Thursday': 4, 'Friday': 5, 'Saturday': 6
+                };
+                
+                // Get the correct day index
+                const selectedDayIndex = dayIndexMap[day]; // Get numeric index of 'Monday', 'Tuesday', etc.
+                const currentDayIndex = targetDay.getDay(); // Current loop iteration day index
+                
+                // Compute offset to the correct day
+                let dayOffset = selectedDayIndex - currentDayIndex;
+                if (dayOffset < 0) dayOffset += 7; // Move forward in the week if necessary
+                
+                // Apply the correct day offset
+                targetDay.setDate(targetDay.getDate() + dayOffset);
+                
+                let currentSlotStartTime = new Date(targetDay);
+                let slotEndTime;
+
+                // Ensure we generate slots only within working hours (e.g., from the user-specified start to end time)
+                let currentSlotStartTimeInMinutes = currentSlotStartTime.getHours() * 60 + currentSlotStartTime.getMinutes();
+                if (currentSlotStartTimeInMinutes < workingStartTime) {
+                    currentSlotStartTime.setMinutes(currentSlotStartTime.getMinutes() + (workingStartTime - currentSlotStartTimeInMinutes));
+                    currentSlotStartTimeInMinutes = workingStartTime;
+                }
+
+                // Generate time slots for this day
+                while (currentSlotStartTimeInMinutes < workingEndTime) {
+                    slotEndTime = new Date(currentSlotStartTime);
+                    slotEndTime.setMinutes(currentSlotStartTime.getMinutes() + durationInMinutes);
+
+                    // Check if the slot is within the valid time range
+                    if (slotEndTime.getHours() * 60 + slotEndTime.getMinutes() > workingEndTime) {
+                        break; // Skip if slot exceeds working hours
+                    }
+
+                    // Add the time slot to the array
+                    timeSlots.push({
+                        date: new Date(currentSlotStartTime),
+                        startTime: currentSlotStartTime.toTimeString().slice(0, 5),
+                        endTime: slotEndTime.toTimeString().slice(0, 5),
+                        consultation: consultationType,
+                        status: 'free',
+                        hospital: consultationType === 'In-person' ? hospital : undefined,
+                        hospitalLocation: consultationType === 'In-person' ? doctor.hospitals.find(h => h.name === hospital) : undefined
+                    });
+
+                    // Move to the next slot
+                    currentSlotStartTime.setMinutes(currentSlotStartTime.getMinutes() + durationInMinutes);
+                    currentSlotStartTimeInMinutes = currentSlotStartTime.getHours() * 60 + currentSlotStartTime.getMinutes();
+                }
+            }
+        }
+
+        console.log('Generated Time Slots:', timeSlots);
+
+        // Add the time slots to the doctor's timeSlots array
+        doctor.timeSlots.push(...timeSlots);
+
+        // Save the doctor document with the new time slots
+        await doctor.save();
+
+        console.log('Time slots added to doctor profile successfully.');
+
+        res.redirect('/doctor/manage-time-slots'); // Redirect to manage time slots page
+    } catch (error) {
+        console.error('Error during time slot creation:', error.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
 
 async function createGoogleMeetLink(booking) {
     const oauth2Client = new google.auth.OAuth2(
@@ -2962,55 +3084,113 @@ router.get('/view-corporate-request/:doctorId', async (req, res) => {
   });
   
   router.post('/update-corporate-request-status/:doctorId/:corporateId/:requestId', async (req, res) => {
-    const doctorId = req.params.doctorId;
-    const corporateId = req.params.corporateId;
-    const requestId = req.params.requestId;  
-    const { newStatus } = req.body; 
-  
+    const { doctorId, corporateId, requestId } = req.params;
+    const { newStatus } = req.body;
+
     try {
-      const doctor = await Doctor.findById(doctorId);
-      if (!doctor) {
-        req.flash('error_msg', 'Doctor not found');
-        return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
-      }
-  
-      const request = doctor.corporateRequests.id(requestId);
-      if (!request || request.corporateId.toString() !== corporateId.toString()) {
-        req.flash('error_msg', 'Request not found');
-        return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
-      }
-  
-      request.requestStatus = newStatus;
-  
-      if (newStatus === 'accepted') {
-        const corporate = await Corporate.findById(corporateId);
-        if (!corporate) {
-          req.flash('error_msg', 'Corporate not found');
-          return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
+        const doctor = await Doctor.findById(doctorId);
+        if (!doctor) {
+            req.flash('error_msg', 'Doctor not found');
+            return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
         }
-  
-        if (!corporate.doctors) {
-          corporate.doctors = [];  
+
+        const request = doctor.corporateRequests.id(requestId);
+        if (!request || request.corporateId.toString() !== corporateId.toString()) {
+            req.flash('error_msg', 'Request not found');
+            return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
         }
-        
-        if (!corporate.doctors.includes(doctor._id)) {
-          corporate.doctors.push(doctor._id);
+
+        request.requestStatus = newStatus;
+
+        if (newStatus === 'accepted') {
+            const corporate = await Corporate.findById(corporateId);
+            if (!corporate) {
+                req.flash('error_msg', 'Corporate not found');
+                return res.redirect(`/doctor/view-corporate-request/${doctorId}`);
+            }
+
+            // Ensure corporate has a doctors array
+            if (!Array.isArray(corporate.doctors)) {
+                corporate.doctors = [];
+            }
+
+            if (!corporate.doctors.includes(doctor._id)) {
+                corporate.doctors.push(doctor._id);
+            }
+
+            // Ensure corporate.address exists (since it's an object, not an array)
+            if (!corporate.address) {
+                corporate.address = {
+                    street: 'N/A',
+                    city: 'N/A',
+                    state: 'N/A',
+                    country: 'N/A',
+                    zipCode: 'N/A'
+                };
+            }
+
+            // Update corporate address only if missing
+            if (!corporate.address.street || corporate.address.street === 'N/A') {
+                corporate.address.street = corporate.street || 'N/A';
+            }
+            if (!corporate.address.city || corporate.address.city === 'N/A') {
+                corporate.address.city = corporate.city || 'N/A';
+            }
+            if (!corporate.address.state || corporate.address.state === 'N/A') {
+                corporate.address.state = corporate.state || 'N/A';
+            }
+            if (!corporate.address.country || corporate.address.country === 'N/A') {
+                corporate.address.country = corporate.country || 'N/A';
+            }
+            if (!corporate.address.zipCode || corporate.address.zipCode === 'N/A') {
+                corporate.address.zipCode = corporate.zipCode || 'N/A';
+            }
+
+            // Ensure doctor has hospitals array
+            if (!Array.isArray(doctor.hospitals)) {
+                doctor.hospitals = [];
+            }
+
+            const hospitalDetails = {
+                name: corporate.corporateName || 'N/A', 
+                street: corporate.address.street,
+                city: corporate.address.city,
+                state: corporate.address.state,
+                country: corporate.address.country,
+                zipCode: corporate.address.zipCode,
+            };
+
+            // Avoid duplicate hospitals
+            const hospitalExists = doctor.hospitals.some(
+                (hosp) =>
+                    hosp.name === hospitalDetails.name &&
+                    hosp.street === hospitalDetails.street &&
+                    hosp.city === hospitalDetails.city &&
+                    hosp.state === hospitalDetails.state &&
+                    hosp.country === hospitalDetails.country &&
+                    hosp.zipCode === hospitalDetails.zipCode
+            );
+
+            if (!hospitalExists) {
+                doctor.hospitals.push(hospitalDetails);
+            }
+
+            await corporate.save();
+            await doctor.save();
+
+            req.flash('success_msg', 'Doctor added to corporate successfully, and hospital details updated.');
         }
-  
-        await corporate.save();
-        req.flash('success_msg', 'Doctor added to corporate successfully');
-      }
-  
-      await doctor.save();
-  
-      req.flash('success_msg', 'Request status updated successfully');
-      res.redirect(`/doctor/view-corporate-request/${doctorId}`);
+
+        await doctor.save();
+
+        req.flash('success_msg', 'Request status updated successfully');
+        res.redirect(`/doctor/view-corporate-request/${doctorId}`);
     } catch (err) {
-      console.error('Error updating corporate request status:', err);
-      req.flash('error_msg', 'Error updating request status');
-      res.redirect('/doctors');
+        console.error('Error updating corporate request status:', err);
+        req.flash('error_msg', 'Error updating request status');
+        res.redirect('/doctors');
     }
-  });
+});
 
   router.get('/corporate-list', async (req, res) => {
     try {

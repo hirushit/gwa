@@ -169,6 +169,43 @@ router.get('/profile', isLoggedIn, async (req, res) => {
     }
 });
 
+router.post('/profile/upload-cover', upload.single('coverPhoto'), isLoggedIn, async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).send('No file uploaded.');
+        }
+
+        if (!req.file.mimetype.startsWith('image')) {
+            return res.status(400).send('Invalid file type. Please upload an image.');
+        }
+
+        const doctorId = req.session.user._id;
+
+        const updatedDoctor = await Doctor.findByIdAndUpdate(
+            doctorId, 
+            {
+                coverPhoto: {
+                    data: req.file.buffer,
+                    contentType: req.file.mimetype
+                }
+            },
+            { new: true }
+        );
+
+        if (!updatedDoctor) {
+            return res.status(404).send('Doctor not found.');
+        }
+
+        console.log("Updated doctor cover photo:", updatedDoctor); 
+
+        res.redirect('/doctor/profile');
+        
+    } catch (error) {
+        console.error("Error uploading cover photo:", error); 
+        res.status(500).send('Error uploading cover photo');
+    }
+});
+
   
 router.get('/edit', isLoggedIn, async (req, res) => {
     try {
@@ -176,7 +213,7 @@ router.get('/edit', isLoggedIn, async (req, res) => {
         const doctor = await Doctor.findOne({ email: doctorEmail }).lean();
         const allInsurances = await Insurance.find({}).select('_id name');
         const allSpecialties = await Specialty.find({}).select('_id name');
-        const allConditions = await Condition.find({}).select('_id name'); // Ensure this is fetched
+        const allConditions = await Condition.find({}).select('_id name');
 
         if (!doctor.hospitals) {
             doctor.hospitals = [];
@@ -186,12 +223,11 @@ router.get('/edit', isLoggedIn, async (req, res) => {
             doctor.insurances = [];
         }
 
-        // Pass allConditions to the template
         res.render('editDoctorProfile', {
             doctor,
             allInsurances,
             allSpecialties,
-            allConditions // Pass this to EJS
+            allConditions 
         });
     } catch (err) {
         console.error(err.message);

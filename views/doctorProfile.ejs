@@ -24,13 +24,22 @@
     <% } %>
     </div>
 
-    <% if (doctor.coverPhoto && doctor.coverPhoto.data) { %>
-        <div class="cover-photo">
-            <img src="data:<%= doctor.coverPhoto.contentType %>;base64,<%= doctor.coverPhoto.data.toString('base64') %>" alt="Cover Photo" style="max-width: 200px; width: 100%; height: auto;">
-        </div>
-    <% } else { %>
-        <p>No cover photo available</p>
-    <% } %>    
+    <div class="cover-photo-section">
+        <% if (doctor.coverPhoto && doctor.coverPhoto.data) { %>
+            <div class="cover-photo">
+                <img src="data:<%= doctor.coverPhoto.contentType %>;base64,<%= doctor.coverPhoto.data.toString('base64') %>" alt="Cover Photo" style="max-width: 200px; width: 100%; height: auto;">
+            </div>
+        <% } else { %>
+            <p>No cover photo available</p>
+        <% } %>    
+    
+        <form action="/doctor/profile/upload-cover" method="POST" enctype="multipart/form-data">
+            <label for="coverPhoto">Upload New Cover Photo:</label>
+            <input type="file" name="coverPhoto" id="coverPhoto" accept="image/*" required>
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+    
 
     <% if (doctor.profilePicture && doctor.profilePicture.data) { %>
     <img src="data:<%= doctor.profilePicture.contentType %>;base64,<%= doctor.profilePicture.data.toString('base64') %>" alt="Profile Picture" width="150" height="180">

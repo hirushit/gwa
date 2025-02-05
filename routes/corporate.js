@@ -830,7 +830,7 @@ router.get('/corporate-list', async (req, res) => {
 
   try {
     const corporates = await Corporate.find(filter)
-      .select('corporateName tagline address profilePicture profileTransferRequest createdByAdmin')
+      .select('corporateName tagline address profilePicture profileTransferRequest createdByAdmin slug')
       .populate({
         path: 'doctors',
         match: {

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');  
 
 const faqSchema = new mongoose.Schema({
   question: { type: String }, 
@@ -15,6 +16,7 @@ const reviewSchema = new mongoose.Schema({
 const doctorSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
+  slug: { type: String, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['doctor'], default: 'doctor' },
   phoneNumber: String,
@@ -164,7 +166,44 @@ const doctorSchema = new mongoose.Schema({
   showFaq: { type: Boolean},
   showArticle: { type: Boolean },
   showInsurances: { type: Boolean},
+});
 
+function generateRandomSlugSuffix() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz';
+  const numbers = '0123456789'; 
+  let result = '';
+
+  result += numbers.charAt(Math.floor(Math.random() * numbers.length));
+
+  const allChars = chars + numbers;
+  for (let i = 0; i < 3; i++) {
+    result += allChars.charAt(Math.floor(Math.random() * allChars.length));
+  }
+
+  return result;
+}
+
+doctorSchema.pre('save', async function(next) {
+  if (this.name) {
+    let baseSlug = slugify(this.name, { lower: true, strict: true });
+
+    const existingDoctor = await this.constructor.findOne({ slug: baseSlug });
+
+    if (existingDoctor) {
+
+      let newSlug = `${baseSlug}-${generateRandomSlugSuffix()}`;
+      
+      while (await this.constructor.findOne({ slug: newSlug })) {
+        newSlug = `${baseSlug}-${generateRandomSlugSuffix()}`;
+      }
+      
+      this.slug = newSlug;  
+    } else {
+      this.slug = baseSlug;  
+    }
+  }
+
+  next();
 });
 
 module.exports = mongoose.model('Doctor', doctorSchema);

@@ -555,7 +555,7 @@ router.get('/all-suppliers', async (req, res) => {
 
     try {
         const suppliers = await Supplier.find(filter)
-            .select('name tagline address profilePicture createdByAdmin profileTransferRequest')
+            .select('name tagline address profilePicture createdByAdmin profileTransferRequest slug')
             .lean();
 
         const countries = await Supplier.distinct('address.country');
@@ -609,16 +609,25 @@ router.post('/claim-profile', upload.single('document'), async (req, res) => {
     }
 });
 
-router.get('/supplier/:id', async (req, res) => {
+router.get('/supplier/:slug', async (req, res) => {
     try {
-        const supplier = await Supplier.findById(req.params.id);
-        const products = await Product.find({ uploadedBy: req.params.id, countInStock: { $gt: 0 } });
+        const supplier = await Supplier.findOne({ slug: req.params.slug });
+
+        if (!supplier) {
+            req.flash('error_msg', 'Supplier not found');
+            return res.redirect('/supplier/all-suppliers');
+        }
+
+        const products = await Product.find({ uploadedBy: supplier._id, countInStock: { $gt: 0 } });
+
         res.render('supplierDetails', { supplier, products });
     } catch (err) {
         console.error('Error fetching supplier details:', err);
+        req.flash('error_msg', 'Error fetching supplier details');
         res.redirect('/supplier/all-suppliers');
     }
 });
+
 
 router.post('/:id/send-message', async (req, res) => {
     try {

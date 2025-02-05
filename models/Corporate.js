@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');  
 
 const corporateSchema = new mongoose.Schema({
   corporateName: {
@@ -7,6 +8,7 @@ const corporateSchema = new mongoose.Schema({
   email: {
     type: String,
   },
+  slug: { type: String, unique: true },
   role: {
     type: String,
   },
@@ -123,6 +125,42 @@ const corporateSchema = new mongoose.Schema({
     enum: ['Accepted', 'Pending', 'Rejected', 'Idle'], 
     default: 'Idle'
   }
+});
+
+function generateRandomSlugSuffix() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz';
+  const numbers = '0123456789'; 
+  let result = '';
+  
+  result += numbers.charAt(Math.floor(Math.random() * numbers.length));
+
+  const allChars = chars + numbers;
+  for (let i = 0; i < 3; i++) {
+    result += allChars.charAt(Math.floor(Math.random() * allChars.length));
+  }
+
+  return result;
+}
+
+corporateSchema.pre('save', async function(next) {
+  if (this.corporateName) {
+    let baseSlug = slugify(this.corporateName, { lower: true, strict: true });
+
+    const existingCorporate = await this.constructor.findOne({ slug: baseSlug });
+
+    if (existingCorporate) {
+      let newSlug = `${baseSlug}-${generateRandomSlugSuffix()}`;
+      
+      while (await this.constructor.findOne({ slug: newSlug })) {
+        newSlug = `${baseSlug}-${generateRandomSlugSuffix()}`;
+      }
+      
+      this.slug = newSlug; 
+    } else {
+      this.slug = baseSlug;  
+    }
+  }
+  next();  
 });
 
 module.exports = mongoose.model('Corporate', corporateSchema);

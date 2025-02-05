@@ -107,8 +107,8 @@
                                         <button type="submit" class="btn btn-primary mt-2">Submit Claim</button>
                                     </form>
                                 <% } else { %>
-                                    <a href="/supplier/<%= supplier._id %>" class="btn btn-primary">View Details</a>
-                                <% } %>
+                                    <a href="/supplier/supplier/<%= supplier.slug %>" class="btn btn-primary">View Details</a>
+                                    <% } %>
                             </div>
                         </div>
                     </div>

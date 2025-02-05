@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const slugify = require('slugify');  
 
 const supplierSchema = new Schema({
     name: { type: String },
     contactEmail: { type: String },
+    slug: { type: String, unique: true },
     phone: { type: String },
     alternateContactNumber: { type: String },
     businessRegistrationNumber: { type: String },
@@ -80,6 +82,44 @@ const supplierSchema = new Schema({
     showCategories: { type: Boolean, default: false }, 
 });
 
-const Supplier = mongoose.model('Supplier', supplierSchema);
+function generateRandomSlugSuffix() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz';
+    const numbers = '0123456789'; 
+    let result = '';
+    
+    result += numbers.charAt(Math.floor(Math.random() * numbers.length));
+  
+    const allChars = chars + numbers;
+    for (let i = 0; i < 3; i++) {
+      result += allChars.charAt(Math.floor(Math.random() * allChars.length));
+    }
+  
+    return result;
+  }
 
-module.exports = Supplier;
+  supplierSchema.pre('save', async function(next) {
+    if (this.name) {
+      let baseSlug = slugify(this.name, { lower: true, strict: true });
+  
+      const existingSupplier = await this.constructor.findOne({ slug: baseSlug });
+  
+      if (existingSupplier) {
+        let newSlug = `${baseSlug}-${generateRandomSlugSuffix()}`;
+        
+        while (await this.constructor.findOne({ slug: newSlug })) {
+          newSlug = `${baseSlug}-${generateRandomSlugSuffix()}`;
+        }
+        
+        this.slug = newSlug;  
+      } else {
+        this.slug = baseSlug;  
+      }
+    }
+  
+    next(); 
+  });
+  
+  const Supplier = mongoose.model('Supplier', supplierSchema);
+  
+  module.exports = Supplier;
+  

@@ -441,7 +441,7 @@ router.get('/doctors', async (req, res) => {
     })
       .populate({
         path: 'hospitals',
-        select: 'name city profileTransferRequest createdByAdmin',
+        select: 'name city profileTransferRequest createdByAdmin slug',
       })
       .sort({ rating: -1 })
       .limit(10);
@@ -507,10 +507,10 @@ router.get('/doctors', async (req, res) => {
   }
 });
 
-router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
+router.get('/doctors/:slug/slots', isLoggedIn, async (req, res) => {
     try {
-        const doctorId = req.params.id;
-        const doctor = await Doctor.findById(doctorId)
+        const slug = req.params.slug;
+        const doctor = await Doctor.findOne({ slug })  
             .populate({
                 path: 'reviews.patientId',
                 select: 'name'
@@ -521,7 +521,7 @@ router.get('/doctors/:id/slots', isLoggedIn, async (req, res) => {
         }
 
         const insurances = await Insurance.find({ '_id': { $in: doctor.insurances } }).select('name logo');
-        const blogs = await Blog.find({ authorId: doctorId, verificationStatus: 'Verified' });
+        const blogs = await Blog.find({ authorId: doctor._id, verificationStatus: 'Verified' });
 
         const conversionRates = await fetchConversionRates();
 
@@ -1992,7 +1992,7 @@ router.get('/news-releases', async (req, res) => {
 
 router.get('/corporate-list', async (req, res) => {
   try {
-    const corporates = await Corporate.find().select('corporateName tagline address profilePicture');
+    const corporates = await Corporate.find().select('corporateName tagline address profilePicture slug');
 
     res.render('corporate-list', { corporates });
   } catch (err) {
@@ -2002,19 +2002,22 @@ router.get('/corporate-list', async (req, res) => {
   }
 });
 
-router.get('/corporate/:corporateId', async (req, res) => {
-  const { corporateId } = req.params;
+
+router.get('/corporate/:slug', async (req, res) => {
+  const { slug } = req.params;  
   const patientId = req.session.user._id; 
 
   try {
-    const corporates = await Corporate.findById(corporateId).populate('doctors'); 
+    const corporates = await Corporate.findOne({ slug }) 
+      .populate('doctors'); 
+    
     if (!corporates) {
       req.flash('error_msg', 'Corporate not found');
       return res.redirect('/patient/corporate-list');
     }
 
     const patient = await Patient.findById(patientId);
-    const isFollowing = patient.followedCorporates.includes(corporateId);
+    const isFollowing = patient.followedCorporates.includes(corporates._id); 
 
     const verifiedBlogs = await Blog.find({
       authorId: { $in: corporates.doctors.map(doctor => doctor._id) },
@@ -2027,7 +2030,7 @@ router.get('/corporate/:corporateId', async (req, res) => {
         select: 'name profilePicture',
       });
 
-    const corporatesWithReviews = await Corporate.findById(corporateId)
+    const corporatesWithReviews = await Corporate.findOne({ slug })
       .populate({
         path: 'patientReviews.patientId',
         model: 'Patient',
